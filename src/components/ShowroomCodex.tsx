@@ -29,9 +29,13 @@ export default function ShowroomCodex({ isDark, onOpenLightbox }: ShowroomCodexP
   const [inspectItem, setInspectItem] = useState<WardrobeItem | null>(null);
   const [inspectViewMode, setInspectViewMode] = useState<'FRONT' | 'BACK'>('FRONT');
 
-  // Carousel ref for smooth native scrolling
+  // Carousel ref for smooth native scrolling & drag
   const carouselRef = useRef<HTMLDivElement>(null);
   const [carouselIndex, setCarouselIndex] = useState<number>(0);
+  const [scrollProgress, setScrollProgress] = useState<number>(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const [startX, setStartX] = useState(0);
+  const [startScrollLeft, setStartScrollLeft] = useState(0);
 
   // Filtered in-game items
   const filteredItems = useMemo(() => {
@@ -63,10 +67,45 @@ export default function ShowroomCodex({ isDark, onOpenLightbox }: ShowroomCodexP
   // Update carousel scroll position tracker
   const handleScroll = () => {
     if (!carouselRef.current) return;
-    const scrollLeft = carouselRef.current.scrollLeft;
+    const { scrollLeft, scrollWidth, clientWidth } = carouselRef.current;
+    const maxScroll = scrollWidth - clientWidth;
+    if (maxScroll > 0) {
+      setScrollProgress(scrollLeft / maxScroll);
+    }
     const cardWidth = 380;
     const idx = Math.round(scrollLeft / cardWidth);
     setCarouselIndex(Math.min(Math.max(idx, 0), filteredItems.length - 1));
+  };
+
+  // Mouse drag-to-scroll handlers
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (!carouselRef.current) return;
+    setIsDragging(true);
+    setStartX(e.pageX - carouselRef.current.offsetLeft);
+    setStartScrollLeft(carouselRef.current.scrollLeft);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging || !carouselRef.current) return;
+    e.preventDefault();
+    const x = e.pageX - carouselRef.current.offsetLeft;
+    const walk = (x - startX) * 1.5;
+    carouselRef.current.scrollLeft = startScrollLeft - walk;
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  const handleSlidebarClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!carouselRef.current) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const clickRatio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    const maxScroll = carouselRef.current.scrollWidth - carouselRef.current.clientWidth;
+    carouselRef.current.scrollTo({
+      left: clickRatio * maxScroll,
+      behavior: 'smooth',
+    });
   };
 
   // Badge rendering helper
@@ -99,12 +138,27 @@ export default function ShowroomCodex({ isDark, onOpenLightbox }: ShowroomCodexP
           : 'bg-gradient-to-b from-[#FAF4F6] via-[#F4E9ED] to-[#FBF2F5] border-red-200 text-zinc-900'
       }`}
     >
-      {/* Background Ambience */}
+      {/* Background Ambience: Streetwear Boutique Studio Wallpaper */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
-        <div className="absolute inset-0 bg-blueprint-dots opacity-30" />
+        <img
+          src="/assets/generated/fanart_council.webp"
+          alt=""
+          loading="lazy"
+          className={`w-full h-full object-cover object-center ${
+            isDark ? 'opacity-22 brightness-80 contrast-125' : 'opacity-[0.08] grayscale'
+          }`}
+        />
+        <div
+          className={`absolute inset-0 ${
+            isDark
+              ? 'bg-gradient-to-b from-[#14060C]/90 via-[#0C0408]/80 to-[#12050A]/95'
+              : 'bg-gradient-to-b from-[#FAF4F6]/90 via-[#F4E9ED]/85 to-[#FBF2F5]/95'
+          }`}
+        />
+        <div className="absolute inset-0 bg-blueprint-dots opacity-25" />
         <div
           style={{
-            background: 'radial-gradient(circle, rgba(220,38,38,0.18) 0%, rgba(220,38,38,0) 70%)',
+            background: 'radial-gradient(circle, rgba(220,38,38,0.22) 0%, rgba(220,38,38,0) 70%)',
           }}
           className="absolute -top-32 left-1/2 -translate-x-1/2 w-[900px] h-[450px] rounded-full pointer-events-none"
         />
@@ -213,128 +267,197 @@ export default function ShowroomCodex({ isDark, onOpenLightbox }: ShowroomCodexP
 
         {/* =====================================================================
             LIGHTWEIGHT CAROUSEL TRACK (HARDWARE-ACCELERATED, 60FPS)
+            WITH FLOATING ARROWS, MOUSE DRAG & INTERACTIVE SLIDEBAR
         ===================================================================== */}
-        <div
-          ref={carouselRef}
-          onScroll={handleScroll}
-          className="flex gap-4 sm:gap-6 overflow-x-auto snap-x snap-mandatory pb-4 pt-2 scroll-smooth select-none focus:outline-none [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-        >
-          {filteredItems.map((item, idx) => {
-            const isFlipped = Boolean(flippedCards[item.id]);
-            const displayImage = isFlipped && item.backImage ? item.backImage : item.frontImage;
+        <div className="relative group/carousel">
+          {/* Floating Left Arrow */}
+          <button
+            onClick={() => scrollCarousel('prev')}
+            className={`absolute -left-3 sm:-left-6 top-[38%] -translate-y-1/2 z-30 w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center border transition-all cursor-pointer shadow-[0_4px_30px_rgba(0,0,0,0.85)] ${
+              isDark
+                ? 'bg-black/90 hover:bg-red-600 border-white/20 hover:border-red-500 text-white hover:scale-110 active:scale-95'
+                : 'bg-white hover:bg-red-600 border-zinc-300 hover:border-red-500 text-zinc-900 hover:text-white hover:scale-110 active:scale-95 shadow-xl'
+            }`}
+            aria-label="Previous clothing item"
+            title="Slide Sebelumnya"
+          >
+            <ChevronLeft className="w-7 h-7 stroke-[2.5]" />
+          </button>
 
-            return (
-              <div
-                key={item.id}
-                onClick={() => {
-                  setInspectItem(item);
-                  setInspectViewMode(isFlipped ? 'BACK' : 'FRONT');
-                }}
-                className={`w-[85vw] sm:w-[350px] md:w-[370px] shrink-0 snap-start border flex flex-col justify-between transition-all duration-300 relative overflow-hidden group cursor-pointer ${
-                  isDark
-                    ? 'bg-[#110A0E] border-white/10 hover:border-red-500/80 shadow-[0_10px_30px_rgba(0,0,0,0.6)] hover:shadow-[0_15px_40px_rgba(220,38,38,0.2)]'
-                    : 'bg-white border-zinc-300 hover:border-red-500 shadow-md hover:shadow-xl'
-                }`}
-              >
-                {/* Visual Area: Studio Stage Photo */}
+          {/* Floating Right Arrow */}
+          <button
+            onClick={() => scrollCarousel('next')}
+            className={`absolute -right-3 sm:-right-6 top-[38%] -translate-y-1/2 z-30 w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center border transition-all cursor-pointer shadow-[0_4px_30px_rgba(0,0,0,0.85)] ${
+              isDark
+                ? 'bg-black/90 hover:bg-red-600 border-white/20 hover:border-red-500 text-white hover:scale-110 active:scale-95'
+                : 'bg-white hover:bg-red-600 border-zinc-300 hover:border-red-500 text-zinc-900 hover:text-white hover:scale-110 active:scale-95 shadow-xl'
+            }`}
+            aria-label="Next clothing item"
+            title="Slide Selanjutnya"
+          >
+            <ChevronRight className="w-7 h-7 stroke-[2.5]" />
+          </button>
+
+          {/* Carousel Scroll Container */}
+          <div
+            ref={carouselRef}
+            onScroll={handleScroll}
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseUp}
+            className={`flex gap-4 sm:gap-6 overflow-x-auto snap-x snap-mandatory pb-4 pt-2 scroll-smooth select-none focus:outline-none [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${
+              isDragging ? 'cursor-grabbing' : 'cursor-grab'
+            }`}
+          >
+            {filteredItems.map((item, idx) => {
+              const isFlipped = Boolean(flippedCards[item.id]);
+              const displayImage = isFlipped && item.backImage ? item.backImage : item.frontImage;
+
+              return (
                 <div
-                  className={`relative aspect-[4/4.5] flex items-center justify-center p-4 overflow-hidden ${
+                  key={item.id}
+                  onClick={() => {
+                    if (isDragging) return;
+                    setInspectItem(item);
+                    setInspectViewMode(isFlipped ? 'BACK' : 'FRONT');
+                  }}
+                  className={`w-[85vw] sm:w-[350px] md:w-[370px] shrink-0 snap-start border flex flex-col justify-between transition-all duration-300 relative overflow-hidden group cursor-pointer ${
                     isDark
-                      ? 'bg-gradient-to-b from-[#1C1218] via-[#0F080C] to-[#0A0608]'
-                      : 'bg-gradient-to-b from-[#F2EDF0] via-[#E8E2E6] to-[#DDD5DC]'
+                      ? 'bg-[#110A0E] border-white/10 hover:border-red-500/80 shadow-[0_10px_30px_rgba(0,0,0,0.6)] hover:shadow-[0_15px_40px_rgba(220,38,38,0.2)]'
+                      : 'bg-white border-zinc-300 hover:border-red-500 shadow-md hover:shadow-xl'
                   }`}
                 >
-                  <div className="absolute inset-0 bg-tactical-grid opacity-20 pointer-events-none" />
+                  {/* Visual Area: Studio Stage Photo */}
+                  <div
+                    className={`relative aspect-[4/4.5] flex items-center justify-center p-4 overflow-hidden ${
+                      isDark
+                        ? 'bg-gradient-to-b from-[#1C1218] via-[#0F080C] to-[#0A0608]'
+                        : 'bg-gradient-to-b from-[#F2EDF0] via-[#E8E2E6] to-[#DDD5DC]'
+                    }`}
+                  >
+                    <div className="absolute inset-0 bg-tactical-grid opacity-20 pointer-events-none" />
 
-                  {/* Top-Left Rank / Category Badge */}
-                  <div className="absolute top-3 left-3 z-20">
-                    {renderBadge(item.badge || item.tier, item.badgeVariant)}
-                  </div>
-
-                  {/* Top-Right Index Counter */}
-                  <span className="absolute top-3 right-3 z-20 text-[10px] font-mono-tech font-bold text-zinc-400">
-                    #{String(idx + 1).padStart(2, '0')}
-                  </span>
-
-                  {/* Garment Image */}
-                  <div className="relative w-full h-full flex items-center justify-center">
-                    <img
-                      src={displayImage}
-                      alt={item.name}
-                      loading="lazy"
-                      className="max-h-[82%] max-w-[85%] object-contain drop-shadow-[0_15px_25px_rgba(0,0,0,0.8)] group-hover:scale-105 transition-transform duration-300"
-                    />
-                  </div>
-
-                  {/* Bottom-Right "FLIP VIEW =" Toggle (for items with back images) */}
-                  {item.backImage && (
-                    <button
-                      onClick={(e) => toggleFlip(item.id, e)}
-                      className="absolute bottom-3 right-3 z-20 px-2.5 py-1 bg-black/85 hover:bg-red-600 border border-white/20 text-[9px] font-mono-tech font-extrabold uppercase tracking-wider text-white transition-colors cursor-pointer flex items-center gap-1 shadow-md"
-                      title="Balik Tampilan Depan / Belakang"
-                    >
-                      <RotateCw className="w-2.5 h-2.5" />
-                      <span>{isFlipped ? 'DEPAN' : 'BELAKANG'}</span>
-                      <span className="text-red-400 font-bold">=</span>
-                    </button>
-                  )}
-                </div>
-
-                {/* Card Body Info */}
-                <div className="p-4 flex flex-col justify-between flex-1 border-t border-white/5">
-                  <div>
-                    <h3
-                      className={`font-sans font-black text-sm sm:text-base tracking-wide uppercase leading-tight truncate ${
-                        isDark ? 'text-white group-hover:text-red-400' : 'text-zinc-900 group-hover:text-red-600'
-                      }`}
-                    >
-                      {item.name}
-                    </h3>
-
-                    <div className="text-[11px] font-mono-tech font-bold text-amber-500 uppercase tracking-wider mt-1 truncate">
-                      {item.subtitle || item.categoryLabel}
+                    {/* Top-Left Rank / Category Badge */}
+                    <div className="absolute top-3 left-3 z-20">
+                      {renderBadge(item.badge || item.tier, item.badgeVariant)}
                     </div>
 
-                    <p className="text-[11px] font-sans text-zinc-400 line-clamp-2 mt-2 leading-relaxed">
-                      {item.description}
-                    </p>
-                  </div>
-
-                  {/* Card Footer: Spec Tag & Zoom Action */}
-                  <div className="flex items-center justify-between pt-3 mt-3 border-t border-white/10">
-                    <span
-                      className={`text-[9px] font-mono-tech font-extrabold uppercase tracking-wider px-2 py-0.5 border ${
-                        isDark ? 'bg-black/40 border-white/10 text-zinc-300' : 'bg-zinc-100 border-zinc-200 text-zinc-700'
-                      }`}
-                    >
-                      {item.tag || item.era}
+                    {/* Top-Right Index Counter */}
+                    <span className="absolute top-3 right-3 z-20 text-[10px] font-mono-tech font-bold text-zinc-400">
+                      #{String(idx + 1).padStart(2, '0')}
                     </span>
 
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setInspectItem(item);
-                        setInspectViewMode(isFlipped ? 'BACK' : 'FRONT');
-                      }}
-                      className="px-2.5 py-1 text-[10px] font-mono-tech font-bold uppercase tracking-wider border border-white/15 hover:border-red-500 hover:text-red-400 transition-colors flex items-center gap-1 cursor-pointer"
-                    >
-                      <Maximize2 className="w-2.5 h-2.5 text-red-500" />
-                      <span>DETAIL</span>
-                    </button>
+                    {/* Garment Image */}
+                    <div className="relative w-full h-full flex items-center justify-center">
+                      <img
+                        src={displayImage}
+                        alt={item.name}
+                        loading="lazy"
+                        className="max-h-[82%] max-w-[85%] object-contain drop-shadow-[0_15px_25px_rgba(0,0,0,0.8)] group-hover:scale-105 transition-transform duration-300 pointer-events-none"
+                      />
+                    </div>
+
+                    {/* Bottom-Right "FLIP VIEW =" Toggle (for items with back images) */}
+                    {item.backImage && (
+                      <button
+                        onClick={(e) => toggleFlip(item.id, e)}
+                        className="absolute bottom-3 right-3 z-20 px-2.5 py-1 bg-black/85 hover:bg-red-600 border border-white/20 text-[9px] font-mono-tech font-extrabold uppercase tracking-wider text-white transition-colors cursor-pointer flex items-center gap-1 shadow-md"
+                        title="Balik Tampilan Depan / Belakang"
+                      >
+                        <RotateCw className="w-2.5 h-2.5" />
+                        <span>{isFlipped ? 'DEPAN' : 'BELAKANG'}</span>
+                        <span className="text-red-400 font-bold">=</span>
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Card Body Info */}
+                  <div className="p-4 flex flex-col justify-between flex-1 border-t border-white/5">
+                    <div>
+                      <h3
+                        className={`font-sans font-black text-sm sm:text-base tracking-wide uppercase leading-tight truncate ${
+                          isDark ? 'text-white group-hover:text-red-400' : 'text-zinc-900 group-hover:text-red-600'
+                        }`}
+                      >
+                        {item.name}
+                      </h3>
+
+                      <div className="text-[11px] font-mono-tech font-bold text-amber-500 uppercase tracking-wider mt-1 truncate">
+                        {item.subtitle || item.categoryLabel}
+                      </div>
+
+                      <p className="text-[11px] font-sans text-zinc-400 line-clamp-2 mt-2 leading-relaxed">
+                        {item.description}
+                      </p>
+                    </div>
+
+                    {/* Card Footer: Spec Tag & Zoom Action */}
+                    <div className="flex items-center justify-between pt-3 mt-3 border-t border-white/10">
+                      <span
+                        className={`text-[9px] font-mono-tech font-extrabold uppercase tracking-wider px-2 py-0.5 border ${
+                          isDark ? 'bg-black/40 border-white/10 text-zinc-300' : 'bg-zinc-100 border-zinc-200 text-zinc-700'
+                        }`}
+                      >
+                        {item.tag || item.era}
+                      </span>
+
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setInspectItem(item);
+                          setInspectViewMode(isFlipped ? 'BACK' : 'FRONT');
+                        }}
+                        className="px-2.5 py-1 text-[10px] font-mono-tech font-bold uppercase tracking-wider border border-white/15 hover:border-red-500 hover:text-red-400 transition-colors flex items-center gap-1 cursor-pointer"
+                      >
+                        <Maximize2 className="w-2.5 h-2.5 text-red-500" />
+                        <span>DETAIL</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
 
-        {/* Carousel Bottom Drag / Swipe Hint */}
-        <div className="flex items-center justify-between mt-4 text-[11px] font-mono-tech text-zinc-500">
-          <div className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-red-500" />
-            <span>GESER / SWIPE UNTUK MELIHAT SEMUA SET PAKAIAN 4BLOODS</span>
+        {/* =====================================================================
+            INTERACTIVE SLIDEBAR / CAROUSEL PROGRESS SCRUBBER
+        ===================================================================== */}
+        <div className="mt-6 space-y-3">
+          <div
+            onClick={handleSlidebarClick}
+            className={`w-full h-3.5 rounded-full relative cursor-pointer overflow-hidden p-0.5 border transition-all ${
+              isDark
+                ? 'bg-black/70 border-white/15 hover:border-red-500/60'
+                : 'bg-zinc-200 border-zinc-300 hover:border-red-400'
+            }`}
+            title="Klik atau geser pada slidebar untuk scroll katalog"
+          >
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-red-600 via-red-500 to-amber-500 transition-[transform] duration-75 shadow-[0_0_15px_rgba(220,38,38,0.7)]"
+              style={{
+                width: `${Math.max(12, 100 / filteredItems.length)}%`,
+                transform: `translateX(${scrollProgress * ((filteredItems.length - 1) / filteredItems.length) * (100 / Math.max(12, 100 / filteredItems.length)) * 100}%)`,
+              }}
+            />
           </div>
-          <span className="hidden sm:inline">KLIK KARTU UNTUK INSPEKSI HD LENGKAP</span>
+
+          {/* Slidebar Info & Drag Hint */}
+          <div className="flex items-center justify-between text-xs font-mono-tech text-zinc-400">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+              <span className="font-bold text-red-500">SLIDEBAR AKTIF:</span>
+              <span>KLIK SLIDEBAR, TEKAN PANAH, ATAU DRAG MOUSE UNTUK SCROLL</span>
+            </div>
+            <div className="flex items-center gap-2 font-bold">
+              <span className="text-red-500">
+                {String(carouselIndex + 1).padStart(2, '0')}
+              </span>
+              <span>/</span>
+              <span>{String(filteredItems.length).padStart(2, '0')} SET ITEM</span>
+            </div>
+          </div>
         </div>
       </div>
 

@@ -300,29 +300,36 @@ export default function CompanyProfilePage() {
       <section
         className={`relative min-h-[88vh] pt-28 pb-14 flex flex-col justify-between overflow-hidden border-b ${
           isDark
-            ? 'bg-[#080305] border-red-500/20'
+            ? 'bg-[#090306] border-red-500/25'
             : 'bg-gradient-to-b from-[#FAF8F5] via-[#EDE7DE] to-[#F5F0E8] border-zinc-200'
         }`}
       >
-        {/* Subtle Atmospheric Backdrop with Custom 20260708_160828 / hero_bg.webp */}
+        {/* Prominent High-Visibility Hero Wallpaper (Vivid, Clear & Cinematic) */}
         <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
           <img
             src="/assets/hero_bg.webp"
             alt="Hero Background"
             className={`w-full h-full object-cover object-center ${
-              isDark ? 'opacity-35 brightness-60 contrast-110' : 'opacity-15 brightness-90'
+              isDark ? 'opacity-85 brightness-95 contrast-105' : 'opacity-40 brightness-100'
             }`}
           />
           <div
             className={`absolute inset-0 ${
               isDark
-                ? 'bg-gradient-to-b from-black/85 via-black/65 to-[#080305]'
-                : 'bg-gradient-to-b from-white/85 via-white/70 to-[#FAF8F5]'
+                ? 'bg-gradient-to-b from-black/55 via-black/30 to-[#090306]/95'
+                : 'bg-gradient-to-b from-white/75 via-white/50 to-[#FAF8F5]'
             }`}
           />
           <div
+            style={{
+              background:
+                'radial-gradient(circle at 50% 50%, rgba(0,0,0,0) 0%, rgba(9,3,6,0.6) 80%)',
+            }}
+            className="absolute inset-0 pointer-events-none"
+          />
+          <div
             className={`absolute inset-0 ${
-              isDark ? 'bg-tactical-grid opacity-20' : 'bg-cam-light-grid opacity-25'
+              isDark ? 'bg-tactical-grid opacity-15' : 'bg-cam-light-grid opacity-20'
             }`}
           />
           <div
@@ -789,7 +796,7 @@ export default function CompanyProfilePage() {
         id="hierarchy"
         className={`py-24 border-b relative overflow-hidden ${
           isDark
-            ? 'bg-gradient-to-tr from-[#0B0A0D] via-[#060507] to-[#120F14] border-red-500/20'
+            ? 'bg-gradient-to-br from-[#1B1626] via-[#251F33] to-[#181323] border-white/20'
             : 'bg-gradient-to-tr from-[#ECEAE4] via-[#DFDDD6] to-[#ECEAE4] border-zinc-300'
         }`}
       >
@@ -801,7 +808,7 @@ export default function CompanyProfilePage() {
             loading="lazy"
             decoding="async"
             className={`w-full h-full object-cover ${
-              isDark ? 'opacity-12' : 'opacity-[0.06]'
+              isDark ? 'opacity-25' : 'opacity-[0.08]'
             }`}
           />
           <div
@@ -1501,27 +1508,27 @@ export default function CompanyProfilePage() {
         id="archives"
         className={`py-24 border-b relative overflow-hidden ${
           isDark
-            ? 'bg-gradient-to-br from-[#0F0508] via-[#070305] to-[#0D0407] border-red-600/35'
+            ? 'bg-gradient-to-br from-[#100508] via-[#090306] to-[#0E0407] border-red-600/35'
             : 'bg-gradient-to-br from-[#FDF2F4] via-[#F8E2E6] to-[#FDF2F4] border-red-300'
         }`}
       >
-        {/* Clean Atmospheric Cinema Backdrop (Non-Clashing, Deep Cinematic Focus) */}
+        {/* Cinematic Turf Wallpaper (Vivid, Clear & Atmospheric Roxwood Scenery) */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
           <img
             src="/assets/hood_roxwood.webp"
             alt="Cinematic Backdrop"
             className={`w-full h-full object-cover object-center ${
-              isDark ? 'opacity-15 brightness-50 contrast-125' : 'opacity-[0.06] grayscale'
+              isDark ? 'opacity-40 brightness-80 contrast-115' : 'opacity-[0.10] grayscale'
             }`}
           />
           <div
             style={{
               background:
-                'radial-gradient(circle at 50% 35%, rgba(220,38,38,0.12) 0%, rgba(7,3,5,0.92) 80%)',
+                'radial-gradient(circle at 50% 35%, rgba(0,0,0,0.2) 0%, rgba(9,3,6,0.88) 75%)',
             }}
             className="absolute inset-0 pointer-events-none"
           />
-          <div className="absolute inset-0 bg-film-grain opacity-50" />
+          <div className="absolute inset-0 bg-film-grain opacity-45" />
         </div>
 
         <div className="max-w-[1520px] mx-auto px-4 sm:px-8 relative z-10">
@@ -1731,7 +1738,7 @@ export default function CompanyProfilePage() {
         id="roster"
         className={`py-24 border-b relative overflow-hidden ${
           isDark
-            ? 'bg-gradient-to-b from-[#09080C] via-[#050406] to-[#0E0A10] border-red-500/25'
+            ? 'bg-gradient-to-br from-[#181422] via-[#221C2D] to-[#16121F] border-zinc-500/25'
             : 'bg-gradient-to-b from-[#EAE8E2] via-[#DFDCD5] to-[#E9E7E0] border-zinc-300'
         }`}
       >
