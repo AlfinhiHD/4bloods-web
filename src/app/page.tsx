@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import StickyAudioPlayer from '@/components/StickyAudioPlayer';
 import Tilt3DCard from '@/components/Tilt3DCard';
+import ThreeLogoHero from '@/components/ThreeLogoHero';
 import {
   LORE_CHAPTERS,
   HIERARCHY_TIERS,
@@ -266,116 +267,99 @@ export default function CompanyProfilePage() {
       </div>
 
       {/* =====================================================================
-          HERO BANNER — SIMPLE, CLEAR, HIGH-IMPACT SYNDICATE HERO
+          HERO BANNER — SIMPLE, ELEGANT LUXURY 3D SYNDICATE HERO
       ===================================================================== */}
       <section
-        className={`relative min-h-[88vh] pt-24 pb-12 flex flex-col justify-between overflow-hidden border-b ${
+        className={`relative min-h-[88vh] pt-28 pb-14 flex flex-col justify-between overflow-hidden border-b ${
           isDark
-            ? 'bg-gradient-to-b from-[#090406] via-[#050304] to-[#0A0507] border-red-500/30'
-            : 'bg-gradient-to-b from-[#F7F4EE] via-[#EDE7DE] to-[#F5F0E8] border-zinc-300'
+            ? 'bg-gradient-to-b from-[#090406] via-[#050304] to-[#0A0507] border-red-500/20'
+            : 'bg-gradient-to-b from-[#FAF8F5] via-[#EDE7DE] to-[#F5F0E8] border-zinc-200'
         }`}
       >
-        {/* Clean, Lightweight Atmospheric Backdrop (Zero GPU Blur Lag) */}
+        {/* Subtle Atmospheric Backdrop (Clean, Lightweight, Zero GPU Drain) */}
         <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
-          <img
-            src="/assets/streams/nahmier_roxwood.jpg"
-            alt=""
-            className={`w-full h-full object-cover object-center ${
-              isDark ? 'opacity-25' : 'opacity-15'
+          <div
+            className={`absolute inset-0 ${
+              isDark ? 'bg-tactical-grid opacity-25' : 'bg-cam-light-grid opacity-30'
             }`}
           />
           <div
-            className={`absolute inset-0 ${
-              isDark
-                ? 'bg-gradient-to-r from-[#070506] via-[#070506]/90 to-[#070506]/70'
-                : 'bg-gradient-to-r from-[#F4F1EC] via-[#F4F1EC]/92 to-[#F4F1EC]/75'
+            className={`absolute -top-32 -left-32 w-96 h-96 rounded-full blur-[120px] pointer-events-none ${
+              isDark ? 'bg-red-600/10' : 'bg-red-500/5'
             }`}
           />
           <div
-            className={`absolute inset-0 ${
-              isDark
-                ? 'bg-gradient-to-t from-[#070506] via-transparent to-[#070506]/85'
-                : 'bg-gradient-to-t from-[#F4F1EC] via-transparent to-[#F4F1EC]/85'
-            }`}
-          />
-          <div
-            className={`absolute inset-0 ${
-              isDark ? 'bg-tactical-grid opacity-35' : 'bg-cam-light-grid opacity-40'
+            className={`absolute top-1/2 -right-32 w-[500px] h-[500px] rounded-full blur-[140px] pointer-events-none ${
+              isDark ? 'bg-red-900/15' : 'bg-red-400/10'
             }`}
           />
         </div>
 
         {/* Main Hero Content */}
-        <div className="relative z-10 max-w-[1520px] mx-auto px-4 sm:px-8 w-full my-auto py-8">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
-            {/* Left 7 Cols: Clear Headline, Description, CTAs & Working 3-Card Preview */}
-            <div className="lg:col-span-7 space-y-6 text-center lg:text-left">
-              {/* Top Status Badges */}
-              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2.5">
+        <div className="relative z-10 max-w-[1520px] mx-auto px-4 sm:px-8 w-full my-auto py-6">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
+            {/* Left Column: Refined Editorial Typography & CTAs */}
+            <div className="lg:col-span-7 space-y-7 text-center lg:text-left">
+              {/* Status Pill */}
+              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-3">
                 <div
-                  className={`inline-flex items-center gap-2 px-3 py-1.5 border ${
+                  className={`inline-flex items-center gap-2.5 px-3.5 py-1.5 border text-xs font-mono-tech tracking-wider uppercase backdrop-blur-md ${
                     isDark
-                      ? 'bg-[#12090C] border-red-500/40 text-zinc-100'
-                      : 'bg-white border-red-500/40 text-zinc-900 shadow-sm'
+                      ? 'bg-[#12080B]/90 border-red-500/30 text-zinc-200'
+                      : 'bg-white/90 border-red-500/30 text-zinc-900 shadow-sm'
                   }`}
                 >
-                  <span className="px-1.5 py-0.5 bg-red-600 text-white text-[10px] font-mono-tech font-bold uppercase tracking-widest">
-                    IME RP
-                  </span>
-                  <span className="text-[11px] font-mono-tech font-bold tracking-[0.15em] uppercase">
-                    SOUTH SIDE ROXWOOD // POSTAL 1051–1052
-                  </span>
+                  <span className="w-2 h-2 rounded-full bg-red-600 animate-pulse" />
+                  <span className="font-bold text-red-500">IME RP</span>
+                  <span className="text-zinc-500">//</span>
+                  <span>SOUTH SIDE ROXWOOD 1051–1052</span>
                 </div>
 
                 {liveMembers.length > 0 && (
                   <Link
                     href="/cam"
-                    className="inline-flex items-center gap-2 px-3 py-1.5 bg-red-600 hover:bg-red-500 text-white text-[11px] font-mono-tech font-bold uppercase tracking-wider transition-colors cursor-pointer"
+                    className="inline-flex items-center gap-2 px-3 py-1.5 bg-red-600/90 hover:bg-red-500 text-white text-[11px] font-mono-tech font-bold uppercase tracking-wider transition-colors cursor-pointer"
                   >
-                    <span className="w-2 h-2 rounded-full bg-white animate-ping" />
-                    <span>{liveCount} MEMBER SEDANG LIVE</span>
+                    <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />
+                    <span>{liveCount} STREAMER LIVE</span>
                   </Link>
                 )}
               </div>
 
-              {/* Clean Title & Single-Line Headline */}
-              <div className="space-y-3">
-                <div className="text-xs font-mono-tech text-red-500 font-bold tracking-[0.28em] uppercase">
-                  FOUR BLOODS GANG (4BG) — OFFICIAL SYNDICATE PORTAL
+              {/* Bold Headline & Clean Tagline */}
+              <div className="space-y-4">
+                <div className="text-xs font-mono-tech text-red-500 font-bold tracking-[0.3em] uppercase">
+                  FOUR BLOODS GANG (4BG) // OFFICIAL PORTAL
                 </div>
 
                 <h1
-                  className={`font-display text-4xl sm:text-6xl md:text-7xl xl:text-[82px] leading-none tracking-wider uppercase whitespace-nowrap ${
-                    isDark ? 'text-white' : 'text-zinc-900'
+                  className={`font-display text-5xl sm:text-7xl md:text-8xl xl:text-[92px] leading-[0.92] tracking-wider uppercase ${
+                    isDark ? 'text-white' : 'text-zinc-950'
                   }`}
                 >
-                  BLOOD IN, <span className="text-red-600">BLOOD OUT</span>
+                  BLOOD IN,<br />
+                  <span className="text-red-600 drop-shadow-[0_0_35px_rgba(220,38,38,0.35)]">
+                    BLOOD OUT
+                  </span>
                 </h1>
 
-                <p className="font-script text-2xl sm:text-3xl text-red-500">
-                  &ldquo;Hidup dalam darah, berjalan bersama keluarga, dan mati demi 4Bloods.&rdquo;
-                </p>
-
                 <p
-                  className={`text-sm sm:text-base max-w-2xl mx-auto lg:mx-0 leading-relaxed ${
+                  className={`text-base sm:text-lg max-w-xl mx-auto lg:mx-0 leading-relaxed font-normal ${
                     isDark ? 'text-zinc-300' : 'text-zinc-700'
                   }`}
                 >
-                  Portal resmi <strong>4Bloods Gang (4BG)</strong> di server{' '}
-                  <strong>IME Roleplay</strong>. Dokumentasi wilayah{' '}
-                  <strong className="text-red-500">South Side Roxwood (Postal 1051–1052)</strong>,
-                  struktur komando High Council, koleksi atribut 3D, arsip MV &amp; Diss Track,
-                  serta pusat pantauan <strong>54 Streamer Multi-POV</strong>.
+                  Sindikat penguasa South Side Roxwood. Struktur komando High Council, arsip budaya streetwear,
+                  dan pusat pantauan interaktif 54 Streamer Multi-POV.
                 </p>
               </div>
 
-              {/* Primary CTA Buttons */}
-              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-3.5">
+              {/* Direct Action CTAs */}
+              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-4 pt-1">
                 <Link
                   href="/cam"
-                  className="px-6 py-3.5 bg-red-600 hover:bg-red-500 text-white font-mono-tech text-xs sm:text-sm font-bold tracking-[0.16em] uppercase transition-colors shadow-[0_0_25px_rgba(220,38,38,0.4)] flex items-center gap-2.5 cursor-pointer"
+                  className="px-8 py-4 bg-red-600 hover:bg-red-500 text-white font-mono-tech text-xs sm:text-sm font-bold tracking-[0.18em] uppercase transition-all shadow-[0_0_30px_rgba(220,38,38,0.35)] hover:shadow-[0_0_40px_rgba(220,38,38,0.6)] flex items-center gap-3 cursor-pointer group"
                 >
-                  <Tv className="w-4 h-4" />
+                  <Tv className="w-4 h-4 transition-transform group-hover:scale-110" />
                   <span>BUKA 4BLOODS CAM ({liveCount > 0 ? `${liveCount} LIVE` : 'MULTI-POV'})</span>
                 </Link>
 
@@ -387,148 +371,75 @@ export default function CompanyProfilePage() {
                       streamer: '4BLOODS OFFICIAL ANTHEM // IME RP',
                     })
                   }
-                  className={`px-5 py-3.5 border font-mono-tech text-xs sm:text-sm font-bold tracking-[0.16em] uppercase transition-colors flex items-center gap-2.5 cursor-pointer ${
+                  className={`px-6 py-4 border font-mono-tech text-xs sm:text-sm font-bold tracking-[0.16em] uppercase transition-colors flex items-center gap-2.5 cursor-pointer ${
                     isDark
                       ? 'bg-[#120A0D] hover:bg-white hover:text-black text-white border-white/15'
                       : 'bg-white hover:bg-zinc-900 hover:text-white text-zinc-900 border-zinc-300 shadow-sm'
                   }`}
                 >
                   <Play className="w-4 h-4 text-red-500 fill-red-500" />
-                  <span>TONTON MV &ldquo;THIS IS 4BLOODS&rdquo;</span>
+                  <span>TONTON MV ANTHEM</span>
                 </button>
               </div>
 
-              {/* 3 Highlight Cards (Roxwood Map, High Council, Official Anthem — 100% Valid Paths) */}
-              <div className="pt-2 grid grid-cols-3 gap-3 max-w-xl mx-auto lg:mx-0">
-                {[
-                  {
-                    img: '/assets/hood_roxwood.png',
-                    tag: 'TURF SATELLITE',
-                    title: 'ROXWOOD 1051–1052',
-                  },
-                  {
-                    img: '/assets/streams/nahmier_roxwood.jpg',
-                    tag: 'SYNDICATE OPS',
-                    title: 'HIGH COUNCIL 4BG',
-                  },
-                  {
-                    img: '/assets/yt_this_is_4bloods.jpg',
-                    tag: 'OFFICIAL ANTHEM',
-                    title: 'THIS IS 4BLOODS',
-                  },
-                ].map((card, i) => (
+              {/* Sleek Minimalist Metadata Bar */}
+              <div
+                className={`pt-5 flex items-center justify-center lg:justify-start gap-6 sm:gap-10 border-t ${
+                  isDark ? 'border-white/10' : 'border-zinc-300/80'
+                }`}
+              >
+                <div>
+                  <div className="text-[10px] font-mono-tech text-red-500 font-bold uppercase tracking-widest">
+                    TURF
+                  </div>
                   <div
-                    key={i}
-                    onClick={() =>
-                      setLightboxImage({
-                        src: card.img,
-                        title: card.title,
-                        subtitle: `${card.tag} // IME Roleplay`,
-                      })
-                    }
-                    className={`group relative h-24 border overflow-hidden cursor-pointer ${
-                      isDark
-                        ? 'border-white/15 hover:border-red-500 bg-[#0D080A]'
-                        : 'border-zinc-300 hover:border-red-500 bg-white shadow-sm'
+                    className={`font-display text-xl sm:text-2xl tracking-wide mt-0.5 ${
+                      isDark ? 'text-white' : 'text-zinc-900'
                     }`}
                   >
-                    <img
-                      src={card.img}
-                      alt={card.title}
-                      className="w-full h-full object-cover opacity-80 group-hover:scale-105 group-hover:opacity-100 transition-transform duration-300"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-transparent" />
-                    <div className="absolute bottom-2 left-2.5 right-2.5 text-left">
-                      <div className="text-[8px] font-mono-tech text-red-400 font-bold uppercase tracking-widest">
-                        {card.tag}
-                      </div>
-                      <div className="font-display text-sm text-white tracking-wider truncate leading-none mt-0.5">
-                        {card.title}
-                      </div>
-                    </div>
+                    SSR 1051–1052
                   </div>
-                ))}
+                </div>
+
+                <div className={`w-px h-8 ${isDark ? 'bg-white/10' : 'bg-zinc-300'}`} />
+
+                <div>
+                  <div className="text-[10px] font-mono-tech text-red-500 font-bold uppercase tracking-widest">
+                    KOMANDO
+                  </div>
+                  <div
+                    className={`font-display text-xl sm:text-2xl tracking-wide mt-0.5 ${
+                      isDark ? 'text-white' : 'text-zinc-900'
+                    }`}
+                  >
+                    HIGH COUNCIL
+                  </div>
+                </div>
+
+                <div className={`w-px h-8 ${isDark ? 'bg-white/10' : 'bg-zinc-300'}`} />
+
+                <div>
+                  <div className="text-[10px] font-mono-tech text-red-500 font-bold uppercase tracking-widest">
+                    ROSTER
+                  </div>
+                  <div
+                    className={`font-display text-xl sm:text-2xl tracking-wide mt-0.5 ${
+                      isDark ? 'text-white' : 'text-zinc-900'
+                    }`}
+                  >
+                    54 STREAMERS
+                  </div>
+                </div>
               </div>
             </div>
 
-            {/* Right 5 Cols: Large, Crisp HD 4BLOODS 3D Crest Showcase */}
-            <div className="lg:col-span-5 flex items-center justify-center">
-              <Tilt3DCard
-                intensity={14}
-                glare={false}
-                onClick={() =>
-                  setLightboxImage({
-                    src: '/assets/generated/logo_3d_pure.webp',
-                    title: '4BLOODS GANG — OFFICIAL 3D HD INSIGNIA',
-                    subtitle: 'IME Roleplay // South Side Roxwood (Postal 1051–1052)',
-                  })
-                }
-                className="relative w-80 h-80 sm:w-[440px] sm:h-[440px] lg:w-[480px] lg:h-[480px] xl:w-[540px] xl:h-[540px] flex items-center justify-center cursor-pointer group"
-              >
-                {/* Subtle Ambient Ring & Crimson Vignette */}
-                <div
-                  className={`absolute inset-4 rounded-full border ${
-                    isDark ? 'border-red-500/20' : 'border-red-500/30'
-                  } pointer-events-none`}
-                />
-                <div
-                  style={{
-                    background:
-                      'radial-gradient(circle, rgba(220,38,38,0.35) 0%, rgba(220,38,38,0) 72%)',
-                  }}
-                  className="absolute inset-2 rounded-full pointer-events-none"
-                />
-
-                <img
-                  src="/assets/generated/logo_3d_pure.webp"
-                  alt="4BLOODS GANG Official 3D Pure Crest HD"
-                  onError={(e) => {
-                    (e.currentTarget as HTMLImageElement).src = '/assets/logo_v2.png';
-                  }}
-                  style={{ transform: 'translateZ(32px)' }}
-                  className="relative w-72 h-auto max-h-[380px] sm:w-[390px] sm:max-h-[440px] lg:w-[440px] lg:max-h-[480px] xl:w-[500px] xl:max-h-[520px] object-contain drop-shadow-[0_24px_50px_rgba(220,38,38,0.35)] drop-shadow-[0_12px_30px_rgba(0,0,0,0.8)] group-hover:scale-105 transition-transform duration-300 select-none"
-                />
-              </Tilt3DCard>
+            {/* Right Column: Real-Time Interactive 3D WebGL Logo (Three.js) */}
+            <div className="lg:col-span-5 flex items-center justify-center relative">
+              <ThreeLogoHero
+                isDark={isDark}
+                className="w-full max-w-[480px] sm:max-w-[540px] xl:max-w-[580px] aspect-square"
+              />
             </div>
-          </div>
-        </div>
-
-        {/* Bottom Hero Quick Stats Strip */}
-        <div className="relative z-10 max-w-[1520px] mx-auto px-4 sm:px-8 w-full pt-4">
-          <div
-            className={`grid grid-cols-2 md:grid-cols-4 gap-px border ${
-              isDark ? 'bg-white/10 border-white/15' : 'bg-zinc-300 border-zinc-300'
-            }`}
-          >
-            {[
-              { label: 'SERVER & KOTA', value: 'IME ROLEPLAY', tag: 'GTA V ROLEPLAY INDONESIA' },
-              { label: 'WILAYAH UTAMA', value: 'ROXWOOD SSR', tag: 'POSTAL 1051–1052' },
-              { label: 'STRUKTUR KOMANDO', value: '4 OG // 6 U-OG', tag: '6-TIER SYNDICATE' },
-              { label: 'JARINGAN KREATOR', value: '54 STREAMERS', tag: 'LIVE & UPCOMING CAM' },
-            ].map((item) => (
-              <div
-                key={item.label}
-                className={`px-5 py-3.5 ${isDark ? 'bg-[#0C080A]' : 'bg-white'}`}
-              >
-                <div className="text-[10px] font-mono-tech text-red-500 font-bold tracking-widest">
-                  {item.label}
-                </div>
-                <div
-                  className={`font-display text-2xl sm:text-3xl tracking-wider mt-0.5 ${
-                    isDark ? 'text-white' : 'text-zinc-900'
-                  }`}
-                >
-                  {item.value}
-                </div>
-                <div
-                  className={`text-[10px] font-mono-tech ${
-                    isDark ? 'text-zinc-400' : 'text-zinc-500'
-                  }`}
-                >
-                  {item.tag}
-                </div>
-              </div>
-            ))}
           </div>
         </div>
       </section>
