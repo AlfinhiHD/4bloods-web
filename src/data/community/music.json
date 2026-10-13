@@ -1,0 +1,54 @@
+[
+  {
+    "id": "this-is-4bloods",
+    "videoId": "wJyovquNR24",
+    "title": "THIS IS 4BLOODS (Official Music Video)",
+    "artist": "4BLOODS MEDIA",
+    "type": "OFFICIAL MV",
+    "duration": "03:42",
+    "thumb": "/assets/yt_this_is_4bloods.jpg",
+    "description": "Anthem kebanggaan utama 4Bloods yang menampilkan visual sinematik kekuatan anggota, deretan kendaraan merah, dan kedaulatan teritori mereka di ImeRP."
+  },
+  {
+    "id": "ebk-audio",
+    "videoId": "ERErTx3snC0",
+    "title": "EBK — EVERYBODY KILLER (Official Audio)",
+    "artist": "4BLOODS SOUND",
+    "type": "OFFICIAL AUDIO",
+    "duration": "02:58",
+    "thumb": "/assets/yt_ebk.jpg",
+    "description": "Track agresif bertempo cepat yang merepresentasikan mentalitas tanpa kompromi 4Bloods saat menghadapi koalisi musuh di medan perang."
+  },
+  {
+    "id": "4bloods-for-life",
+    "videoId": "LnUPC7RgivI",
+    "title": "4BLOODS FOR LIFE (Official Anthem)",
+    "artist": "4BLOODS COLLECTIVE",
+    "type": "ANTHEM",
+    "duration": "03:15",
+    "thumb": "/assets/yt_4bloods_for_life.jpg",
+    "description": "Lagu penghormatan terhadap perjalanan panjang persaudaraan 4Bloods dari masa West Side, Jamestown Street, hingga era keemasan Roxwood."
+  },
+  {
+    "id": "diss-dobrak",
+    "videoId": "QCxFaAx-fcU",
+    "title": "DOBRAK — 4BLOODS DISS TRACK",
+    "artist": "4BLOODS RECORDS",
+    "type": "DISS TRACK",
+    "target": "RIVAL FACTION DISS",
+    "duration": "03:08",
+    "thumb": "/assets/yt_dobrak_diss.jpg",
+    "description": "Diss track tajam sebagai bentuk psywar budaya jalanan yang memanaskan tensi konflik antarfaksi di dalam skena roleplay."
+  },
+  {
+    "id": "diss-boa",
+    "videoId": "7LOrZ9-4cTc",
+    "title": "BOA — 4BLOODS DISS TRACK",
+    "artist": "4BLOODS RECORDS",
+    "type": "DISS TRACK",
+    "target": "BOA FACTION DISS",
+    "duration": "02:54",
+    "thumb": "/assets/yt_boa_diss.jpg",
+    "description": "Balasan lirik keras khas skena hip-hop gangsta yang menegaskan dominasi 4Bloods baik di jalanan maupun di panggung karya."
+  }
+]

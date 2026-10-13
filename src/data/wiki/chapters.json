@@ -1,0 +1,107 @@
+[
+  {
+    "id": "chapter-1",
+    "number": "01",
+    "roman": "CHAPTER I",
+    "title": "BLOOD ON THE WEST SIDE",
+    "subtitle": "Kelahiran Identitas Merah & Prinsip Kekeluargaan Jalanan",
+    "era": "ERA AWAL // WEST SIDE ORIGIN",
+    "turfName": "West Side Projects, Los Santos",
+    "postalCode": "WEST SECTOR // LEGACY TURF",
+    "logoUsed": "/assets/logo_v1.png",
+    "logoName": "4BS Red Bandana Emblem (First Era)",
+    "mapImage": "/assets/hood_west.jpg",
+    "actionImage": "/assets/streams/ilham_back.jpg",
+    "quote": "Sebelum nama kami menggema di seluruh penjuru kota, kami hanyalah sekelompok anak jalanan yang menolak tunduk pada hukum siapa pun selain darah.",
+    "summary": "4Bloods lahir di kawasan keras West Side Los Santos dari ikatan persaudaraan para pendiri (Original Gangsters). Merah bukan sekadar warna pakaian, melainkan sumpah kesetiaan seumur hidup.",
+    "paragraphs": [
+      "Berawal dari kerasnya kehidupan di sudut blok West Side Los Santos, 4Bloods terbentuk bukan sebagai organisasi bisnis biasa, melainkan sebagai rumah bagi mereka yang terbuang namun memiliki loyalitas tanpa batas. Di bawah komando para OG pendiri—Ilham Joseph, Louis Ven, Deja Amari, dan Muhammad Sumbul—fondasi 4Bloods dibangun di atas rasa hormat, keberanian, dan solidaritas jalanan.",
+      "Pada fase Chapter I ini, identitas visual 4Bloods mulai dikenal luas di seluruh server ImeRP melalui penggunaan bandana merah (4BS) dan aturan berpakaian hitam-merah yang disiplin. Setiap gesekan antar-kelompok di West Side menempa mentalitas tempur anggota 4Bloods hingga disegani lawan maupun kawan."
+    ],
+    "milestones": [
+      {
+        "label": "DEKLARASI 4BS WEST SIDE",
+        "detail": "Penyatuan blok West Side di bawah bendera merah 4Bloods oleh 4 OG utama."
+      },
+      {
+        "label": "KODE ETIK DARAH",
+        "detail": "Penetapan aturan loyalitas: Blood In, Blood Out & larangan keras mengkhianati keluarga."
+      },
+      {
+        "label": "IDENTITAS BANDANA MERAH",
+        "detail": "Peluncuran lambang 4BS Diamond Bandana & seragam jalanan generasi pertama."
+      }
+    ],
+    "colorsRule": "Dominan Merah Darah (#DC2626) & Hitam Pekat (#09090B)"
+  },
+  {
+    "id": "chapter-2",
+    "number": "02",
+    "roman": "CHAPTER II",
+    "title": "JAMESTOWN STREET & THE EAST",
+    "subtitle": "Migrasi Besar ke Rancho East Side & Lahirnya Gerbang W-Hotdog",
+    "era": "ERA EKSPANSI // EAST SIDE RANCHO",
+    "turfName": "Jamestown Street, Rancho (East Side)",
+    "postalCode": "RANCHO // JAMESTOWN BLOCK",
+    "logoUsed": "/assets/logo_v1.png",
+    "logoName": "4BS East Side Era Crest",
+    "mapImage": "/assets/hood_east.webp",
+    "actionImage": "/assets/streams/war_allstar.jpg",
+    "quote": "Jamestown Street mengajarkan kami bahwa wilayah bukan hanya soal batas jalan, melainkan siapa yang sanggup bertahan saat malam paling berdarah tiba.",
+    "summary": "Memasuki babak kedua, 4Bloods memindahkan pusat kekuatan mereka ke kawasan ikonik Jamestown Street di East Side (Rancho). Di era ini pula sistem kaderisasi jalanan melalui W-Hotdog dibentuk.",
+    "paragraphs": [
+      "Keputusan strategis untuk menguasai Jamestown Street di kawasan East Side (Rancho) mengubah skala operasi 4Bloods secara drastis. Kompleks apartemen bata merah Jamestown menjadi benteng pertahanan sekaligus titik kumpul puluhan anggota aktif setiap malamnya.",
+      "Seiring membesarnya nama 4Bloods, arus orang luar yang ingin bergabung semakin padat. Untuk memastikan tidak ada penyusup atau kutu loncat, 4Bloods mendirikan bisnis kedok sekaligus gerbang seleksi ketat bernama W-Hotdog. Setiap calon anggota (Outsider & Locals) wajib membuktikan dedikasi RP, loyalitas, dan kesiapan mental mereka dari bawah sebelum diizinkan mengenakan atribut merah."
+    ],
+    "milestones": [
+      {
+        "label": "PENGUASAAN JAMESTOWN STREET",
+        "detail": "Konsolidasi blok perumahan Rancho East Side sebagai markas besar Chapter II."
+      },
+      {
+        "label": "PENDIRIAN W-HOTDOG",
+        "detail": "Bisnis kuliner jalanan resmi yang berfungsi sebagai filter seleksi & rekrutmen kandidat."
+      },
+      {
+        "label": "REGENERASI UNDER OG",
+        "detail": "Penguatan struktur komando lapangan di bawah para Under OG untuk memimpin peperangan."
+      }
+    ],
+    "colorsRule": "Merah, Hitam, Putih & Abu-Abu Jalanan (Jamestown Spec)"
+  },
+  {
+    "id": "chapter-3",
+    "number": "03",
+    "roman": "CHAPTER III",
+    "title": "SOUTH SIDE ROXWOOD (SSR)",
+    "subtitle": "Transformasi Menuju 4BG (Four Bloods Gang) & Supremasi Kota Baru",
+    "era": "ERA SEKARANG // POSTAL 1051–1052",
+    "turfName": "South Side Roxwood (Postal 1051 - 1052)",
+    "postalCode": "SSR // POSTAL 1051 - 1052",
+    "logoUsed": "/assets/logo_v2.png",
+    "logoName": "4BG Dual-Glock Red Bandana Crest (Current)",
+    "mapImage": "/assets/hood_roxwood.png",
+    "actionImage": "/assets/streams/nahmier_roxwood.jpg",
+    "quote": "Hidup dalam darah, berjalan bersama keluarga, dan mati demi 4Bloods.",
+    "summary": "Babak terbaru dan paling matang dari 4Bloods. Menguasai teritori strategis South Side Roxwood (Postal 1051–1052), memperbarui lambang menjadi 4BG (Four Bloods Gang), dan dipimpin di lapangan oleh Hood President Nahmier Davies.",
+    "paragraphs": [
+      "Di Chapter III, 4Bloods melakukan ekspansi besar menuju kawasan South Side Roxwood (SSR) tepatnya di blok Postal 1051 hingga 1052. Bersamaan dengan perpindahan wilayah ini, 4Bloods resmi memperkenalkan pembaruan lambang organisasi dari 4BS menjadi 4BG (Four Bloods Gang) dengan simbol dua pucuk pistol Glock bersilang di atas bandana merah.",
+      "Di bawah pengawasan para OG dan komando taktis Hood President / Under OG seperti Nahmier Davies, Asep Teriyaki, Joy Braxton, Jane Elisha, Rusdi \"Abuy\" Walker, serta Deden Walker, 4Bloods kini berdiri sebagai ekosistem komunitas dan faksi roleplay terbesar dengan 54+ kreator aktif, merilis karya musik orisinal (THIS IS 4BLOODS, EBK), dan mendominasi skena peperangan liga maupun skenario jalanan di ImeRP."
+    ],
+    "milestones": [
+      {
+        "label": "EKSODUS KE SOUTH SIDE ROXWOOD",
+        "detail": "Penguasaan penuh blok Postal 1051–1052 sebagai wilayah kedaulatan baru 4Bloods."
+      },
+      {
+        "label": "REBRANDING RESMI 4BG",
+        "detail": "Evolusi logo menjadi 4BG (Four Bloods Gang) Dual-Glock Bandana Diamond."
+      },
+      {
+        "label": "ERA MEDIA & 54 STREAMER HUB",
+        "detail": "Peluncuran karya musik resmi, Diss Track, dan ekosistem Multi-POV 4Bloods Cam."
+      }
+    ],
+    "colorsRule": "Crimson Blood (#DC2626), Obsidian Black (#050507), Pure White & Concrete Grey"
+  }
+]

@@ -1,0 +1,421 @@
+[
+  {
+    "name": "Ilham Joseph",
+    "channelId": "UCzjGSL8HMCRUi1sWH5VYGjQ",
+    "rank": "OG",
+    "role": "Original Gangster // Founding Father (Windah Basudara)",
+    "chapter": "Chapter I – III",
+    "featuredVideoId": "LwzAe09GEH8",
+    "featuredTitle": "4BLOOD IS BACK LETS GO! #imeroleplay",
+    "featuredThumb": "/assets/streams/ilham_back.jpg",
+    "bio": "Sosok ikonik pendiri 4Bloods (\"Ilham The Red Bandana\") yang menjadi simbol persatuan dan magnet utama skena roleplay 4Bloods sejak era West Side."
+  },
+  {
+    "name": "Louis Ven",
+    "channelId": "UC79cKOK5rTIABhvXxeINdHw",
+    "rank": "OG",
+    "role": "Original Gangster // Supreme Strategist",
+    "chapter": "Chapter I – III",
+    "featuredVideoId": "OIM_8ZymT60",
+    "featuredTitle": "SANTRI LV BERI DAKWAH KE ANAK-ANAK 4BLOODS",
+    "featuredThumb": "/assets/streams/war_mx69.jpg",
+    "bio": "Salah satu dari empat pilar OG utama yang menjaga stabilitas internal, diplomasi tingkat tinggi, dan arah strategis 4Bloods."
+  },
+  {
+    "name": "Deja Amari",
+    "channelId": "UCWpOmCvUcYgjMrNW4LjvmCw",
+    "rank": "OG",
+    "role": "Original Gangster // High Council",
+    "chapter": "Chapter I – III",
+    "featuredVideoId": "K6kfspfbAwM",
+    "featuredTitle": "CHARITY 4BLOOD TO IMEFEST JKT #4blood",
+    "featuredThumb": "/assets/streams/deja_charity.jpg",
+    "bio": "OG karismatik yang menggerakkan solidaritas internal maupun kegiatan komunitas 4Bloods di dalam dan luar kota."
+  },
+  {
+    "name": "Muhammad Sumbul",
+    "channelId": "UC6a-XQK_U4lsMfODIbgrFAA",
+    "rank": "OG",
+    "role": "Original Gangster // Warlord Vanguard",
+    "chapter": "Chapter I – III",
+    "featuredVideoId": "UWzNP0fxL_A",
+    "featuredTitle": "SUMBUL SIAP MENJADI GARDA TERDEPAN 4BLOODS",
+    "featuredThumb": "/assets/streams/sumbul_garda.jpg",
+    "bio": "Pilar OG yang dikenal selalu turun langsung menjadi garda terdepan saat 4Bloods menghadapi krisis maupun peperangan besar."
+  },
+  {
+    "name": "Nahmier Davies",
+    "channelId": "UCgO8kYJBkm5jvUJkV9H9mIw",
+    "rank": "Under OG",
+    "role": "Hood President // Tactical Field Commander",
+    "chapter": "Chapter I – III",
+    "featuredVideoId": "ylYwKzRaYeQ",
+    "featuredTitle": "ROXWOOD SEMAKIN MEMANAS INIKAH SAATNYA?!! #4blood",
+    "featuredThumb": "/assets/streams/nahmier_roxwood.jpg",
+    "bio": "Hood President dan komandan lapangan utama 4Bloods di era South Side Roxwood. Memimpin operasi peperangan, rekrutmen perampokan, dan komando harian blok."
+  },
+  {
+    "name": "Asep Teriyaki",
+    "channelId": "UCI1hbc1-qfszyjNYoNgkV2w",
+    "rank": "Under OG",
+    "role": "Under OG // Enforcer & Most Wanted",
+    "chapter": "Chapter I – III",
+    "featuredVideoId": "UG1hYx8jSeA",
+    "featuredTitle": "THIS IS ASEP 4 BLOODS TOP 1 WARRANT LOS SANTOS",
+    "featuredThumb": "/assets/streams/asep_top1.jpg",
+    "bio": "Under OG legendaris dengan reputasi Top 1 Warrant di Los Santos—eksekutor garis keras yang ditakuti di setiap skenario baku tembak."
+  },
+  {
+    "name": "Joy Braxton",
+    "channelId": "UCiAlUeYsA39S5x_nQS2aT-Q",
+    "rank": "Under OG",
+    "role": "Under OG // Operations & Logistics",
+    "chapter": "Chapter I – III",
+    "featuredVideoId": "9kVESNXI-L0",
+    "featuredTitle": "INISIASI DRIVEBY!! 4BLOODS VS MX69",
+    "featuredThumb": "/assets/streams/war_mx69.jpg",
+    "bio": "Perwira tinggi Under OG yang mengatur kesiapan tempur, kedisiplinan anggota, dan koordinasi konvoi 4Bloods."
+  },
+  {
+    "name": "Jane Elisha",
+    "channelId": "UC9LmRRwAzHkCxlgbKW3tMjA",
+    "rank": "Under OG",
+    "role": "Under OG // Internal Affairs & Treasury",
+    "chapter": "Chapter I – III",
+    "featuredVideoId": "9hhP8B0dDN8",
+    "featuredTitle": "PERANG PANAS 4BLOODS VS 51REAVER DI ROXWOOD",
+    "featuredThumb": "/assets/streams/war_51reaver.jpg",
+    "bio": "Sosok kunci di jajaran Under OG yang menjaga kerapian manajemen internal, kas keluarga, dan kohesi antar-anggota."
+  },
+  {
+    "name": "Ackai",
+    "channelId": "UCvseheuTcY-BnPGsmfQ5K5g",
+    "handle": "@Ackaiii",
+    "rank": "Under OG",
+    "role": "Under OG // Walker Bloodline Commander (Rusdi)",
+    "chapter": "Chapter I – III",
+    "featuredVideoId": "a3NgNy4NDMU",
+    "featuredTitle": "AFTERNOON LEAGUE WAR 4BLOODS VS ALLSTAR 20V20",
+    "featuredThumb": "/assets/streams/war_allstar.jpg",
+    "bio": "Komandan lapangan senior dari klan Walker yang memimpin pertahanan teritori dan kaderisasi anggota tempur."
+  },
+  {
+    "name": "Deden Walker",
+    "channelId": "UCAt1-AACF3v7FnOkLUuWCBA",
+    "rank": "Under OG",
+    "role": "Under OG // Tactical Strike Leader",
+    "chapter": "Chapter I – III",
+    "featuredVideoId": "fToo-U7hAs8",
+    "featuredTitle": "MISI MEMPEREBUTKAN PULAU CAYO!! BERSIAP",
+    "featuredThumb": "/assets/streams/nahmier_cayo.jpg",
+    "bio": "Under OG yang berperan vital dalam pengamanan blok Roxwood serta komando taktis saat peperangan terbuka."
+  },
+  {
+    "name": "Keedo Chaser",
+    "channelId": "UCxR4hAbipLyiWfmaF0rEAvg",
+    "rank": "Young Bloods",
+    "role": "Young Bloods // Frontline Shooter",
+    "chapter": "Chapter II – III"
+  },
+  {
+    "name": "Geo Blitz",
+    "channelId": "UC7KiVxdO5HiAwIrbz--RG1w",
+    "rank": "Young Bloods",
+    "role": "Young Bloods // Vanguard",
+    "chapter": "Chapter II – III"
+  },
+  {
+    "name": "Vall Diego",
+    "channelId": "UCmlRglH7APivrEiDLNYK8DQ",
+    "rank": "Young Bloods",
+    "role": "Young Bloods // Street Enforcer",
+    "chapter": "Chapter II – III"
+  },
+  {
+    "name": "Grimm Jow",
+    "channelId": "UC8opURjNDJhx5OtgMsekvMQ",
+    "rank": "Young Bloods",
+    "role": "Young Bloods // Heavy Unit",
+    "chapter": "Chapter II – III"
+  },
+  {
+    "name": "NiM",
+    "channelId": "UCq-2EZzC5ps6WL77LIDWVZg",
+    "rank": "Young Bloods",
+    "role": "Young Bloods // Recon & Driver",
+    "chapter": "Chapter II – III"
+  },
+  {
+    "name": "TET",
+    "channelId": "UC-j54how4NIqu2rJMTvH_2A",
+    "rank": "Young Bloods",
+    "role": "Young Bloods // Combat Specialist",
+    "chapter": "Chapter II – III"
+  },
+  {
+    "name": "Robbe Loxse",
+    "channelId": "UCuTN4Rl32nqN6WoIRaElEpQ",
+    "rank": "Young Bloods",
+    "role": "Young Bloods // Turf Defender",
+    "chapter": "Chapter II – III"
+  },
+  {
+    "name": "Patra",
+    "channelId": "UCCEDmX6Jl-fwm4fywtwo4pQ",
+    "rank": "Young Bloods",
+    "role": "Young Bloods // Field Operative",
+    "chapter": "Chapter II – III"
+  },
+  {
+    "name": "Al Pacino",
+    "channelId": "UC8Z53mHi83vhNEqzPcUr_2w",
+    "rank": "Young Bloods",
+    "role": "Young Bloods // Syndicate Soldier",
+    "chapter": "Chapter II – III"
+  },
+  {
+    "name": "Ones Gilford",
+    "channelId": "UCoDXbUJQAFJhr7Tc9h0kOng",
+    "rank": "Young Bloods",
+    "role": "Young Bloods // Strike Team",
+    "chapter": "Chapter II – III"
+  },
+  {
+    "name": "Beck Heist",
+    "channelId": "UCRBqlWhaKfPQVobdHdCocrg",
+    "rank": "Young Bloods",
+    "role": "Young Bloods // Heist Specialist",
+    "chapter": "Chapter II – III"
+  },
+  {
+    "name": "Tom Kendrick",
+    "channelId": "UCWo4HDG6p3pXSErXm3NADew",
+    "rank": "Young Bloods",
+    "role": "Young Bloods // Street Soldier",
+    "chapter": "Chapter II – III"
+  },
+  {
+    "name": "Tyler Brown",
+    "channelId": "UCGn04RUUMb6An52go-FtX-Q",
+    "rank": "Young Bloods",
+    "role": "Young Bloods // Convoy Lead",
+    "chapter": "Chapter II – III"
+  },
+  {
+    "name": "Aceng Salim",
+    "channelId": "UC-Rz8TjBl5jZKRYz3-ce0Wg",
+    "rank": "Young Bloods",
+    "role": "Young Bloods // Hood Guardian",
+    "chapter": "Chapter II – III"
+  },
+  {
+    "name": "dixie",
+    "channelId": "UCqH1g6fv5t2bNHz-VA_nrjw",
+    "rank": "Member",
+    "role": "Official Streamer // Roster",
+    "chapter": "Chapter III"
+  },
+  {
+    "name": "aufy",
+    "channelId": "UCQ1n_PUxgvTn9nZISqHpylw",
+    "rank": "Member",
+    "role": "Official Streamer // Roster",
+    "chapter": "Chapter III"
+  },
+  {
+    "name": "Ujang Walker",
+    "channelId": "UCqUhn7QlVk9MJStkR5Q_59g",
+    "rank": "Young Bloods",
+    "role": "Young Bloods // Walker Clan",
+    "chapter": "Chapter II – III"
+  },
+  {
+    "name": "Dai Helsein",
+    "channelId": "UCV6F4SQBDiomWQyYuWdOi-w",
+    "rank": "Member",
+    "role": "Official Streamer // Roster",
+    "chapter": "Chapter III"
+  },
+  {
+    "name": "Rubby S Walker",
+    "channelId": "UCx3LtULB8Xm5F02tectuojA",
+    "rank": "Young Bloods",
+    "role": "Young Bloods // Walker Clan",
+    "chapter": "Chapter II – III"
+  },
+  {
+    "name": "Moongskie",
+    "channelId": "UCVqyNp9LM2htRULABiI_cyA",
+    "rank": "Member",
+    "role": "Official Streamer // Roster",
+    "chapter": "Chapter III"
+  },
+  {
+    "name": "Flip Flop",
+    "channelId": "UCtjLmmgBzjtND3i7bvyjLRQ",
+    "rank": "Member",
+    "role": "Official Streamer // Roster",
+    "chapter": "Chapter III"
+  },
+  {
+    "name": "Nayara",
+    "channelId": "UCmOPopMKHUDkxqQ2lyL0b0g",
+    "rank": "Member",
+    "role": "Official Streamer // Roster",
+    "chapter": "Chapter III"
+  },
+  {
+    "name": "Azmi",
+    "channelId": "UCHi0xCfpNPut25e_jcRcC3A",
+    "rank": "Member",
+    "role": "Official Streamer // Roster",
+    "chapter": "Chapter III"
+  },
+  {
+    "name": "Gavin",
+    "channelId": "UCYq6sqBIJePerAfUq9SwiPA",
+    "rank": "Member",
+    "role": "Official Streamer // Roster",
+    "chapter": "Chapter III"
+  },
+  {
+    "name": "Axel",
+    "channelId": "UC4v9jRHgw5ZUt9MC8kB9rUw",
+    "rank": "Member",
+    "role": "Official Streamer // Roster",
+    "chapter": "Chapter III"
+  },
+  {
+    "name": "znah",
+    "channelId": "UCYG2Pp0MZvxyziNXO8puT-Q",
+    "rank": "Member",
+    "role": "Official Streamer // Roster",
+    "chapter": "Chapter III"
+  },
+  {
+    "name": "Aeon",
+    "channelId": "UCTu3uCZvVAOR8BsWmmKNN-w",
+    "rank": "Member",
+    "role": "Official Streamer // Roster",
+    "chapter": "Chapter III"
+  },
+  {
+    "name": "Nats",
+    "channelId": "UCdCNBMGBzwYmtjO-kNsc9kA",
+    "rank": "Member",
+    "role": "Official Streamer // Roster",
+    "chapter": "Chapter III"
+  },
+  {
+    "name": "Kim",
+    "channelId": "UCVbGCNvads9e5vZCfGva4-g",
+    "rank": "Member",
+    "role": "Official Streamer // Roster",
+    "chapter": "Chapter III"
+  },
+  {
+    "name": "Ras Dss",
+    "channelId": "UCJh-SbdIxQyRYkIGtg6ud7w",
+    "rank": "Member",
+    "role": "Official Streamer // Roster",
+    "chapter": "Chapter III"
+  },
+  {
+    "name": "Garox",
+    "channelId": "UC9XyLt5pDD4NduHJ0966stQ",
+    "rank": "Member",
+    "role": "Official Streamer // Roster",
+    "chapter": "Chapter III"
+  },
+  {
+    "name": "Ruby Joseph",
+    "channelId": "UCi2Oz3Upz9HIPWQWfZKKyDg",
+    "rank": "Young Bloods",
+    "role": "Young Bloods // Joseph Family",
+    "chapter": "Chapter II – III"
+  },
+  {
+    "name": "hulio",
+    "channelId": "UCgSQDGh4U78yLhH3O7Og3bA",
+    "rank": "Member",
+    "role": "Official Streamer // Roster",
+    "chapter": "Chapter III"
+  },
+  {
+    "name": "Dorres",
+    "channelId": "UCsEvcoi_wij2pzIyom8AV0Q",
+    "rank": "Member",
+    "role": "Official Streamer // Roster",
+    "chapter": "Chapter III"
+  },
+  {
+    "name": "Riko",
+    "channelId": "UCgUolxj0PXw0sMi9tMka06Q",
+    "rank": "Member",
+    "role": "Official Streamer // Roster",
+    "chapter": "Chapter III"
+  },
+  {
+    "name": "suwep",
+    "channelId": "UC9arc3t1vp7h5y9etaFL2uA",
+    "rank": "Member",
+    "role": "Official Streamer // Roster",
+    "chapter": "Chapter III"
+  },
+  {
+    "name": "brandon",
+    "channelId": "UCrnxCHeqxcV6sGEWiBAbxoA",
+    "rank": "Member",
+    "role": "Official Streamer // Roster",
+    "chapter": "Chapter III"
+  },
+  {
+    "name": "Valen",
+    "channelId": "UCgZmHc49xPv6X_Z3FTw1aqQ",
+    "rank": "Member",
+    "role": "Official Streamer // Roster",
+    "chapter": "Chapter III"
+  },
+  {
+    "name": "Alzod",
+    "channelId": "UCEt0sRBLpWOhZSQQ8VDYtVw",
+    "rank": "Member",
+    "role": "Official Streamer // Roster",
+    "chapter": "Chapter III"
+  },
+  {
+    "name": "udin",
+    "channelId": "UCKd-ef2JJtWqRtjl1OiN3qw",
+    "rank": "Member",
+    "role": "Official Streamer // Roster",
+    "chapter": "Chapter III"
+  },
+  {
+    "name": "Ellaaa",
+    "channelId": "UCJziR1GfVMZyx3yCCXT3Utg",
+    "rank": "Member",
+    "role": "Official Streamer // Roster",
+    "chapter": "Chapter III"
+  },
+  {
+    "name": "Kynee",
+    "channelId": "UCx9D32C8ZFaz1kPkBASSAzQ",
+    "rank": "Member",
+    "role": "Official Streamer // Roster",
+    "chapter": "Chapter III"
+  },
+  {
+    "name": "Rey",
+    "channelId": "UCg6Bo5s6ZRkyfQSxtlQkZrQ",
+    "rank": "Member",
+    "role": "Official Streamer // Roster",
+    "chapter": "Chapter III"
+  },
+  {
+    "name": "Kris",
+    "channelId": "UCd1cNSgpTe30q_o9UbDmqPA",
+    "rank": "Member",
+    "role": "Official Streamer // Roster",
+    "chapter": "Chapter III"
+  }
+]

@@ -1,0 +1,195 @@
+[
+  {
+    "id": "hoodie-merah-v1",
+    "name": "4BLOODS SIGNATURE RED HOODIE V1",
+    "category": "hoodie",
+    "categoryLabel": "HEAVY HOODIE",
+    "tier": "CORE UNIFORM // ALL FULL MEMBERS",
+    "badge": "CORE UNIFORM",
+    "badgeVariant": "red",
+    "subtitle": "450GSM HEAVYWEIGHT FLEECE",
+    "tag": "CRIMSON RED",
+    "era": "CHAPTER I – III",
+    "frontImage": "/assets/hoodie_merah1.png",
+    "flipAvailable": false,
+    "description": "Hoodie merah darah ikonik dengan bordir tipografi Old English 4Bloods di dada. Wajib digunakan saat berkumpul di hood maupun operasi konvoi.",
+    "specs": [
+      "Heavyweight Fleece 450GSM",
+      "Crimson Red #DC2626",
+      "Old English 4Bloods Embroidery",
+      "Custom In-Game 3D Mesh"
+    ]
+  },
+  {
+    "id": "hoodie-merah-v2",
+    "name": "4BLOODS FLAMING SKULL RED HOODIE V2",
+    "category": "hoodie",
+    "categoryLabel": "HEAVY HOODIE",
+    "tier": "WAR & TURF EDITION",
+    "badge": "WAR & TURF",
+    "badgeVariant": "red",
+    "subtitle": "480GSM FLAME FLEECE",
+    "tag": "FLAME PRINT",
+    "era": "CHAPTER II – III",
+    "frontImage": "/assets/hoodie_merah2.png",
+    "flipAvailable": false,
+    "description": "Varian hoodie merah dengan grafis tengkorak berapi (Flaming Skull) di bagian punggung dan detail flame putih di lengan—sering terlihat dipakai melingkar bersama OG Ilham Joseph.",
+    "specs": [
+      "Back Skull Flame Artwork",
+      "Sleeve Flame Print",
+      "High-Visibility Turf Red",
+      "Thermal Insulated Lining"
+    ]
+  },
+  {
+    "id": "hoodie-hitam",
+    "name": "4BLOODS NIGHT OPS BLACK HOODIE",
+    "category": "hoodie",
+    "categoryLabel": "HEAVY HOODIE",
+    "tier": "NIGHT OPERATIONS // STEALTH",
+    "badge": "STEALTH OPS",
+    "badgeVariant": "slate",
+    "subtitle": "480GSM OBSIDIAN FLEECE",
+    "tag": "NIGHT OPS",
+    "era": "CHAPTER II – III",
+    "frontImage": "/assets/hoodie_hitam.png",
+    "flipAvailable": false,
+    "description": "Hoodie hitam pekat dengan aksen merah menyala untuk pergerakan malam hari, pengintaian, dan operasi senyap di luar teritori.",
+    "specs": [
+      "Obsidian Black Base",
+      "Crimson Chest Crest",
+      "Stealth Street Cut",
+      "Low-Reflective Matte Finish"
+    ]
+  },
+  {
+    "id": "workshirt-hitam",
+    "name": "4BG DICKIES WORKSHIRT — BLACK EDITION",
+    "category": "workshirt",
+    "categoryLabel": "TACTICAL WORKSHIRT",
+    "tier": "OG & UNDER OG SIGNATURE",
+    "badge": "WEST COAST",
+    "badgeVariant": "orange",
+    "subtitle": "CHICANO WORKWEAR",
+    "tag": "DUAL-SIDE RENDER",
+    "era": "CHAPTER II – III",
+    "frontImage": "/assets/shirt_hitam_depan.png",
+    "backImage": "/assets/shirt_hitam_belakang.png",
+    "flipAvailable": true,
+    "description": "Kemeja kerja lengan pendek bergaya West Coast dengan potongan boxy, dilengkapi patch depan dan grafis punggung eksklusif 4Bloods.",
+    "specs": [
+      "Front & Back Custom Print",
+      "Crisp Collar Structure",
+      "Dual-Side Render Available",
+      "Chicano West Coast Cut"
+    ]
+  },
+  {
+    "id": "workshirt-abu",
+    "name": "4BG DICKIES WORKSHIRT — CONCRETE GREY",
+    "category": "workshirt",
+    "categoryLabel": "TACTICAL WORKSHIRT",
+    "tier": "HOOD CASUAL & BUSINESS",
+    "badge": "CONCRETE GREY",
+    "badgeVariant": "slate",
+    "subtitle": "TWILL WORKWEAR",
+    "tag": "HOOD CASUAL",
+    "era": "CHAPTER II – III",
+    "frontImage": "/assets/shirt_abu.png",
+    "flipAvailable": false,
+    "description": "Varian warna abu-abu beton (Concrete Grey) yang merepresentasikan salah satu dari empat warna resmi 4Bloods (Merah, Hitam, Putih, Abu-abu).",
+    "specs": [
+      "Concrete Grey Tone",
+      "Contrast Red Graphics",
+      "Relaxed Street Fit",
+      "Reinforced Chest Pockets"
+    ]
+  },
+  {
+    "id": "tee-hooddays-v1",
+    "name": "4BLOODS \"HOOD DAYS\" GRAPHIC TEE V1",
+    "category": "tee",
+    "categoryLabel": "HOODDAYS TEE",
+    "tier": "SOUTH SIDE ROXWOOD DROP",
+    "badge": "ROXWOOD DROP",
+    "badgeVariant": "cyan",
+    "subtitle": "240GSM OVERSIZED",
+    "tag": "DUAL-SIDE RENDER",
+    "era": "CHAPTER III",
+    "frontImage": "/assets/tee_hooddays1_depan.png",
+    "backImage": "/assets/tee_hooddays1_belakang.png",
+    "flipAvailable": true,
+    "description": "Kaos oversized edisi Hood Days dengan ilustrasi kehidupan blok 4Bloods di bagian depan dan tipografi penuh di bagian punggung.",
+    "specs": [
+      "Front & Back Artwork",
+      "Drop-Shoulder Cut",
+      "100% Streetwear Heritage",
+      "High-Density Screenprint"
+    ]
+  },
+  {
+    "id": "tee-hooddays-v2",
+    "name": "4BLOODS \"HOOD DAYS\" GRAPHIC TEE V2",
+    "category": "tee",
+    "categoryLabel": "HOODDAYS TEE",
+    "tier": "SOUTH SIDE ROXWOOD DROP",
+    "badge": "CHAPTER III",
+    "badgeVariant": "cyan",
+    "subtitle": "SCREENPRINT 240GSM",
+    "tag": "BOXY SILHOUETTE",
+    "era": "CHAPTER III",
+    "frontImage": "/assets/tee_hooddays2_depan.png",
+    "flipAvailable": false,
+    "description": "Edisi kedua kaos Hood Days dengan komposisi visual kontras tinggi yang menegaskan identitas skena jalanan Roxwood.",
+    "specs": [
+      "High-Contrast Screenprint",
+      "Boxy Silhouette",
+      "Chapter III Exclusive",
+      "240GSM Heavy Cotton"
+    ]
+  },
+  {
+    "id": "cap-official-v1",
+    "name": "4BG FITTED SNAPBACK CAP — CRIMSON",
+    "category": "headwear",
+    "categoryLabel": "HEADWEAR & ACCS",
+    "tier": "SIGNATURE ACCESSORY",
+    "badge": "SIGNATURE CAP",
+    "badgeVariant": "red",
+    "subtitle": "3D PUFF EMBROIDERY",
+    "tag": "2 STYLES INCLUDED",
+    "era": "CHAPTER I – III",
+    "frontImage": "/assets/topi_1.png",
+    "backImage": "/assets/topi_2.png",
+    "flipAvailable": true,
+    "description": "Topi snapback resmi dengan bordir timbul 4Bloods. Tersedia dalam dua variasi gaya pemakaian untuk melengkapi setelan hood.",
+    "specs": [
+      "3D Puff Embroidery",
+      "Crimson Crown",
+      "2 Variant Styles Included",
+      "Structured Crown Profile"
+    ]
+  },
+  {
+    "id": "sling-bag-tactical",
+    "name": "4BLOODS TACTICAL SLING & DUFFEL BAG",
+    "category": "bag",
+    "categoryLabel": "TACTICAL GEAR",
+    "tier": "LOGISTICS & FIELD CARRY",
+    "badge": "LOGISTICS GEAR",
+    "badgeVariant": "orange",
+    "subtitle": "CORDURA TACTICAL",
+    "tag": "DUAL CARRY MODES",
+    "era": "CHAPTER II – III",
+    "frontImage": "/assets/bag_1.png",
+    "backImage": "/assets/bag_2.png",
+    "flipAvailable": true,
+    "description": "Tas selempang taktis berlogo 4Bloods yang digunakan anggota saat membawa logistik peperangan, amunisi, maupun hasil operasi.",
+    "specs": [
+      "Heavy Cordura Texture",
+      "Custom 4BG Branding",
+      "2 Carry Configurations",
+      "MOLLE Tactical Straps"
+    ]
+  }
+]

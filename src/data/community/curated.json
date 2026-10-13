@@ -1,0 +1,141 @@
+{
+  "socialHub": {
+    "youtube": {
+      "name": "YouTube Hub",
+      "handle": "@4blood-plug",
+      "url": "https://www.youtube.com/@4blood-plug",
+      "label": "Gathering & Official VOD",
+      "subscribers": "8.99K",
+      "videoCount": 16,
+      "totalViewsVerified": "628K+",
+      "highlight": "1 Year Anniversary & Member Charity Hub"
+    },
+    "instagram": {
+      "name": "Instagram Media",
+      "handle": "@4bloodmedia",
+      "url": "https://www.instagram.com/4bloodmedia/",
+      "label": "Official Statement & Cinematic Reels",
+      "followers": "4.39K",
+      "postsCount": 30,
+      "highlight": "Press Release Faksi & Laporan Visual Roxwood"
+    },
+    "tiktok": {
+      "name": "TikTok Highlights",
+      "handle": "@4bloodmedia",
+      "url": "https://www.tiktok.com/@4bloodmedia",
+      "label": "Clips, Hype & FYP",
+      "followers": "2.57K",
+      "likes": "27.3K",
+      "highlight": "Klip War Singkat, Sound Drill & Momentum RP"
+    },
+    "discord": {
+      "name": "Discord Community",
+      "invite": "https://discord.gg/GdTa7VvwX5",
+      "members": "7.22K+",
+      "online": "1.01K+",
+      "label": "Markas Komunikasi & Fans Hub",
+      "highlight": "7.229 Anggota Terdaftar Sejak Juni 2025"
+    },
+    "linktree": {
+      "name": "Linktree Hub",
+      "url": "https://linktr.ee/4bloods",
+      "label": "Official Links Directory",
+      "creatorsCount": 33,
+      "highlight": "Gerbang Resmi Menuju 33 Kanal Kreator Petinggi 4B"
+    }
+  },
+  "verifiedAchievements": [
+    {
+      "id": "ach-01",
+      "title": "GATHERING ONE YEAR #4BLOOD ANNIVERSARY",
+      "date": "24 Juni 2026",
+      "category": "ANNIVERSARY",
+      "views": "110.012 views",
+      "source": "https://www.youtube.com/watch?v=M8weIs6uzTs",
+      "verified": true,
+      "desc": "Perayaan puncak satu tahun berdirinya 4Bloods sejak 23 Juni 2025. Dihadiri seluruh member lintas angkatan dalam perhelatan multi-hari (Day 1 hingga Day 3)."
+    },
+    {
+      "id": "ach-02",
+      "title": "4BLOOD CHARITY FOR MEMBER",
+      "date": "Mei 2026",
+      "category": "SOLIDARITAS SOSIAL",
+      "views": "Community Stream",
+      "source": "https://www.youtube.com/@4blood-plug",
+      "verified": true,
+      "desc": "Aksi kepedulian nyata penggalangan dana internal untuk membantu anggota keluarga 4Bloods yang membutuhkan uluran tangan."
+    },
+    {
+      "id": "ach-03",
+      "title": "CHARITY 4BLOOD TO IMEFEST JAKARTA",
+      "date": "2025",
+      "category": "CHARITY IRL",
+      "views": "Community Event",
+      "source": "https://www.youtube.com/watch?v=K6kfspfbAwM",
+      "verified": true,
+      "desc": "Aksi solidaritas nyata di dunia nyata (IRL) dipimpin oleh OG Deja Amari atas nama nama besar 4Bloods untuk perhelatan IMEFEST Jakarta."
+    },
+    {
+      "id": "ach-04",
+      "title": "VALORANT 4BLOOD CHAMP TOUR (FULL MATCH)",
+      "date": "30 Mei 2026",
+      "category": "ESPORTS TURNAMEN",
+      "views": "29.302 views",
+      "source": "https://www.youtube.com/@4blood-plug",
+      "verified": true,
+      "desc": "Turnamen kompetitif antarmember 4Blood dalam skena Valorant, menguji koordinasi tim dan sportivitas di luar server roleplay."
+    },
+    {
+      "id": "ach-05",
+      "title": "THIS IS 4BLOODS — OFFICIAL MUSIC VIDEO",
+      "date": "Era Roxwood",
+      "category": "MUSIK & SINEMATIK",
+      "views": "Official MV",
+      "source": "https://www.youtube.com/watch?v=wJyovquNR24",
+      "verified": true,
+      "desc": "Anthem resmi kebanggaan faksi yang memvisualisasikan kedaulatan wilayah South Side Roxwood, konvoi kendaraan merah, dan identitas 4BG."
+    },
+    {
+      "id": "ach-06",
+      "title": "GATHERING BOOTH IME IESPA",
+      "date": "5 Juni 2026",
+      "category": "EVENT E-SPORTS",
+      "views": "18.042 views",
+      "source": "https://www.youtube.com/@4blood-plug",
+      "verified": true,
+      "desc": "Kehadiran delegasi komunitas 4Blood dalam perhelatan akbar IESPA (Indonesia Esports Association)."
+    }
+  ],
+  "featuredSocialReels": [
+    {
+      "id": "reel-01",
+      "platform": "INSTAGRAM",
+      "account": "@4bloodmedia",
+      "title": "Official Statement - 4B Community",
+      "date": "19 Mei 2026",
+      "tag": "PRESS RELEASE",
+      "url": "https://www.instagram.com/4bloodmedia/",
+      "summary": "Pernyataan resmi tata tertib faksi, komitmen roleplay berintegritas, dan koordinasi internal keluarga 4Blood."
+    },
+    {
+      "id": "reel-02",
+      "platform": "INSTAGRAM",
+      "account": "@4bloodmedia",
+      "title": "Cinematic Convoy & Roxwood Patrol",
+      "date": "2026",
+      "tag": "CINEMATIC REEL",
+      "url": "https://www.instagram.com/4bloodmedia/",
+      "summary": "Visualisasi sinematik armada mobil merah 4BG menguasai kawasan South Side Roxwood Postal 1051-1052."
+    },
+    {
+      "id": "reel-03",
+      "platform": "TIKTOK",
+      "account": "@4bloodmedia",
+      "title": "War Moments & Highway Clutches",
+      "date": "2026",
+      "tag": "FYP HIGHLIGHT",
+      "url": "https://www.tiktok.com/@4bloodmedia",
+      "summary": "Kompilasi momen tembak-menembak intensif di jalan tol Los Santos dengan iringan sound drill kebanggaan."
+    }
+  ]
+}

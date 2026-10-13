@@ -6,6 +6,7 @@ import Navbar from '@/components/Navbar';
 import StickyAudioPlayer from '@/components/StickyAudioPlayer';
 import Tilt3DCard from '@/components/Tilt3DCard';
 import ShowroomCodex from '@/components/ShowroomCodex';
+import Icon3D from '@/components/Icon3D';
 import {
   LORE_CHAPTERS,
   HIERARCHY_TIERS,
@@ -304,32 +305,33 @@ export default function CompanyProfilePage() {
             : 'bg-gradient-to-b from-[#FAF8F5] via-[#EDE7DE] to-[#F5F0E8] border-zinc-200'
         }`}
       >
-        {/* Prominent High-Visibility Hero Wallpaper (Vivid, Clear & Cinematic) */}
+        {/* Moodily Darkened Atmospheric Hero Wallpaper (Non-HD Artifact Masking) */}
         <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
           <img
             src="/assets/hero_bg.webp"
             alt="Hero Background"
             className={`w-full h-full object-cover object-center ${
-              isDark ? 'opacity-85 brightness-95 contrast-105' : 'opacity-40 brightness-100'
+              isDark ? 'opacity-40 brightness-65 contrast-115 blur-[0.5px]' : 'opacity-20 brightness-90'
             }`}
           />
           <div
             className={`absolute inset-0 ${
               isDark
-                ? 'bg-gradient-to-b from-black/55 via-black/30 to-[#090306]/95'
-                : 'bg-gradient-to-b from-white/75 via-white/50 to-[#FAF8F5]'
+                ? 'bg-gradient-to-b from-black/85 via-black/70 to-[#090306]'
+                : 'bg-gradient-to-b from-white/85 via-white/70 to-[#FAF8F5]'
             }`}
           />
           <div
             style={{
               background:
-                'radial-gradient(circle at 50% 50%, rgba(0,0,0,0) 0%, rgba(9,3,6,0.6) 80%)',
+                'radial-gradient(circle at 50% 45%, rgba(0,0,0,0.35) 0%, rgba(9,3,6,0.92) 80%)',
             }}
             className="absolute inset-0 pointer-events-none"
           />
+          <div className="absolute inset-0 bg-film-grain opacity-55" />
           <div
             className={`absolute inset-0 ${
-              isDark ? 'bg-tactical-grid opacity-15' : 'bg-cam-light-grid opacity-20'
+              isDark ? 'bg-tactical-grid opacity-20' : 'bg-cam-light-grid opacity-20'
             }`}
           />
           <div
@@ -490,8 +492,8 @@ export default function CompanyProfilePage() {
                 glare={false}
                 onClick={() =>
                   setLightboxImage({
-                    src: '/assets/logo_v1.png',
-                    title: '4BLOODS GANG — VINTAGE HERITAGE V1',
+                    src: '/assets/generated/crest_v1_3d.webp',
+                    title: '4BLOODS GANG — 3D HERITAGE V1 EMBLEM',
                     subtitle: 'IME Roleplay // South Side Roxwood (Postal 1051–1052)',
                   })
                 }
@@ -513,10 +515,10 @@ export default function CompanyProfilePage() {
                 />
 
                 <img
-                  src="/assets/logo_v1.png"
-                  alt="4BLOODS GANG Official Emblem"
+                  src="/assets/generated/crest_v1_3d.webp"
+                  alt="4BLOODS GANG Official 3D Emblem"
                   style={{ transform: 'translateZ(30px)' }}
-                  className="relative w-72 h-auto max-h-[380px] sm:w-[380px] sm:max-h-[420px] lg:w-[420px] lg:max-h-[460px] object-contain drop-shadow-[0_20px_45px_rgba(220,38,38,0.4)] drop-shadow-[0_10px_25px_rgba(0,0,0,0.85)] group-hover:scale-105 transition-transform duration-300 select-none"
+                  className="relative w-72 h-auto max-h-[380px] sm:w-[380px] sm:max-h-[420px] lg:w-[420px] lg:max-h-[460px] object-contain drop-shadow-[0_20px_45px_rgba(220,38,38,0.45)] drop-shadow-[0_10px_25px_rgba(0,0,0,0.85)] group-hover:scale-105 transition-transform duration-300 select-none"
                 />
               </Tilt3DCard>
 
@@ -534,7 +536,7 @@ export default function CompanyProfilePage() {
                 </span>
                 <span className="text-zinc-500">//</span>
                 <span className="text-[10px] font-mono-tech tracking-wider">
-                  VINTAGE 4BLOODS CREST
+                  3D OFFICIAL CREST
                 </span>
               </div>
             </div>
@@ -562,6 +564,95 @@ export default function CompanyProfilePage() {
           ))}
         </div>
       </div>
+
+      {/* =====================================================================
+          TWO MAJOR GATEWAYS: 01 WIKI & ARCHIVE  vs  02 COMMUNITY & ACHIEVEMENTS
+      ===================================================================== */}
+      <section className={`py-16 border-b ${isDark ? 'bg-[#090507] border-white/10' : 'bg-[#F2ECE4] border-zinc-300'}`}>
+        <div className="max-w-[1520px] mx-auto px-4 sm:px-8 space-y-8">
+          <div className="flex flex-col md:flex-row items-start md:items-end justify-between gap-4">
+            <div>
+              <div className="text-xs font-mono-tech text-red-500 font-bold uppercase tracking-[0.25em]">
+                DUA PILAR UTAMA EKOSISTEM
+              </div>
+              <h2 className={`font-display text-4xl sm:text-5xl tracking-wider uppercase mt-1 ${isDark ? 'text-white' : 'text-zinc-950'}`}>
+                PILIH GERBANG <span className="text-red-600">4BLOODS</span>
+              </h2>
+            </div>
+            <p className={`text-xs font-mono-tech max-w-md ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>
+              Eksplorasi arsip mendalam sejarah lore faksi di Wiki resmi, atau selami skala masif komunitas, pencapaian turnamen, dan media sosial.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* Gateway 01: 4Bloods Wiki & History */}
+            <Link
+              href="/wiki"
+              className={`group p-8 sm:p-10 border transition-all duration-300 relative overflow-hidden flex flex-col justify-between min-h-[320px] cursor-pointer ${
+                isDark
+                  ? 'bg-gradient-to-br from-[#1A080D] via-[#0E0407] to-black border-red-500/30 hover:border-red-500 hover:shadow-[0_0_40px_rgba(220,38,38,0.3)]'
+                  : 'bg-white border-zinc-300 hover:border-red-500 shadow-md hover:shadow-xl'
+              }`}
+            >
+              <div className="space-y-4 relative z-10">
+                <div className="flex items-center justify-between">
+                  <span className="px-3 py-1 bg-red-600 text-white text-[10px] font-mono-tech font-bold uppercase tracking-widest">
+                    MENU 01 // ENSiKLOPEDIA
+                  </span>
+                  <span className="text-xs font-mono-tech text-red-500 font-bold">EST. 23 JUNI 2025</span>
+                </div>
+                <h3 className={`font-display text-4xl sm:text-5xl tracking-wider uppercase group-hover:text-red-500 transition-colors ${isDark ? 'text-white' : 'text-zinc-900'}`}>
+                  4BLOODS WIKI & ARCHIVE
+                </h3>
+                <p className={`text-xs sm:text-sm font-mono-tech leading-relaxed ${isDark ? 'text-zinc-300' : 'text-zinc-600'}`}>
+                  Kisah awal mula pekerja burger (Ilham, Louis, Deja, Sumbul), migrasi 3 chapter (West Side &rarr; Jamestown &rarr; Roxwood), hierarki sindikat, kode etik Blood In Blood Out, serta arsip rekaman perang bersejarah.
+                </p>
+              </div>
+
+              <div className="pt-6 border-t border-white/10 flex items-center justify-between relative z-10">
+                <span className="text-xs font-mono-tech text-red-500 font-bold tracking-widest uppercase flex items-center gap-2 group-hover:translate-x-1 transition-transform">
+                  <span>MASUK KE WIKI & SEJARAH</span>
+                  <span>&rarr;</span>
+                </span>
+                <span className="text-[10px] font-mono-tech text-zinc-500">ORIGIN · CHAPTERS · HIERARCHY · WARS</span>
+              </div>
+            </Link>
+
+            {/* Gateway 02: Community & Achievements */}
+            <Link
+              href="/community"
+              className={`group p-8 sm:p-10 border transition-all duration-300 relative overflow-hidden flex flex-col justify-between min-h-[320px] cursor-pointer ${
+                isDark
+                  ? 'bg-gradient-to-br from-[#1A080D] via-[#0E0407] to-black border-red-500/30 hover:border-red-500 hover:shadow-[0_0_40px_rgba(220,38,38,0.3)]'
+                  : 'bg-white border-zinc-300 hover:border-red-500 shadow-md hover:shadow-xl'
+              }`}
+            >
+              <div className="space-y-4 relative z-10">
+                <div className="flex items-center justify-between">
+                  <span className="px-3 py-1 bg-red-600 text-white text-[10px] font-mono-tech font-bold uppercase tracking-widest">
+                    MENU 02 // KOMUNITAS & MEDIA
+                  </span>
+                  <span className="text-xs font-mono-tech text-red-500 font-bold">7.2K+ DISCORD · 54 STREAMERS</span>
+                </div>
+                <h3 className={`font-display text-4xl sm:text-5xl tracking-wider uppercase group-hover:text-red-500 transition-colors ${isDark ? 'text-white' : 'text-zinc-900'}`}>
+                  COMMUNITY & ACHIEVEMENTS
+                </h3>
+                <p className={`text-xs sm:text-sm font-mono-tech leading-relaxed ${isDark ? 'text-zinc-300' : 'text-zinc-600'}`}>
+                  Skala komunitas nyata: 54 streamer aktif, hub YouTube @4blood-plug (1 Year Anniversary & Charity), Instagram @4bloodmedia, TikTok, discography vinyl lagu resmi, 3D merch lookbook, dan direktori kreator.
+                </p>
+              </div>
+
+              <div className="pt-6 border-t border-white/10 flex items-center justify-between relative z-10">
+                <span className="text-xs font-mono-tech text-red-500 font-bold tracking-widest uppercase flex items-center gap-2 group-hover:translate-x-1 transition-transform">
+                  <span>MASUK KE COMMUNITY HUB</span>
+                  <span>&rarr;</span>
+                </span>
+                <span className="text-[10px] font-mono-tech text-zinc-500">METRICS · SOCIALS · DISCOGRAPHY · MERCH</span>
+              </div>
+            </Link>
+          </div>
+        </div>
+      </section>
 
       {/* =====================================================================
           SECTION 01 — THE 3 CHAPTERS (DYNAMIC SATELLITE MAP BACKDROP)
@@ -609,7 +700,9 @@ export default function CompanyProfilePage() {
 
         <div className="max-w-[1520px] mx-auto px-4 sm:px-8 relative z-10">
           <div className="flex flex-col lg:flex-row lg:items-end justify-between mb-10 gap-6">
-            <div>
+            <div className="flex items-center gap-4 sm:gap-6">
+              <Icon3D src="/assets/generated/icons3d/icon_territory.webp" alt="3D Territory Map" />
+              <div>
               <div className="text-xs font-mono-tech font-bold text-red-500 tracking-[0.25em] uppercase mb-1">
                 01 // SEJARAH TERITORI DI IME ROLEPLAY (CHAPTER I – III)
               </div>
@@ -620,6 +713,7 @@ export default function CompanyProfilePage() {
               >
                 THE <span className="text-red-600">TERRITORY</span> ARCHIVES
               </h2>
+              </div>
             </div>
 
             {/* Chapter Switcher Pills */}
@@ -827,7 +921,9 @@ export default function CompanyProfilePage() {
 
         <div className="max-w-[1520px] mx-auto px-4 sm:px-8 relative z-10">
           <div className="flex flex-col lg:flex-row lg:items-end justify-between mb-8 gap-6">
-            <div>
+            <div className="flex items-center gap-4 sm:gap-6">
+              <Icon3D src="/assets/generated/icons3d/icon_hierarchy.webp" alt="3D Syndicate Crown" />
+              <div>
               <div className="text-xs font-mono-tech font-bold text-red-500 tracking-[0.25em] uppercase mb-1">
                 02 // STRUKTUR KOMANDO &amp; CHARACTER SHOWCASE (IME RP)
               </div>
@@ -838,6 +934,7 @@ export default function CompanyProfilePage() {
               >
                 SYNDICATE <span className="text-red-600">HIERARCHY</span> SHOWCASE
               </h2>
+              </div>
             </div>
 
             <div className="flex flex-wrap gap-1.5">
@@ -1229,7 +1326,9 @@ export default function CompanyProfilePage() {
 
         <div className="max-w-[1520px] mx-auto px-4 sm:px-8 relative z-10">
           <div className="flex flex-col lg:flex-row lg:items-end justify-between mb-10 gap-6">
-            <div>
+            <div className="flex items-center gap-4 sm:gap-6">
+              <Icon3D src="/assets/generated/icons3d/icon_records.webp" alt="3D Vinyl Record" />
+              <div>
               <div className="inline-flex items-center gap-2 text-xs font-mono-tech font-bold text-red-500 tracking-[0.25em] uppercase mb-1">
                 <Disc3 className="w-3.5 h-3.5 animate-spin" style={{ animationDuration: '6s' }} />
                 <span>04 // 4BLOODS RECORDS — UNDERGROUND SOUNDTRACK &amp; DISS TRACKS</span>
@@ -1241,6 +1340,7 @@ export default function CompanyProfilePage() {
               >
                 OFFICIAL <span className="text-red-600">MV &amp; DISS TRACKS</span>
               </h2>
+              </div>
             </div>
 
             <div className="flex flex-wrap gap-2">
@@ -1533,7 +1633,9 @@ export default function CompanyProfilePage() {
 
         <div className="max-w-[1520px] mx-auto px-4 sm:px-8 relative z-10">
           <div className="flex flex-col lg:flex-row lg:items-end justify-between mb-10 gap-6">
-            <div>
+            <div className="flex items-center gap-4 sm:gap-6">
+              <Icon3D src="/assets/generated/icons3d/icon_archives.webp" alt="3D VHS Archive" />
+              <div>
               <div className="inline-flex items-center gap-2 text-xs font-mono-tech font-bold text-red-500 tracking-[0.25em] uppercase mb-1">
                 <Film className="w-3.5 h-3.5" />
                 <span>05 // DOKUMENTASI PERANG, KOMANDO &amp; SOLIDARITAS IME RP</span>
@@ -1545,6 +1647,7 @@ export default function CompanyProfilePage() {
               >
                 WAR CINEMA &amp; <span className="text-red-600">ARCHIVES</span>
               </h2>
+              </div>
             </div>
 
             <div className="flex flex-wrap gap-2">
@@ -1765,7 +1868,9 @@ export default function CompanyProfilePage() {
 
         <div className="max-w-[1520px] mx-auto px-4 sm:px-8 relative z-10">
           <div className="flex flex-col lg:flex-row lg:items-end justify-between mb-10 gap-6">
-            <div>
+            <div className="flex items-center gap-4 sm:gap-6">
+              <Icon3D src="/assets/generated/icons3d/icon_roster.webp" alt="3D Studio Mic" />
+              <div>
               <div className="text-xs font-mono-tech font-bold text-red-500 tracking-[0.25em] uppercase mb-1">
                 06 // JARINGAN KREATOR RESMI 4BLOODS DI IME RP
               </div>
@@ -1776,6 +1881,7 @@ export default function CompanyProfilePage() {
               >
                 54 OFFICIAL <span className="text-red-600">STREAMERS</span>
               </h2>
+              </div>
             </div>
 
             <div className="flex flex-wrap items-center gap-2.5">

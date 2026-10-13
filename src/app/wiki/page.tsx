@@ -1,0 +1,759 @@
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
+import Navbar from '@/components/Navbar';
+import StickyAudioPlayer from '@/components/StickyAudioPlayer';
+import Tilt3DCard from '@/components/Tilt3DCard';
+import {
+  BookOpen,
+  MapPin,
+  Shield,
+  Film,
+  Play,
+  X,
+  Maximize2,
+  ChevronRight,
+  Sun,
+  Moon,
+  Tv,
+  HelpCircle,
+  Award,
+  Scroll,
+  Flame,
+  Users,
+} from 'lucide-react';
+
+import originData from '@/data/wiki/origin.json';
+import chaptersData from '@/data/wiki/chapters.json';
+import hierarchyData from '@/data/wiki/hierarchy.json';
+import doctrineData from '@/data/wiki/doctrine.json';
+import warsData from '@/data/wiki/wars.json';
+import glossaryData from '@/data/wiki/glossary.json';
+
+export default function WikiPage() {
+  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+  const [activeChapterIdx, setActiveChapterIdx] = useState(2); // default Chapter III (SSR)
+  const [activeTab, setActiveTab] = useState<'origin' | 'chapters' | 'hierarchy' | 'doctrine' | 'wars' | 'glossary'>('origin');
+  const [warFilter, setWarFilter] = useState<'ALL' | 'WAR' | 'LORE'>('ALL');
+  const [selectedWarId, setSelectedWarId] = useState<string>(warsData[0]?.id || '');
+  const [glossarySearch, setGlossarySearch] = useState('');
+
+  // Modals
+  const [lightboxImage, setLightboxImage] = useState<{
+    src: string;
+    title: string;
+    subtitle?: string;
+  } | null>(null);
+  const [videoModal, setVideoModal] = useState<{
+    videoId: string;
+    title: string;
+    streamer: string;
+  } | null>(null);
+
+  const isDark = theme === 'dark';
+
+  useEffect(() => {
+    try {
+      const savedTheme = localStorage.getItem('4bg_theme') || localStorage.getItem('4bs_cam_theme');
+      if (savedTheme === 'light' || savedTheme === 'dark') {
+        setTheme(savedTheme);
+      }
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      if (theme === 'dark') {
+        document.documentElement.classList.add('dark');
+        document.documentElement.classList.remove('light');
+        document.documentElement.style.colorScheme = 'dark';
+      } else {
+        document.documentElement.classList.remove('dark');
+        document.documentElement.classList.add('light');
+        document.documentElement.style.colorScheme = 'light';
+      }
+    }
+  }, [theme]);
+
+  const toggleTheme = () => {
+    const next = theme === 'dark' ? 'light' : 'dark';
+    setTheme(next);
+    try {
+      localStorage.setItem('4bg_theme', next);
+      localStorage.setItem('4bs_cam_theme', next);
+    } catch {}
+  };
+
+  const currentChapter = chaptersData[activeChapterIdx] || chaptersData[0];
+
+  const filteredWars = warsData.filter((war: any) => {
+    if (warFilter === 'WAR') return war.category?.includes('WAR') || war.category?.includes('DEFENSE');
+    if (warFilter === 'LORE') return !war.category?.includes('WAR') && !war.category?.includes('DEFENSE');
+    return true;
+  });
+
+  const activeWarTape =
+    filteredWars.find((w: any) => w.id === selectedWarId) ||
+    filteredWars[0] ||
+    warsData[0];
+
+  const filteredGlossary = glossaryData.filter((item: any) => {
+    const q = glossarySearch.toLowerCase();
+    return item.term.toLowerCase().includes(q) || item.desc.toLowerCase().includes(q) || item.category.toLowerCase().includes(q);
+  });
+
+  return (
+    <div
+      className={`theme-smooth min-h-screen relative selection:bg-red-600 selection:text-white ${
+        isDark ? 'bg-[#070506] text-[#F4F4F6]' : 'bg-[#F4F1EC] text-[#141113]'
+      }`}
+    >
+      <Navbar theme={theme} onToggleTheme={toggleTheme} />
+      <StickyAudioPlayer isDark={isDark} />
+
+      {/* Floating Theme Switcher */}
+      <div className="fixed bottom-6 left-6 z-50 select-none">
+        <button
+          onClick={toggleTheme}
+          className={`group p-1.5 border shadow-[0_15px_40px_rgba(0,0,0,0.65)] flex items-center gap-2 cursor-pointer backdrop-blur-xl ${
+            isDark
+              ? 'bg-[#120A0E]/95 border-red-500/40 text-white hover:border-red-500'
+              : 'bg-white/95 border-zinc-300 text-zinc-900 hover:border-red-500'
+          }`}
+          title={isDark ? 'Ganti ke Light Mode' : 'Ganti ke Dark Mode'}
+        >
+          <span
+            className={`w-8 h-8 flex items-center justify-center transition-transform duration-500 ${
+              isDark ? 'bg-red-600 text-white rotate-0' : 'bg-amber-400 text-black rotate-180'
+            }`}
+          >
+            {isDark ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
+          </span>
+          <div className="pr-2.5 text-left">
+            <div className="text-[8px] font-mono-tech text-red-500 font-bold uppercase tracking-widest leading-none">
+              TEMA WIKI
+            </div>
+            <div className="text-[11px] font-mono-tech font-bold uppercase tracking-wider mt-0.5">
+              {isDark ? 'DARK // OBSIDIAN' : 'LIGHT // STREET'}
+            </div>
+          </div>
+        </button>
+      </div>
+
+      {/* Hero Banner Wiki */}
+      <section
+        className={`relative pt-32 pb-16 border-b overflow-hidden ${
+          isDark
+            ? 'bg-[#0A0407] border-red-500/20'
+            : 'bg-gradient-to-b from-[#FAF8F5] via-[#EDE7DE] to-[#F5F0E8] border-zinc-200'
+        }`}
+      >
+        <div className="max-w-[1520px] mx-auto px-4 sm:px-8 relative z-10">
+          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-8">
+            <div className="space-y-4 max-w-3xl">
+              <div className="inline-flex items-center gap-2 px-3 py-1 bg-red-600/15 border border-red-500/30 text-red-500 text-xs font-mono-tech font-bold tracking-widest uppercase">
+                <BookOpen className="w-3.5 h-3.5" />
+                <span>OFFICIAL FACTION CODEX // EST. 23 JUNI 2025</span>
+              </div>
+              <h1
+                className={`font-display text-5xl sm:text-7xl lg:text-8xl tracking-wider uppercase leading-[0.92] ${
+                  isDark ? 'text-white' : 'text-zinc-950'
+                }`}
+              >
+                4BLOODS <span className="text-red-600">WIKI & ARCHIVE</span>
+              </h1>
+              <p
+                className={`text-sm sm:text-base font-mono-tech leading-relaxed ${
+                  isDark ? 'text-zinc-300' : 'text-zinc-700'
+                }`}
+              >
+                Dokumentasi ensiklopedia resmi Four Bloods Gang (4BG) di server IME Roleplay: dari awal mula
+                pekerja pengantar burger, migrasi markas 3 babak, hierarki sindikat, kode etik darah, hingga rekaman perang bersejarah.
+              </p>
+            </div>
+
+            {/* Quick Metadata Box */}
+            <div
+              className={`p-6 border min-w-[280px] lg:min-w-[320px] space-y-3 ${
+                isDark ? 'bg-[#12080B]/90 border-red-500/30' : 'bg-white border-zinc-300 shadow-md'
+              }`}
+            >
+              <div className="text-[10px] font-mono-tech text-red-500 font-bold uppercase tracking-widest">
+                FACTION BRIEF
+              </div>
+              <div className="space-y-1.5 text-xs font-mono-tech">
+                <div className="flex justify-between border-b border-white/10 pb-1">
+                  <span className="text-zinc-500">Nama Resmi:</span>
+                  <span className="font-bold">Four Bloods Gang (4BG)</span>
+                </div>
+                <div className="flex justify-between border-b border-white/10 pb-1">
+                  <span className="text-zinc-500">Tanggal Berdiri:</span>
+                  <span className="font-bold text-red-500">{originData.foundedDate}</span>
+                </div>
+                <div className="flex justify-between border-b border-white/10 pb-1">
+                  <span className="text-zinc-500">Wilayah Utama:</span>
+                  <span className="font-bold">South Side Roxwood (1051-1052)</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-zinc-500">Semboyan:</span>
+                  <span className="font-bold text-red-500">Blood In, Blood Out</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Wiki Section Tabs */}
+          <div className="flex flex-wrap items-center gap-2 pt-10 border-t border-white/10 mt-10">
+            {[
+              { id: 'origin', label: '01 // THE GENESIS', icon: Scroll },
+              { id: 'chapters', label: '02 // 3 CHAPTERS', icon: MapPin },
+              { id: 'hierarchy', label: '03 // HIERARCHY', icon: Shield },
+              { id: 'doctrine', label: '04 // KODE ETIK & WARNA', icon: Flame },
+              { id: 'wars', label: '05 // WAR CHRONICLES', icon: Film },
+              { id: 'glossary', label: '06 // GLOSSARY & ISTILAH', icon: HelpCircle },
+            ].map((tab) => {
+              const Icon = tab.icon;
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id as any)}
+                  className={`px-4 py-2.5 text-xs font-mono-tech font-bold uppercase tracking-widest transition-all flex items-center gap-2 border cursor-pointer ${
+                    isActive
+                      ? 'bg-red-600 text-white border-red-500 shadow-[0_0_20px_rgba(220,38,38,0.4)]'
+                      : isDark
+                        ? 'bg-black/40 border-white/10 text-zinc-300 hover:border-red-500/50 hover:text-white'
+                        : 'bg-white border-zinc-200 text-zinc-700 hover:border-red-300 hover:text-red-600'
+                  }`}
+                >
+                  <Icon className="w-3.5 h-3.5" />
+                  <span>{tab.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* Tab 01: The Burger Boy Genesis */}
+      {activeTab === 'origin' && (
+        <section className="max-w-[1520px] mx-auto px-4 sm:px-8 py-14 space-y-12">
+          <div className="border border-red-500/30 p-8 sm:p-12 relative overflow-hidden bg-gradient-to-br from-red-950/20 via-transparent to-black/40">
+            <div className="max-w-4xl space-y-6">
+              <div className="text-xs font-mono-tech text-red-500 font-bold uppercase tracking-[0.25em]">
+                BABAK AWAL // 23 JUNI 2025
+              </div>
+              <h2 className="font-display text-4xl sm:text-6xl text-white tracking-wider uppercase">
+                {originData.title}
+              </h2>
+              <p className="font-script text-2xl sm:text-3xl text-red-400">
+                &ldquo;{originData.oath}&rdquo;
+              </p>
+              <p className="text-sm sm:text-base font-mono-tech leading-relaxed text-zinc-300">
+                {originData.synopsis}
+              </p>
+              <div className="space-y-4 pt-4 text-xs sm:text-sm font-mono-tech leading-relaxed text-zinc-400">
+                {originData.paragraphs.map((p, idx) => (
+                  <p key={idx}>{p}</p>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* 4 Founders Showcase */}
+          <div className="space-y-6">
+            <div className="flex items-center justify-between border-b border-white/10 pb-3">
+              <h3 className="font-display text-2xl sm:text-3xl tracking-wide uppercase">
+                EMPAT PILAR PENDIRI (FOUNDING FATHERS)
+              </h3>
+              <span className="text-xs font-mono-tech text-red-500 font-bold uppercase tracking-widest">
+                TIER 01 // ORIGINAL GANGSTERS
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {originData.founders.map((founder, idx) => (
+                <div
+                  key={idx}
+                  className={`border p-6 space-y-4 ${
+                    isDark ? 'bg-[#0E070A] border-white/10 hover:border-red-500/50' : 'bg-white border-zinc-200 shadow-sm'
+                  } transition-all duration-300 group`}
+                >
+                  <div className="relative aspect-square overflow-hidden bg-black/60 border border-white/10">
+                    <img
+                      src={founder.avatar}
+                      alt={founder.name}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                    />
+                    <div className="absolute top-3 left-3 px-2 py-0.5 bg-red-600 text-white text-[9px] font-mono-tech font-bold uppercase">
+                      OG FOUNDER
+                    </div>
+                  </div>
+                  <div>
+                    <h4 className="font-display text-xl text-white tracking-wider group-hover:text-red-500 transition-colors">
+                      {founder.name}
+                    </h4>
+                    <p className="text-[11px] font-mono-tech text-red-400 font-bold">
+                      {founder.streamer}
+                    </p>
+                    <p className="text-[10px] font-mono-tech text-zinc-400 uppercase tracking-wider mt-0.5">
+                      {founder.title}
+                    </p>
+                  </div>
+                  <p className="text-xs font-mono-tech text-zinc-400 border-t border-white/10 pt-3">
+                    {founder.role}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Tab 02: The 3 Chapters & Territories */}
+      {activeTab === 'chapters' && (
+        <section className="max-w-[1520px] mx-auto px-4 sm:px-8 py-14 space-y-12">
+          {/* Chapter Selector Buttons */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {chaptersData.map((chap: any, idx: number) => {
+              const isSelected = activeChapterIdx === idx;
+              return (
+                <button
+                  key={chap.id}
+                  onClick={() => setActiveChapterIdx(idx)}
+                  className={`p-6 border text-left cursor-pointer transition-all ${
+                    isSelected
+                      ? 'bg-red-600/20 border-red-500 shadow-[0_0_25px_rgba(220,38,38,0.3)]'
+                      : isDark
+                        ? 'bg-[#0E070A] border-white/10 hover:border-red-500/40'
+                        : 'bg-white border-zinc-200'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-mono-tech text-red-500 font-bold">{chap.roman}</span>
+                    <span className="text-[10px] font-mono-tech text-zinc-400 uppercase">{chap.era}</span>
+                  </div>
+                  <h4 className="font-display text-2xl text-white tracking-wider uppercase mt-2">
+                    {chap.title}
+                  </h4>
+                  <p className="text-xs font-mono-tech text-zinc-400 mt-1 line-clamp-2">
+                    {chap.subtitle}
+                  </p>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Active Chapter Details */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            <div className="lg:col-span-7 space-y-6">
+              <div className="relative aspect-video overflow-hidden border border-white/15 bg-black">
+                <img
+                  src={currentChapter.mapImage}
+                  alt={currentChapter.turfName}
+                  className="w-full h-full object-cover"
+                />
+                <button
+                  onClick={() =>
+                    setLightboxImage({
+                      src: currentChapter.mapImage,
+                      title: currentChapter.turfName,
+                      subtitle: currentChapter.postalCode,
+                    })
+                  }
+                  className="absolute bottom-4 right-4 p-2 bg-black/80 hover:bg-red-600 text-white border border-white/20 text-xs font-mono-tech flex items-center gap-1.5"
+                >
+                  <Maximize2 className="w-3.5 h-3.5" />
+                  <span>ZOOM MAP</span>
+                </button>
+              </div>
+
+              <div className="p-6 border border-white/10 bg-[#0E070A] space-y-3">
+                <div className="text-[10px] font-mono-tech text-red-500 font-bold uppercase tracking-widest">
+                  WARNA ATRIBUT KHAS BABAK INI
+                </div>
+                <p className="text-xs font-mono-tech text-zinc-300">
+                  {currentChapter.colorsRule}
+                </p>
+              </div>
+            </div>
+
+            <div className="lg:col-span-5 space-y-6">
+              <div>
+                <span className="text-xs font-mono-tech text-red-500 font-bold uppercase tracking-widest">
+                  {currentChapter.postalCode}
+                </span>
+                <h3 className="font-display text-3xl sm:text-4xl text-white tracking-wider uppercase mt-1">
+                  {currentChapter.turfName}
+                </h3>
+                <p className="font-script text-2xl text-red-400 mt-2">
+                  &ldquo;{currentChapter.quote}&rdquo;
+                </p>
+              </div>
+
+              <div className="text-xs sm:text-sm font-mono-tech leading-relaxed text-zinc-300 space-y-3">
+                <p>{currentChapter.summary}</p>
+                {currentChapter.paragraphs?.map((p: string, i: number) => (
+                  <p key={i}>{p}</p>
+                ))}
+              </div>
+
+              {/* Milestones */}
+              <div className="border-t border-white/10 pt-4 space-y-3">
+                <div className="text-[10px] font-mono-tech text-red-500 font-bold uppercase tracking-widest">
+                  PENCAPAIAN PENTING ERA INI
+                </div>
+                <div className="space-y-2">
+                  {currentChapter.milestones?.map((m: any, idx: number) => (
+                    <div key={idx} className="p-3 bg-white/[0.03] border border-white/10">
+                      <div className="text-xs font-mono-tech font-bold text-white uppercase">{m.label}</div>
+                      <div className="text-[11px] font-mono-tech text-zinc-400 mt-0.5">{m.detail}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Tab 03: Hierarchy & Syndicate */}
+      {activeTab === 'hierarchy' && (
+        <section className="max-w-[1520px] mx-auto px-4 sm:px-8 py-14 space-y-10">
+          <div className="max-w-2xl">
+            <h3 className="font-display text-4xl text-white tracking-wider uppercase">
+              STRUKTUR & TIER KEPANGKATAN
+            </h3>
+            <p className="text-xs font-mono-tech text-zinc-400 mt-2">
+              Sistem hierarki 6 tingkat yang menjaga komando taktis di medan tempur serta keteraturan operasional di hood Roxwood.
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            {hierarchyData.map((tier: any) => (
+              <div
+                key={tier.tier}
+                className={`p-6 border flex flex-col md:flex-row items-start md:items-center justify-between gap-6 ${
+                  isDark ? 'bg-[#0E070A] border-white/10 hover:border-red-500/40' : 'bg-white border-zinc-200 shadow-sm'
+                } transition-all`}
+              >
+                <div className="flex items-center gap-6">
+                  <div
+                    className="w-14 h-14 flex items-center justify-center font-display text-2xl font-bold border shrink-0"
+                    style={{ borderColor: tier.badgeColor, color: tier.badgeColor }}
+                  >
+                    {tier.tier}
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-3">
+                      <span className="font-display text-2xl text-white tracking-wider">{tier.name}</span>
+                      <span
+                        className="px-2 py-0.5 text-[9px] font-mono-tech font-bold uppercase"
+                        style={{ backgroundColor: tier.badgeColor, color: '#FFFFFF' }}
+                      >
+                        {tier.code}
+                      </span>
+                    </div>
+                    <div className="text-xs font-mono-tech text-red-400 font-bold mt-1">
+                      {tier.role}
+                    </div>
+                  </div>
+                </div>
+
+                <p className="text-xs font-mono-tech text-zinc-400 max-w-xl md:text-right">
+                  {tier.desc}
+                </p>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Tab 04: Doctrine & Colors */}
+      {activeTab === 'doctrine' && (
+        <section className="max-w-[1520px] mx-auto px-4 sm:px-8 py-14 space-y-12">
+          {/* Rules List */}
+          <div className="space-y-6">
+            <div className="max-w-2xl">
+              <h3 className="font-display text-4xl text-white tracking-wider uppercase">
+                {doctrineData.title}
+              </h3>
+              <p className="text-xs font-mono-tech text-zinc-400 mt-1">
+                {doctrineData.subtitle}
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {doctrineData.rules.map((rule: any) => (
+                <div
+                  key={rule.code}
+                  className={`p-6 border space-y-3 ${
+                    isDark ? 'bg-[#0E070A] border-white/10' : 'bg-white border-zinc-200 shadow-sm'
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-mono-tech text-red-500 font-bold">{rule.code}</span>
+                    <span className="text-[10px] font-mono-tech text-zinc-500 uppercase">PRINSIP MUTLAK</span>
+                  </div>
+                  <h4 className="font-display text-2xl text-white tracking-wider uppercase">
+                    {rule.name}
+                  </h4>
+                  <p className="text-xs font-mono-tech text-red-400 font-bold">
+                    {rule.summary}
+                  </p>
+                  <p className="text-xs font-mono-tech text-zinc-400 leading-relaxed pt-2 border-t border-white/10">
+                    {rule.detail}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Color Palette */}
+          <div className="space-y-6 pt-6 border-t border-white/10">
+            <h4 className="font-display text-2xl text-white tracking-wider uppercase">
+              EMPAT WARNA RESMI IDENTITAS 4BLOODS
+            </h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              {doctrineData.colorsPalette.map((col: any, idx: number) => (
+                <div
+                  key={idx}
+                  className="p-5 border border-white/10 bg-[#0E070A] space-y-3"
+                >
+                  <div
+                    className="w-full h-16 border border-white/20 shadow-inner"
+                    style={{ backgroundColor: col.hex }}
+                  />
+                  <div>
+                    <div className="font-display text-lg text-white tracking-wider">{col.name}</div>
+                    <div className="text-[10px] font-mono-tech text-red-500 font-bold">{col.hex}</div>
+                  </div>
+                  <p className="text-[11px] font-mono-tech text-zinc-400 leading-relaxed">
+                    {col.meaning}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Tab 05: War Chronicles */}
+      {activeTab === 'wars' && (
+        <section className="max-w-[1520px] mx-auto px-4 sm:px-8 py-14 space-y-8">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+              <h3 className="font-display text-4xl text-white tracking-wider uppercase">
+                ARSIP PERANG & OPERASI LAPANGAN
+              </h3>
+              <p className="text-xs font-mono-tech text-zinc-400 mt-1">
+                Koleksi rekaman pertempuran resmi: Defend Hood Roxwood, Liga Perang, Cayo Perico, dan rekaman POV pimpinan.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-2">
+              {(['ALL', 'WAR', 'LORE'] as const).map((filter) => (
+                <button
+                  key={filter}
+                  onClick={() => setWarFilter(filter)}
+                  className={`px-3 py-1.5 text-xs font-mono-tech font-bold uppercase border cursor-pointer ${
+                    warFilter === filter
+                      ? 'bg-red-600 text-white border-red-500'
+                      : 'bg-black/40 text-zinc-400 border-white/10 hover:text-white'
+                  }`}
+                >
+                  {filter}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Active Featured Video */}
+          <div className="border border-white/15 p-6 bg-[#0E070A] space-y-4">
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+              <div>
+                <span className="text-[10px] font-mono-tech text-red-500 font-bold uppercase tracking-widest">
+                  {activeWarTape.category} // {activeWarTape.tag}
+                </span>
+                <h4 className="font-display text-2xl sm:text-3xl text-white tracking-wider uppercase mt-1">
+                  {activeWarTape.title}
+                </h4>
+                <p className="text-xs font-mono-tech text-zinc-400 mt-1">
+                  POV: <strong className="text-white">{activeWarTape.streamer}</strong> ({activeWarTape.rank})
+                </p>
+              </div>
+
+              <button
+                onClick={() =>
+                  setVideoModal({
+                    videoId: activeWarTape.videoId,
+                    title: activeWarTape.title,
+                    streamer: activeWarTape.streamer,
+                  })
+                }
+                className="px-6 py-3 bg-red-600 hover:bg-red-500 text-white font-mono-tech text-xs font-bold uppercase tracking-widest flex items-center gap-2 cursor-pointer shrink-0"
+              >
+                <Play className="w-3.5 h-3.5 fill-white" />
+                <span>PUTAR REKAMAN HD</span>
+              </button>
+            </div>
+
+            <div className="aspect-video w-full bg-black relative overflow-hidden border border-white/10">
+              <iframe
+                src={`https://www.youtube.com/embed/${activeWarTape.videoId}?rel=0`}
+                title={activeWarTape.title}
+                className="w-full h-full"
+                allowFullScreen
+              />
+            </div>
+          </div>
+
+          {/* War Grid List */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filteredWars.map((war: any) => {
+              const isSelected = war.id === selectedWarId;
+              return (
+                <div
+                  key={war.id}
+                  onClick={() => setSelectedWarId(war.id)}
+                  className={`border p-4 cursor-pointer transition-all ${
+                    isSelected
+                      ? 'bg-red-600/15 border-red-500'
+                      : 'bg-[#0E070A] border-white/10 hover:border-red-500/40'
+                  }`}
+                >
+                  <div className="relative aspect-video overflow-hidden bg-black mb-3">
+                    <img src={war.thumb} alt={war.title} className="w-full h-full object-cover" />
+                    <div className="absolute top-2 left-2 px-2 py-0.5 bg-black/80 text-[9px] font-mono-tech text-red-400 font-bold uppercase">
+                      {war.tag}
+                    </div>
+                  </div>
+                  <h5 className="font-display text-lg text-white line-clamp-1">{war.title}</h5>
+                  <p className="text-[11px] font-mono-tech text-zinc-400 mt-1">
+                    {war.streamer} // {war.rank}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
+      {/* Tab 06: Glossary */}
+      {activeTab === 'glossary' && (
+        <section className="max-w-[1520px] mx-auto px-4 sm:px-8 py-14 space-y-8">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+              <h3 className="font-display text-4xl text-white tracking-wider uppercase">
+                KAMUS & ISTILAH FACTION (GLOSSARY)
+              </h3>
+              <p className="text-xs font-mono-tech text-zinc-400 mt-1">
+                Panduan memahami terminologi khas komunitas 4Bloods di dunia roleplay IME RP.
+              </p>
+            </div>
+
+            <input
+              type="text"
+              placeholder="Cari istilah..."
+              value={glossarySearch}
+              onChange={(e) => setGlossarySearch(e.target.value)}
+              className="px-4 py-2 bg-black/50 border border-white/15 text-xs font-mono-tech text-white placeholder-zinc-500 w-full sm:w-64 focus:outline-none focus:border-red-500"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {filteredGlossary.map((item: any, idx: number) => (
+              <div
+                key={idx}
+                className="p-5 border border-white/10 bg-[#0E070A] space-y-2 hover:border-red-500/40 transition-colors"
+              >
+                <div className="flex items-center justify-between">
+                  <h4 className="font-display text-xl text-white tracking-wider">{item.term}</h4>
+                  <span className="px-2 py-0.5 bg-red-600/20 text-red-400 border border-red-500/30 text-[9px] font-mono-tech font-bold uppercase">
+                    {item.category}
+                  </span>
+                </div>
+                <p className="text-xs font-mono-tech text-zinc-400 leading-relaxed">{item.desc}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Modals */}
+      {lightboxImage && (
+        <div
+          onClick={() => setLightboxImage(null)}
+          className="fixed inset-0 z-50 bg-black/92 backdrop-blur-xl flex items-center justify-center p-4"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="max-w-5xl w-full bg-[#0B0709] border border-white/20 overflow-hidden"
+          >
+            <div className="px-5 py-3.5 bg-[#120B0E] border-b border-white/10 flex items-center justify-between">
+              <div>
+                <h4 className="font-display text-2xl text-white tracking-wider">
+                  {lightboxImage.title}
+                </h4>
+                {lightboxImage.subtitle && (
+                  <p className="text-xs font-mono-tech text-red-400">{lightboxImage.subtitle}</p>
+                )}
+              </div>
+              <button
+                onClick={() => setLightboxImage(null)}
+                className="p-2 bg-white/5 hover:bg-red-600 text-white cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-6 bg-black flex items-center justify-center max-h-[80vh]">
+              <img
+                src={lightboxImage.src}
+                alt={lightboxImage.title}
+                className="max-h-[72vh] w-auto object-contain"
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {videoModal && (
+        <div
+          onClick={() => setVideoModal(null)}
+          className="fixed inset-0 z-50 bg-black/92 backdrop-blur-xl flex items-center justify-center p-4"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="max-w-5xl w-full bg-[#0B0709] border border-red-500/50 overflow-hidden shadow-[0_0_60px_rgba(220,38,38,0.3)]"
+          >
+            <div className="px-5 py-3.5 bg-[#120B0E] border-b border-white/10 flex items-center justify-between">
+              <div>
+                <span className="text-[10px] font-mono-tech text-red-500 font-bold uppercase tracking-widest">
+                  {videoModal.streamer}
+                </span>
+                <h4 className="font-display text-2xl text-white tracking-wider">
+                  {videoModal.title}
+                </h4>
+              </div>
+              <button
+                onClick={() => setVideoModal(null)}
+                className="p-2 bg-white/5 hover:bg-red-600 text-white cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="aspect-video w-full bg-black">
+              <iframe
+                src={`https://www.youtube.com/embed/${videoModal.videoId}?autoplay=1&rel=0`}
+                title={videoModal.title}
+                className="w-full h-full"
+                allowFullScreen
+              />
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

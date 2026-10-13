@@ -1,0 +1,52 @@
+{
+  "title": "DOKTRIN & KODE ETIK 4BG",
+  "subtitle": "Hukum Darah, Protokol Wilayah, dan Standar Disiplin Sindikat",
+  "rules": [
+    {
+      "code": "RULE-01",
+      "name": "BLOOD IN, BLOOD OUT",
+      "summary": "Masuk dengan darah, keluar hanya dengan kematian.",
+      "detail": "Menjadi anggota 4Bloods bukan sekadar mengenakan atribut merah, melainkan sumpah seumur hidup. Pengkhianatan terhadap keluarga tidak memiliki ruang pengampunan dan berujung pada eksekusi moral maupun pengusiran permanen."
+    },
+    {
+      "code": "RULE-02",
+      "name": "KEKELUARGAAN DI ATAS KEUNTUNGAN",
+      "summary": "Tidak ada anggota yang ditinggalkan di medan perang.",
+      "detail": "Kekayaan, rampokan, atau bisnis brangkas hanyalah sarana. Kepentingan keselamatan dan martabat setiap anggota adalah hukum tertinggi yang harus dijaga bersama."
+    },
+    {
+      "code": "RULE-03",
+      "name": "DISIPLIN KOMANDO & RADIO HT ENKRIPSI",
+      "summary": "Satu komando di bawah Shotcaller & Hood President.",
+      "detail": "Saat situasi perang atau operasi teritorial (Postal 1051–1052), seluruh anggota wajib berada pada frekuensi radio terenkripsi resmi 4BG. Suara shotcaller adalah absolut untuk meminimalisir kepanikan dan korban."
+    },
+    {
+      "code": "RULE-04",
+      "name": "FILTER REKRUTMEN W-HOTDOG",
+      "summary": "Pintu masuk wajib melalui pembuktian nyata dari bawah.",
+      "detail": "Calon anggota baru (Outsiders) dilarang langsung memakai warna merah sebelum menuntaskan shift kerja di kedai W-Hotdog, lulus audit integritas PC check anti-cheat, dan mendapatkan rekomendasi Dewan Under OG."
+    }
+  ],
+  "colorsPalette": [
+    {
+      "name": "Crimson Blood",
+      "hex": "#DC2626",
+      "meaning": "Warna kehormatan utama, sumpah darah pendiri, dan identitas bandana."
+    },
+    {
+      "name": "Obsidian Black",
+      "hex": "#090507",
+      "meaning": "Operasi malam, ketenangan strategis, dan kedalaman prinsip rahasia."
+    },
+    {
+      "name": "Pure White",
+      "hex": "#FFFFFF",
+      "meaning": "Ketulusan niat persaudaraan dan aksen tipografi Old English."
+    },
+    {
+      "name": "Concrete Grey",
+      "hex": "#71717A",
+      "meaning": "Debu jalanan Rancho & Roxwood, ketangguhan fisik buruh kota."
+    }
+  ]
+}

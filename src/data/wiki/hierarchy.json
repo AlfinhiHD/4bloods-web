@@ -1,0 +1,50 @@
+[
+  {
+    "tier": "01",
+    "code": "OG",
+    "name": "ORIGINAL GANGSTER",
+    "role": "Pemimpin Tertinggi & Dewan Pendiri",
+    "desc": "Pemegang keputusan tertinggi organisasi, penjaga filosofi dasar 4Bloods, serta penentu arah besar aliansi dan peperangan faksi.",
+    "badgeColor": "#DC2626"
+  },
+  {
+    "tier": "02",
+    "code": "UNDER OG",
+    "name": "UNDER OG / HOOD PRESIDENT",
+    "role": "Komandan Lapangan & Eksekutor Strategis",
+    "desc": "Mengatur jalannya roda organisasi sehari-hari di hood, memimpin taktik peperangan (shotcaller), mengawasi brangkas logistik, dan menjaga disiplin seluruh anggota.",
+    "badgeColor": "#EF4444"
+  },
+  {
+    "tier": "03",
+    "code": "YOUNG BLOODS",
+    "name": "YOUNG BLOODS (YB)",
+    "role": "Anggota Inti & Garda Tempur Utama",
+    "desc": "Anggota penuh yang telah melewati seluruh ujian loyalitas. Menjadi tulang punggung peperangan, operasi ekonomi ilegal, dan pembimbing bagi generasi di bawahnya.",
+    "badgeColor": "#F87171"
+  },
+  {
+    "tier": "04",
+    "code": "YOUNGSTER",
+    "name": "YOUNGSTER",
+    "role": "Kader Muda & Penggerak Jalanan",
+    "desc": "Generasi muda yang telah resmi mengenakan warna 4Bloods dan aktif menjalankan misi lapangan, menjaga ketertiban blok, serta menyuplai kebutuhan operasional.",
+    "badgeColor": "#A1A1AA"
+  },
+  {
+    "tier": "05",
+    "code": "LOCALS",
+    "name": "LOCALS",
+    "role": "Warga Blok & Kandidat Terverifikasi",
+    "desc": "Individu yang sudah diterima tinggal dan beraktivitas di sekitar teritori 4Bloods serta sedang berada dalam tahap pembuktian akhir sebelum diangkat menjadi Youngster.",
+    "badgeColor": "#71717A"
+  },
+  {
+    "tier": "06",
+    "code": "OUTSIDER",
+    "name": "OUTSIDER (W-HOTDOG)",
+    "role": "Tahap Seleksi Awal & Pekerja W-Hotdog",
+    "desc": "Pintu gerbang pertama bagi siapa pun yang ingin mendekat ke 4Bloods. Diuji melalui kerja nyata di W-Hotdog, pengecekan integritas, dan kontribusi material.",
+    "badgeColor": "#52525B"
+  }
+]

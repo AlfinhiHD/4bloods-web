@@ -1,0 +1,42 @@
+[
+  {
+    "term": "4BS (Four Bloods South/Street)",
+    "category": "ORGANISASI",
+    "desc": "Lambang dan sebutan awal 4Bloods di Chapter I (West Side) dan Chapter II (Jamestown) sebelum rebranding menjadi 4BG."
+  },
+  {
+    "term": "4BG (Four Bloods Gang)",
+    "category": "ORGANISASI",
+    "desc": "Evolusi nama dan lambang resmi di Chapter III (South Side Roxwood) dengan simbol Dual-Glock bersilang di atas bandana merah berlian."
+  },
+  {
+    "term": "W-Hotdog",
+    "category": "BISNIS & FILTER",
+    "desc": "Kedai bisnis kuliner jalanan resmi milik 4Bloods di Rancho yang berfungsi sebagai gerbang penyaringan (vetting pipeline) bagi calon anggota baru."
+  },
+  {
+    "term": "SSR (South Side Roxwood)",
+    "category": "TERITORI",
+    "desc": "Kawasan teritori kedaulatan utama 4Bloods saat ini yang mencakup blok perumahan Postal 1051 hingga 1052."
+  },
+  {
+    "term": "Hood President",
+    "category": "PANGKAT",
+    "desc": "Pangkat komando eksekutif tertinggi di lapangan (dipegang oleh Nahmier Davies) yang memimpin pergerakan taktis dan koordinasi harian anggota."
+  },
+  {
+    "term": "Shotcaller",
+    "category": "TAKTIK",
+    "desc": "Peran komandan peperangan yang memegang komando arah tembakan, strategi rotasi, dan instruksi radio HT saat perang faksi berkecamuk (contoh: Asep Teriyaki)."
+  },
+  {
+    "term": "Defend Hood",
+    "category": "SKENARIO WAR",
+    "desc": "Aturan in-game pertempuran di mana faksi bertahan harus menjaga batas wilayah markas dari serbuan faksi lawan dalam batasan waktu dan jumlah kuota pemain."
+  },
+  {
+    "term": "Operasi Cayo Perico",
+    "category": "MISI KHUSUS",
+    "desc": "Misi militer lintas pulau untuk merebut penguasaan pulau Cayo Perico melawan koalisi faksi lawan dan penjagaan ketat bersenjata."
+  }
+]
