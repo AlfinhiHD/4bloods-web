@@ -26,6 +26,8 @@ import {
   HelpCircle,
   GripVertical,
   RotateCcw,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import { STREAMER_ROSTER, StreamerMember } from '@/data/4bloods-data';
 
@@ -41,6 +43,7 @@ type EnrichedStreamer = StreamerMember & {
   upcomingTitle?: string | null;
   scheduledStartTime?: string | null;
   thumbnail: string;
+  viewerCount?: number | null;
   lastChecked?: string;
 };
 
@@ -155,7 +158,6 @@ export default function FourBloodsCamPage() {
 
   // Multi-Live Chat & Resizable Chat Dock
   const [showChat, setShowChat] = useState(true);
-  const [chatSplitMode, setChatSplitMode] = useState<'SINGLE' | 'SPLIT'>('SINGLE');
   const [activeChatIds, setActiveChatIds] = useState<string[]>([]);
   const [chatWidthPx, setChatWidthPx] = useState<number>(360);
   const [isResizingChat, setIsResizingChat] = useState<boolean>(false);
@@ -172,6 +174,9 @@ export default function FourBloodsCamPage() {
   const [lastScannerTime, setLastScannerTime] = useState<string>('--:--:--');
   const [embedDomain, setEmbedDomain] = useState<string>('localhost');
   const [nowMs, setNowMs] = useState<number>(0);
+
+  // Track if initial streamer selection has run once
+  const hasInitializedSelection = useRef(false);
 
   // Panduan Modal
   const [showGuideModal, setShowGuideModal] = useState(false);
@@ -252,6 +257,46 @@ export default function FourBloodsCamPage() {
     });
   };
 
+  const applyInitialStreamerSelection = useCallback(
+    (loadedStreamers: EnrichedStreamer[]) => {
+      if (hasInitializedSelection.current) return;
+      hasInitializedSelection.current = true;
+
+      if (typeof window !== 'undefined') {
+        const params = new URLSearchParams(window.location.search);
+        const watchParam = params.get('watch');
+        if (watchParam && loadedStreamers.some((s) => s.channelId === watchParam)) {
+          setSelectedIds([watchParam]);
+          setUnmutedId(watchParam);
+          setActiveChatIds([watchParam]);
+          return;
+        }
+
+        try {
+          const rawFavs = localStorage.getItem('4bg_fav_streamers');
+          const favList: string[] = rawFavs ? JSON.parse(rawFavs) : [];
+          if (favList.length > 0) {
+            const liveFavs = loadedStreamers.filter(
+              (s) => s.isLive && favList.includes(s.channelId)
+            );
+            if (liveFavs.length > 0) {
+              const liveFavIds = liveFavs.map((s) => s.channelId);
+              setSelectedIds(liveFavIds);
+              setUnmutedId(liveFavIds[0]);
+              setActiveChatIds(liveFavIds);
+              return;
+            }
+          }
+        } catch {}
+      }
+
+      // Default: Jangan checklist semua! Kosongkan jika tidak ada favorit yang live.
+      setSelectedIds([]);
+      setActiveChatIds([]);
+    },
+    []
+  );
+
   const fetchLiveStatus = useCallback(async (forceRefresh = false) => {
     setIsScanning(true);
     let success = false;
@@ -265,36 +310,27 @@ export default function FourBloodsCamPage() {
       if (res.ok) {
         const data = await res.json();
         if (data?.streamers && Array.isArray(data.streamers) && data.streamers.length > 0) {
-          setStreamers(data.streamers);
-          setLastScannerTime(
-            new Date(data.lastScannerTime || Date.now()).toLocaleTimeString('id-ID', {
-              hour: '2-digit',
-              minute: '2-digit',
-              second: '2-digit',
-            })
-          );
-
-          const liveOnes = (data.streamers as EnrichedStreamer[]).filter((s) => s.isLive);
-          setSelectedIds((prev) => {
-            if (prev.length === 0 && liveOnes.length > 0) {
-              return liveOnes.map((s) => s.channelId);
-            }
-            return prev;
-          });
-          setActiveChatIds((prev) => {
-            if (prev.length === 0 && liveOnes.length > 0) {
-              return liveOnes.slice(0, 2).map((s) => s.channelId);
-            }
-            return prev;
-          });
-          success = true;
+          const liveCount = (data.streamers as EnrichedStreamer[]).filter((s) => s.isLive).length;
+          // If server reports live streamers, use server data directly
+          if (liveCount > 0) {
+            setStreamers(data.streamers);
+            setLastScannerTime(
+              new Date(data.lastScannerTime || Date.now()).toLocaleTimeString('id-ID', {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+              })
+            );
+            applyInitialStreamerSelection(data.streamers);
+            success = true;
+          }
         }
       }
     } catch (err) {
       console.warn('Backend API /api/streamers unreachable or timed out on Vercel, activating direct client fallback:', err);
     }
 
-    // 2. Direct Client-Side Firebase RTDB Fallback (100% infallible on Vercel)
+    // 2. Direct Client-Side Firebase RTDB Fallback (100% infallible on Vercel deployment)
     if (!success) {
       try {
         const [fbStreamersRes, fbAvatarsRes] = await Promise.all([
@@ -353,19 +389,7 @@ export default function FourBloodsCamPage() {
             })
           );
 
-          const liveOnes = enriched.filter((s) => s.isLive);
-          setSelectedIds((prev) => {
-            if (prev.length === 0 && liveOnes.length > 0) {
-              return liveOnes.map((s) => s.channelId);
-            }
-            return prev;
-          });
-          setActiveChatIds((prev) => {
-            if (prev.length === 0 && liveOnes.length > 0) {
-              return liveOnes.slice(0, 2).map((s) => s.channelId);
-            }
-            return prev;
-          });
+          applyInitialStreamerSelection(enriched);
           success = true;
         }
       } catch (fbErr) {
@@ -424,6 +448,10 @@ export default function FourBloodsCamPage() {
 
   const liveStreamers = useMemo(() => streamers.filter((s) => s.isLive), [streamers]);
 
+  const totalLiveViewers = useMemo(() => {
+    return streamers.reduce((acc, s) => acc + (s.viewerCount || 0), 0);
+  }, [streamers]);
+
   const upcomingStreamers = useMemo(
     () =>
       streamers
@@ -459,40 +487,26 @@ export default function FourBloodsCamPage() {
       .filter((s): s is EnrichedStreamer => Boolean(s));
   }, [selectedIds, streamers]);
 
-  // AUTO-SPLIT LIVE CHAT: Auto 1 chat if 1 stream, auto 2 split chats if 2+ streams
+  // DYNAMIC MULTI-CHAT: Automatically sync chat channels with selected POV members
   useEffect(() => {
-    if (activePovMembers.length <= 1) {
-      setChatSplitMode('SINGLE');
-      if (activePovMembers[0]) {
-        setActiveChatIds([activePovMembers[0].channelId]);
-      }
-    } else {
-      setChatSplitMode('SPLIT');
-      setActiveChatIds((prev) => {
-        const first = activePovMembers[0]?.channelId;
-        const second = activePovMembers[1]?.channelId;
-        if (prev.length >= 2 && prev.every((id) => activePovMembers.some((m) => m.channelId === id))) {
-          return prev;
-        }
-        return [first, second].filter(Boolean) as string[];
-      });
-    }
-  }, [activePovMembers.length]);
+    const povIds = activePovMembers.map((m) => m.channelId);
+    setActiveChatIds((prev) => {
+      // Keep chat for streamers that are still in active POV
+      const kept = prev.filter((id) => povIds.includes(id));
+      // Add any newly selected POV members
+      const added = povIds.filter((id) => !prev.includes(id));
+      return [...kept, ...added];
+    });
+  }, [activePovMembers]);
 
   const activeChatMembers = useMemo(() => {
-    const valid = activeChatIds
-      .map((cid) => activePovMembers.find((m) => m.channelId === cid))
+    const povMap = new Map(activePovMembers.map((m) => [m.channelId, m]));
+    const matched = activeChatIds
+      .map((cid) => povMap.get(cid))
       .filter((m): m is EnrichedStreamer => Boolean(m));
-    if (valid.length > 0) {
-      return chatSplitMode === 'SINGLE' ? [valid[0]] : valid.slice(0, 2);
-    }
-    if (activePovMembers.length > 0) {
-      return chatSplitMode === 'SINGLE'
-        ? [activePovMembers[0]]
-        : activePovMembers.slice(0, 2);
-    }
-    return [];
-  }, [activeChatIds, activePovMembers, chatSplitMode]);
+    if (matched.length > 0) return matched;
+    return activePovMembers;
+  }, [activeChatIds, activePovMembers]);
 
   const toggleStreamer = (channelId: string) => {
     setSelectedIds((prev) => {
@@ -505,35 +519,47 @@ export default function FourBloodsCamPage() {
         const next = [...prev, channelId];
         if (next.length === 1) {
           setUnmutedId(channelId);
-          setActiveChatIds([channelId]);
         }
+        setActiveChatIds((cPrev) => (cPrev.includes(channelId) ? cPrev : [...cPrev, channelId]));
         return next;
       }
     });
   };
 
-  const selectChatStream = (channelId: string) => {
-    if (chatSplitMode === 'SINGLE') {
-      setActiveChatIds([channelId]);
-    } else {
-      setActiveChatIds((prev) => {
-        if (prev.includes(channelId)) {
-          return prev.length > 1 ? prev.filter((item) => item !== channelId) : prev;
-        }
-        if (prev.length >= 2) {
-          return [prev[1], channelId];
-        }
-        return [...prev, channelId];
-      });
-    }
+  const toggleChatStream = (channelId: string) => {
+    setActiveChatIds((prev) => {
+      if (prev.includes(channelId)) {
+        return prev.filter((item) => item !== channelId);
+      }
+      return [...prev, channelId];
+    });
   };
+
+  const selectChatStream = (channelId: string) => {
+    toggleChatStream(channelId);
+  };
+
+  // Quick 1-click swap for POV positioning
+  const moveStreamerPosition = useCallback(
+    (fromIdx: number, dir: -1 | 1) => {
+      const toIdx = fromIdx + dir;
+      if (toIdx < 0 || toIdx >= selectedIds.length) return;
+      setSelectedIds((prev) => {
+        const next = [...prev];
+        const [moved] = next.splice(fromIdx, 1);
+        next.splice(toIdx, 0, moved);
+        return next;
+      });
+    },
+    [selectedIds.length]
+  );
 
   const watchAllLive = () => {
     const liveIds = liveStreamers.map((s) => s.channelId);
     if (liveIds.length > 0) {
       setSelectedIds(liveIds);
       setUnmutedId(liveIds[0]);
-      setActiveChatIds(liveIds.slice(0, 2));
+      setActiveChatIds(liveIds);
     }
   };
 
@@ -857,6 +883,11 @@ export default function FourBloodsCamPage() {
             <span>
               <strong>{liveStreamers.length}</strong> / {streamers.length} LIVE
             </span>
+            {totalLiveViewers > 0 && (
+              <span className="hidden lg:inline text-zinc-300 font-normal pl-1.5 border-l border-emerald-500/30">
+                👥 {totalLiveViewers.toLocaleString('id-ID')} penonton
+              </span>
+            )}
           </div>
         </div>
 
@@ -1209,6 +1240,11 @@ export default function FourBloodsCamPage() {
                             {member.isLive ? (
                               <span className="text-[9px] font-mono-tech text-emerald-400 font-bold flex items-center gap-1">
                                 ● LIVE {uptime ? `(${uptime})` : ''}
+                                {typeof member.viewerCount === 'number' && member.viewerCount > 0 && (
+                                  <span className="text-zinc-400 font-normal">
+                                    • 👥 {member.viewerCount.toLocaleString('id-ID')}
+                                  </span>
+                                )}
                               </span>
                             ) : member.isUpcoming && upcomingInfo ? (
                               <span className="text-[9px] font-mono-tech text-amber-400 font-bold truncate">
@@ -1519,6 +1555,11 @@ export default function FourBloodsCamPage() {
                             >
                               <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
                               <span>LIVE</span>
+                              {typeof member.viewerCount === 'number' && member.viewerCount > 0 && (
+                                <span className="text-red-100 font-mono text-[8px] border-l border-white/30 pl-1 ml-0.5 font-normal">
+                                  👥 {member.viewerCount.toLocaleString('id-ID')}
+                                </span>
+                              )}
                             </button>
                           ) : member.isUpcoming ? (
                             <span className="px-1.5 py-0.5 bg-amber-500 text-black text-[9px] font-mono-tech font-bold uppercase rounded-sm shrink-0">
@@ -1545,6 +1586,44 @@ export default function FourBloodsCamPage() {
 
                         {/* Card Controls */}
                         <div className="flex items-center gap-1 shrink-0">
+                          {/* Quick Reorder Swap Arrows */}
+                          {activePovMembers.length > 1 && (
+                            <div className="flex items-center gap-0.5 border border-white/10 p-0.5 rounded-sm bg-black/40">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  moveStreamerPosition(idx, -1);
+                                }}
+                                disabled={idx === 0}
+                                className={`p-0.5 rounded-xs transition-colors ${
+                                  idx === 0
+                                    ? 'opacity-25 cursor-not-allowed text-zinc-600'
+                                    : 'hover:bg-red-600 hover:text-white text-zinc-300 cursor-pointer'
+                                }`}
+                                title="Geser posisi POV ke kiri/sebelumnya"
+                              >
+                                <ChevronLeft className="w-3 h-3" />
+                              </button>
+                              <span className="text-[8px] font-mono-tech px-0.5 text-zinc-400 font-bold select-none">
+                                #{idx + 1}
+                              </span>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  moveStreamerPosition(idx, 1);
+                                }}
+                                disabled={idx === activePovMembers.length - 1}
+                                className={`p-0.5 rounded-xs transition-colors ${
+                                  idx === activePovMembers.length - 1
+                                    ? 'opacity-25 cursor-not-allowed text-zinc-600'
+                                    : 'hover:bg-red-600 hover:text-white text-zinc-300 cursor-pointer'
+                                }`}
+                                title="Geser posisi POV ke kanan/berikutnya"
+                              >
+                                <ChevronRight className="w-3 h-3" />
+                              </button>
+                            </div>
+                          )}
                           {/* Quick Width Cycle Button (Auto Fit -> 50% -> 100%) */}
                           <button
                             ref={(el) => {
@@ -1657,8 +1736,8 @@ export default function FourBloodsCamPage() {
                           fitHeightView ? 'flex-1 min-h-0 h-full' : 'aspect-video'
                         }`}
                       >
-                        {(resizingChannelId || isResizingChat) && (
-                          <div className="absolute inset-0 z-20 bg-transparent cursor-ew-resize" />
+                        {(resizingChannelId || isResizingChat || draggedChannelId) && (
+                          <div className="absolute inset-0 z-20 bg-transparent cursor-move" />
                         )}
 
                         {activeEmbedVideoId ? (
@@ -1699,23 +1778,32 @@ export default function FourBloodsCamPage() {
                         ) : (
                           <div className="w-full h-full flex flex-col items-center justify-center p-4 sm:p-6 text-center bg-[#090608]">
                             <span className="px-2.5 py-0.5 bg-zinc-800 text-zinc-400 border border-white/10 text-[10px] font-mono-tech font-bold uppercase rounded mb-2">
-                              OFFLINE
+                              STREAM BERAKHIR / OFFLINE
                             </span>
                             <h3 className="font-display text-xl sm:text-2xl text-white uppercase tracking-wide mb-1">
                               {member.name}
                             </h3>
-                            <p className="text-xs text-zinc-400 mb-3">
-                              Streamer sedang tidak siaran langsung.
+                            <p className="text-xs text-zinc-400 mb-4 max-w-xs">
+                              Siaran langsung telah selesai di YouTube.
                             </p>
-                            <a
-                              href={`https://www.youtube.com/channel/${member.channelId}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="px-4 py-2 bg-red-600 hover:bg-red-500 text-white text-[10px] font-mono-tech font-bold uppercase tracking-widest rounded transition-all flex items-center gap-1.5"
-                            >
-                              <span>Kunjungi Channel</span>
-                              <ExternalLink className="w-3 h-3" />
-                            </a>
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => toggleStreamer(member.channelId)}
+                                className="px-3.5 py-1.5 bg-red-600 hover:bg-red-500 text-white text-[10px] font-mono-tech font-bold uppercase tracking-wider rounded transition-all cursor-pointer flex items-center gap-1.5 shadow-[0_0_15px_rgba(220,38,38,0.4)]"
+                              >
+                                <X className="w-3.5 h-3.5" />
+                                <span>TUTUP POV INI</span>
+                              </button>
+                              <a
+                                href={`https://www.youtube.com/channel/${member.channelId}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-[10px] font-mono-tech font-bold uppercase rounded transition-all flex items-center gap-1"
+                              >
+                                <span>Channel</span>
+                                <ExternalLink className="w-3 h-3" />
+                              </a>
+                            </div>
                           </div>
                         )}
                       </div>
@@ -1768,42 +1856,11 @@ export default function FourBloodsCamPage() {
                       isDark ? 'text-white' : 'text-zinc-900'
                     }`}
                   >
-                    LIVE CHAT {chatSplitMode === 'SPLIT' ? '(AUTO SPLIT)' : ''}
+                    LIVE CHAT {activeChatMembers.length > 0 ? `(${activeChatMembers.length})` : ''}
                   </span>
                 </div>
 
                 <div className="flex items-center gap-1">
-                  <div
-                    className={`flex items-center border p-0.5 rounded-sm ${
-                      isDark ? 'bg-black border-white/10' : 'bg-white border-zinc-300'
-                    }`}
-                  >
-                    <button
-                      onClick={() => setChatSplitMode('SINGLE')}
-                      className={`px-2 py-0.5 text-[9px] font-mono-tech font-bold uppercase cursor-pointer rounded-sm ${
-                        chatSplitMode === 'SINGLE'
-                          ? 'bg-red-600 text-white'
-                          : isDark
-                            ? 'text-zinc-400 hover:text-white'
-                            : 'text-zinc-700 hover:text-black'
-                      }`}
-                    >
-                      1 CHAT
-                    </button>
-                    <button
-                      onClick={() => setChatSplitMode('SPLIT')}
-                      className={`px-2 py-0.5 text-[9px] font-mono-tech font-bold uppercase cursor-pointer rounded-sm ${
-                        chatSplitMode === 'SPLIT'
-                          ? 'bg-red-600 text-white'
-                          : isDark
-                            ? 'text-zinc-400 hover:text-white'
-                            : 'text-zinc-700 hover:text-black'
-                      }`}
-                    >
-                      2 SPLIT
-                    </button>
-                  </div>
-
                   <button
                     onClick={() => setShowChat(false)}
                     className={`p-1 cursor-pointer ${
@@ -1828,16 +1885,18 @@ export default function FourBloodsCamPage() {
                     return (
                       <button
                         key={m.channelId}
-                        onClick={() => selectChatStream(m.channelId)}
-                        className={`px-2.5 py-1 text-[10px] font-mono-tech font-bold uppercase border shrink-0 transition-colors cursor-pointer rounded-sm ${
+                        onClick={() => toggleChatStream(m.channelId)}
+                        className={`px-2 py-0.5 text-[9px] font-mono-tech font-bold uppercase border shrink-0 transition-colors cursor-pointer rounded-sm flex items-center gap-1 ${
                           isSelected
-                            ? 'bg-red-600 text-white border-red-500'
+                            ? 'bg-red-600 text-white border-red-500 shadow-xs'
                             : isDark
-                              ? 'bg-[#140D10] text-zinc-300 border-white/10 hover:text-white'
-                              : 'bg-white text-zinc-800 border-zinc-300 hover:border-red-500'
+                              ? 'bg-[#140D10] text-zinc-400 border-white/10 hover:text-white'
+                              : 'bg-white text-zinc-700 border-zinc-300 hover:border-red-500'
                         }`}
+                        title={isSelected ? `Sembunyikan chat ${m.name}` : `Tampilkan chat ${m.name}`}
                       >
-                        {m.name}
+                        <span>{m.name}</span>
+                        {isSelected ? <X className="w-2.5 h-2.5" /> : <Plus className="w-2.5 h-2.5" />}
                       </button>
                     );
                   })}
@@ -1845,8 +1904,8 @@ export default function FourBloodsCamPage() {
               )}
             </div>
 
-            {/* Chat Iframes */}
-            <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
+            {/* Chat Iframes: Dynamically adapts to N open chats */}
+            <div className="flex-1 min-h-0 flex flex-col overflow-y-auto cam-scroll">
               {activeChatMembers.length === 0 ? (
                 <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
                   <MessageSquare className="w-8 h-8 text-red-500/50 mb-2" />
@@ -1876,7 +1935,7 @@ export default function FourBloodsCamPage() {
                   return (
                     <div
                       key={chatMember.channelId}
-                      className={`flex-1 min-h-0 flex flex-col overflow-hidden ${
+                      className={`flex-1 min-h-[180px] flex flex-col overflow-hidden shrink-0 ${
                         idx > 0
                           ? isDark
                             ? 'border-t border-white/15'
@@ -1898,18 +1957,27 @@ export default function FourBloodsCamPage() {
                         >
                           CHAT // {chatMember.name}
                         </span>
-                        {chatVideoId && (
-                          <a
-                            href={`https://www.youtube.com/live_chat?v=${chatVideoId}&is_popout=1`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-[9px] font-mono-tech text-red-500 hover:underline flex items-center gap-0.5"
-                            title="Buka Chat di Pop-up Window Terpisah"
+                        <div className="flex items-center gap-2">
+                          {chatVideoId && (
+                            <a
+                              href={`https://www.youtube.com/live_chat?v=${chatVideoId}&is_popout=1`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-[9px] font-mono-tech text-red-500 hover:underline flex items-center gap-0.5"
+                              title="Buka Chat di Pop-up Window Terpisah"
+                            >
+                              <span>POP-OUT</span>
+                              <ExternalLink className="w-2.5 h-2.5" />
+                            </a>
+                          )}
+                          <button
+                            onClick={() => toggleChatStream(chatMember.channelId)}
+                            className="p-0.5 text-zinc-400 hover:text-white hover:bg-red-600 rounded-xs transition-colors cursor-pointer"
+                            title={`Tutup chat ${chatMember.name}`}
                           >
-                            <span>POP-OUT</span>
-                            <ExternalLink className="w-2.5 h-2.5" />
-                          </a>
-                        )}
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
                       </div>
 
                       {chatVideoId ? (

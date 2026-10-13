@@ -194,10 +194,10 @@
     "channelId": "UCvseheuTcY-BnPGsmfQ5K5g",
     "handle": "@Ackaiii",
     "avatar": "/assets/avatars/UCvseheuTcY-BnPGsmfQ5K5g.jpg",
-    "isLive": true,
-    "videoId": "eAv8k5zuMhs",
-    "streamTitle": "GTA V ROLEPLAY // IME RP - 4BLOODS",
-    "startTimestamp": "2026-10-13T06:00:00.000Z"
+    "isLive": false,
+    "videoId": null,
+    "streamTitle": null,
+    "startTimestamp": null
   },
   {
     "name": "Tom Kendrick",

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import StickyAudioPlayer from '@/components/StickyAudioPlayer';
@@ -87,7 +87,6 @@ export default function CompanyProfilePage() {
   // Gang Structure Interactive Showcase State
   const [selectedShowcaseIdx, setSelectedShowcaseIdx] = useState<number>(0);
   const [showcaseTierFilter, setShowcaseTierFilter] = useState<string>('ALL');
-  const [showcaseVisualMode, setShowcaseVisualMode] = useState<'FANART' | 'INGAME'>('FANART');
 
   const isDark = theme === 'dark';
 
@@ -197,42 +196,34 @@ export default function CompanyProfilePage() {
     return true;
   });
 
-  // High Council & Key Creators for the Interactive Gang Structure Showcase
-  const allSpotlightCreators = streamers.filter((m) =>
-    [
-      'Nahmier Davies',
-      'Ilham Joseph',
-      'Louis Ven',
-      'Deja Amari',
-      'Muhammad Sumbul',
-      'Joy Braxton',
-      'Rusdi Abuy Walker',
-      'Deden Walker',
-      'Jane Elisha',
-      'Asep Teriyaki',
-      'Azmi',
-      'Flip Flop',
-      'Kim',
-      'Ujang Walker',
-    ].includes(m.name)
-  );
+  // Rank hierarchy priority ordering
+  const RANK_PRIORITY: Record<string, number> = {
+    'OG': 1,
+    'Under OG': 2,
+    'Young Bloods': 3,
+    'Member': 4,
+  };
+
+  // Complete Syndicate Roster ordered strictly by gang hierarchy (All 54 Members)
+  const allSpotlightCreators = useMemo(() => {
+    return [...streamers].sort((a, b) => {
+      const pA = RANK_PRIORITY[a.rank] ?? 99;
+      const pB = RANK_PRIORITY[b.rank] ?? 99;
+      if (pA !== pB) return pA - pB;
+      return a.name.localeCompare(b.name);
+    });
+  }, [streamers]);
 
   const showcaseList =
     showcaseTierFilter === 'ALL'
       ? allSpotlightCreators
-      : allSpotlightCreators.filter((m) => m.rank === showcaseTierFilter);
+      : allSpotlightCreators.filter((m: any) => m.rank === showcaseTierFilter);
 
   const activeShowcaseMember =
     showcaseList[selectedShowcaseIdx] || showcaseList[0] || allSpotlightCreators[0];
 
   const getMemberShowcaseArtwork = (member: any) => {
     if (!member) return '/assets/generated/fanart_council.webp';
-    if (showcaseVisualMode === 'INGAME') {
-      if (member.isLive && member.videoId) {
-        return `https://i.ytimg.com/vi/${member.videoId}/maxresdefault.jpg`;
-      }
-      return member.featuredThumb || '/assets/streams/nahmier_roxwood.jpg';
-    }
     return (
       DEFAULT_SHOWCASE_FANARTS[member.name] ||
       (member.rank === 'OG'
@@ -834,11 +825,11 @@ export default function CompanyProfilePage() {
 
             <div className="flex flex-wrap gap-1.5">
               {[
-                { id: 'ALL', label: 'ALL SHOWCASE (14)' },
-                { id: 'OG', label: 'TIER 01 // OG (4)' },
-                { id: 'Under OG', label: 'TIER 02 // UNDER OG (6)' },
-                { id: 'Young Bloods', label: 'TIER 03 // YOUNG BLOODS' },
-                { id: 'Member', label: 'TIER 04 // KEY CREATORS' },
+                { id: 'ALL', label: `ALL MEMBERS (${allSpotlightCreators.length})` },
+                { id: 'OG', label: `TIER 01 // OG (${allSpotlightCreators.filter((m: any) => m.rank === 'OG').length})` },
+                { id: 'Under OG', label: `TIER 02 // UNDER OG (${allSpotlightCreators.filter((m: any) => m.rank === 'Under OG').length})` },
+                { id: 'Young Bloods', label: `TIER 03 // YOUNG BLOODS (${allSpotlightCreators.filter((m: any) => m.rank === 'Young Bloods').length})` },
+                { id: 'Member', label: `TIER 04 // MEMBERS (${allSpotlightCreators.filter((m: any) => m.rank === 'Member').length})` },
               ].map((tab) => (
                 <button
                   key={tab.id}
@@ -922,7 +913,7 @@ export default function CompanyProfilePage() {
                 </div>
 
                 <div className="flex-1 overflow-y-auto p-3 space-y-2">
-                  {showcaseList.map((member, idx) => {
+                  {showcaseList.map((member: any, idx: number) => {
                     const isSelected = activeShowcaseMember?.channelId === member.channelId;
                     return (
                       <button
@@ -1004,57 +995,36 @@ export default function CompanyProfilePage() {
                       (e.currentTarget as HTMLImageElement).src =
                         '/assets/generated/fanart_council.webp';
                     }}
-                    className="w-full h-full object-cover opacity-65 transition-all duration-700"
+                    className="w-full h-full object-cover opacity-90 transition-all duration-700 brightness-105 contrast-105"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-[#070506] via-[#070506]/65 to-transparent" />
-                  <div className="absolute inset-0 bg-gradient-to-r from-[#070506]/95 via-[#070506]/40 to-transparent" />
+                  {/* Subtle readable gradient for text legibility without making the art dark */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#070506]/95 via-[#070506]/35 to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-[#070506]/75 via-[#070506]/20 to-transparent" />
                 </div>
 
                 {/* Top Showcase Bar */}
                 <div className="relative z-10 p-5 sm:p-7 flex flex-wrap items-center justify-between gap-3">
-                  <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-black/85 border border-amber-500/40 text-amber-300 text-[10px] font-mono-tech">
-                    <ImageIcon className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-                    <span>
-                      {showcaseVisualMode === 'FANART'
-                        ? 'DEFAULT AI CONCEPT ART — SIAP DIGANTI FAN ART ANAK-ANAK 4BLOODS'
-                        : 'IN-GAME STREAM POV SNAPSHOT (IME RP)'}
-                    </span>
+                  <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-black/80 border border-red-500/30 text-zinc-200 text-[10px] font-mono-tech backdrop-blur-xs">
+                    <span className="w-1.5 h-1.5 rounded-full bg-red-600 animate-pulse" />
+                    <span className="font-bold text-red-500">DOSSIER</span>
+                    <span className="text-zinc-500">•</span>
+                    <span>{activeShowcaseMember.rank.toUpperCase()} ARCHIVE</span>
                   </div>
 
-                  <div className="flex items-center gap-1.5 bg-black/85 p-1 border border-white/15">
-                    <button
-                      onClick={() => setShowcaseVisualMode('FANART')}
-                      className={`px-3 py-1 text-[10px] font-mono-tech font-bold uppercase cursor-pointer ${
-                        showcaseVisualMode === 'FANART'
-                          ? 'bg-red-600 text-white'
-                          : 'text-zinc-400 hover:text-white'
-                      }`}
-                    >
-                      DEFAULT FAN ART
-                    </button>
-                    <button
-                      onClick={() => setShowcaseVisualMode('INGAME')}
-                      className={`px-3 py-1 text-[10px] font-mono-tech font-bold uppercase cursor-pointer ${
-                        showcaseVisualMode === 'INGAME'
-                          ? 'bg-red-600 text-white'
-                          : 'text-zinc-400 hover:text-white'
-                      }`}
-                    >
-                      STREAM SNAPSHOT
-                    </button>
+                  <div className="flex items-center gap-2 bg-black/80 p-1 border border-white/15 backdrop-blur-xs">
                     <button
                       onClick={() =>
                         setLightboxImage({
                           src: getMemberShowcaseArtwork(activeShowcaseMember),
                           title: `${activeShowcaseMember.name} — ${activeShowcaseMember.rank}`,
-                          subtitle:
-                            'Slot Fan Art Karakter (Dapat diganti dengan Fan Art Komunitas 4Bloods)',
+                          subtitle: `Arsip Visual 4Bloods // ${activeShowcaseMember.role || activeShowcaseMember.rank}`,
                         })
                       }
-                      className="p-1.5 text-zinc-300 hover:text-white cursor-pointer"
+                      className="px-3 py-1 bg-red-600/20 hover:bg-red-600 border border-red-500/40 hover:border-red-500 text-zinc-200 hover:text-white text-[10px] font-mono-tech font-bold uppercase cursor-pointer flex items-center gap-1.5 transition-all"
                       title="Perbesar Artwork"
                     >
                       <Maximize2 className="w-3.5 h-3.5" />
+                      <span>PERBESAR ARTWORK</span>
                     </button>
                   </div>
                 </div>

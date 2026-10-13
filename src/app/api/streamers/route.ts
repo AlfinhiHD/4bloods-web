@@ -197,13 +197,40 @@ export async function GET(request: Request) {
           });
           if (checkRes.ok) {
             const html = await checkRes.text();
-            const hasEnded = html.includes('"endTimestamp":"');
-            const isLiveNow = html.includes('"isLiveNow":true');
-            if (hasEnded || !isLiveNow) {
-              // Stream has finished on YouTube! Auto-clear stuck live status
-              snapshotMap[cid].isLive = false;
-              snapshotMap[cid].videoId = null;
-              snapshotMap[cid].streamTitle = null;
+            const isBotChallenge =
+              html.includes('consent.youtube.com') ||
+              html.includes('unusual traffic') ||
+              html.includes('recaptcha') ||
+              !html.includes('<title>');
+
+            if (!isBotChallenge) {
+              const hasExplicitlyEnded =
+                html.includes('"endTimestamp":"') ||
+                html.includes('This live stream has ended') ||
+                html.includes('Live stream offline') ||
+                html.includes('Siaran langsung telah berakhir');
+
+              const isLiveNow =
+                !hasExplicitlyEnded &&
+                (html.includes('"isLiveNow":true') ||
+                 html.includes('"isLive":true') ||
+                 html.includes('"isLiveBroadcast":true'));
+
+              if (hasExplicitlyEnded) {
+                // Stream has finished on YouTube! Auto-clear stuck live status
+                snapshotMap[cid].isLive = false;
+                snapshotMap[cid].videoId = null;
+                snapshotMap[cid].streamTitle = null;
+                snapshotMap[cid].viewerCount = null;
+              } else if (isLiveNow) {
+                // Extract real concurrent live viewer count
+                const viewerMatch =
+                  html.match(/"originalViewCount":"(\d+)"/) ||
+                  html.match(/"viewCount":\{"runs":\[\{"text":"([\d,.]+)"\}/);
+                if (viewerMatch) {
+                  snapshotMap[cid].viewerCount = Number(viewerMatch[1].replace(/,/g, ''));
+                }
+              }
             }
           }
         } catch {
@@ -282,6 +309,7 @@ export async function GET(request: Request) {
       avatar: safeAvatar,
       isLive: isActuallyLive,
       videoId: isActuallyLive ? snap.videoId : null,
+      viewerCount: isActuallyLive ? snap.viewerCount || null : null,
       streamTitle: isActuallyLive ? snap.streamTitle || `${member.name} Live Stream` : null,
       startTimestamp: snap.startTimestamp || null,
       isUpcoming,
