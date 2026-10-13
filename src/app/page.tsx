@@ -1,0 +1,2501 @@
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
+import Navbar from '@/components/Navbar';
+import StickyAudioPlayer from '@/components/StickyAudioPlayer';
+import Tilt3DCard from '@/components/Tilt3DCard';
+import {
+  LORE_CHAPTERS,
+  HIERARCHY_TIERS,
+  WARDROBE_ITEMS,
+  OFFICIAL_MEDIA_TRACKS,
+  WAR_ARCHIVES,
+  STREAMER_ROSTER,
+} from '@/data/4bloods-data';
+import {
+  Play,
+  Radio,
+  MapPin,
+  ExternalLink,
+  Search,
+  Tv,
+  RotateCw,
+  Maximize2,
+  X,
+  ChevronLeft,
+  ChevronRight,
+  Image as ImageIcon,
+  Shield,
+  Box,
+  Disc3,
+  Film,
+  Columns2,
+  Sun,
+  Moon,
+  Sparkles,
+} from 'lucide-react';
+
+// Optimized Lightweight Fan Art visuals per rank/character
+const DEFAULT_SHOWCASE_FANARTS: Record<string, string> = {
+  'Nahmier Davies': '/assets/generated/fanart_roxwood.webp',
+  'Jane Elisha': '/assets/generated/fanart_council.webp',
+  'Asep Teriyaki': '/assets/generated/fanart_west_to_ssr.webp',
+  'Ilham Joseph': '/assets/generated/fanart_council.webp',
+  'Louis Ven': '/assets/generated/fanart_roxwood.webp',
+  'Deja Amari': '/assets/generated/fanart_west_to_ssr.webp',
+};
+
+export default function CompanyProfilePage() {
+  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+  const [activeChapterIdx, setActiveChapterIdx] = useState(2); // Default Chapter III (SSR)
+
+  // Section 03: Interactive 3D Showroom State
+  const [wardrobeCategory, setWardrobeCategory] = useState<string>('all');
+  const [selectedGarmentId, setSelectedGarmentId] = useState<string>(WARDROBE_ITEMS[0].id);
+  const [garmentViewMode, setGarmentViewMode] = useState<'DUAL' | 'FRONT' | 'BACK'>('DUAL');
+
+  // Section 04: Vinyl Record Deck & Studio Tracklist State
+  const [trackFilter, setTrackFilter] = useState<'ALL' | 'MV' | 'DISS'>('ALL');
+  const [selectedTrackId, setSelectedTrackId] = useState<string>(OFFICIAL_MEDIA_TRACKS[0].id);
+
+  // Section 05: War Cinema Screen & Tactical Tape Reel State
+  const [warFilter, setWarFilter] = useState<'ALL' | 'WAR' | 'LORE'>('ALL');
+  const [selectedWarId, setSelectedWarId] = useState<string>(WAR_ARCHIVES[0].id);
+
+  // Modals
+  const [lightboxImage, setLightboxImage] = useState<{
+    src: string;
+    title: string;
+    subtitle?: string;
+  } | null>(null);
+  const [videoModal, setVideoModal] = useState<{
+    videoId: string;
+    title: string;
+    streamer: string;
+  } | null>(null);
+
+  // Live Streamers from our Strict Edge API
+  const [streamers, setStreamers] = useState<any[]>(STREAMER_ROSTER);
+  const [liveCount, setLiveCount] = useState<number>(1);
+  const [rosterSearch, setRosterSearch] = useState('');
+  const [rosterFilter, setRosterFilter] = useState<
+    'ALL' | 'LIVE' | 'OG' | 'Under OG' | 'Young Bloods'
+  >('ALL');
+
+  // Gang Structure Interactive Showcase State
+  const [selectedShowcaseIdx, setSelectedShowcaseIdx] = useState<number>(0);
+  const [showcaseTierFilter, setShowcaseTierFilter] = useState<string>('ALL');
+  const [showcaseVisualMode, setShowcaseVisualMode] = useState<'FANART' | 'INGAME'>('FANART');
+
+  const isDark = theme === 'dark';
+
+  useEffect(() => {
+    try {
+      const savedTheme = localStorage.getItem('4bs_cam_theme');
+      if (savedTheme === 'light' || savedTheme === 'dark') {
+        setTheme(savedTheme);
+      }
+    } catch {}
+
+    fetch('/api/streamers')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.streamers) {
+          setStreamers(data.streamers);
+          setLiveCount(data.liveCount || 0);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const toggleTheme = () => {
+    const next = theme === 'dark' ? 'light' : 'dark';
+    setTheme(next);
+    try {
+      localStorage.setItem('4bs_cam_theme', next);
+    } catch {}
+  };
+
+  const currentChapter = LORE_CHAPTERS[activeChapterIdx];
+  const liveMembers = streamers.filter((s) => s.isLive);
+
+  // Filtered 3D Lookbook Wardrobe
+  const filteredWardrobe =
+    wardrobeCategory === 'all'
+      ? WARDROBE_ITEMS
+      : WARDROBE_ITEMS.filter((item) => item.category === wardrobeCategory);
+
+  const activeGarment =
+    filteredWardrobe.find((g) => g.id === selectedGarmentId) ||
+    filteredWardrobe[0] ||
+    WARDROBE_ITEMS[0];
+
+  const activeGarmentIndex = filteredWardrobe.findIndex((g) => g.id === activeGarment.id);
+
+  // Filtered MV & Diss Tracks
+  const filteredTracks = OFFICIAL_MEDIA_TRACKS.filter((track) => {
+    if (trackFilter === 'MV') return track.type !== 'DISS TRACK';
+    if (trackFilter === 'DISS') return track.type === 'DISS TRACK';
+    return true;
+  });
+
+  const activeTrack =
+    filteredTracks.find((t) => t.id === selectedTrackId) ||
+    filteredTracks[0] ||
+    OFFICIAL_MEDIA_TRACKS[0];
+
+  // Filtered War Tapes
+  const filteredWarArchives = WAR_ARCHIVES.filter((war) => {
+    if (warFilter === 'WAR') {
+      return war.category.includes('WAR') || war.category.includes('PURSUIT');
+    }
+    if (warFilter === 'LORE') {
+      return !war.category.includes('WAR') && !war.category.includes('PURSUIT');
+    }
+    return true;
+  });
+
+  const activeWarTape =
+    filteredWarArchives.find((w) => w.id === selectedWarId) ||
+    filteredWarArchives[0] ||
+    WAR_ARCHIVES[0];
+
+  // Filtered 54 Streamers
+  const filteredRoster = streamers.filter((m) => {
+    const q = rosterSearch.toLowerCase();
+    const matchName =
+      m.name.toLowerCase().includes(q) ||
+      (m.handle && m.handle.toLowerCase().includes(q)) ||
+      (m.role && m.role.toLowerCase().includes(q));
+    if (!matchName) return false;
+    if (rosterFilter === 'LIVE') return Boolean(m.isLive);
+    if (rosterFilter === 'OG') return m.rank === 'OG';
+    if (rosterFilter === 'Under OG') return m.rank === 'Under OG';
+    if (rosterFilter === 'Young Bloods') return m.rank === 'Young Bloods';
+    return true;
+  });
+
+  // High Council & Key Creators for the Interactive Gang Structure Showcase
+  const allSpotlightCreators = streamers.filter((m) =>
+    [
+      'Nahmier Davies',
+      'Ilham Joseph',
+      'Louis Ven',
+      'Deja Amari',
+      'Muhammad Sumbul',
+      'Joy Braxton',
+      'Rusdi Abuy Walker',
+      'Deden Walker',
+      'Jane Elisha',
+      'Asep Teriyaki',
+      'Azmi',
+      'Flip Flop',
+      'Kim',
+      'Ujang Walker',
+    ].includes(m.name)
+  );
+
+  const showcaseList =
+    showcaseTierFilter === 'ALL'
+      ? allSpotlightCreators
+      : allSpotlightCreators.filter((m) => m.rank === showcaseTierFilter);
+
+  const activeShowcaseMember =
+    showcaseList[selectedShowcaseIdx] || showcaseList[0] || allSpotlightCreators[0];
+
+  const getMemberShowcaseArtwork = (member: any) => {
+    if (!member) return '/assets/generated/fanart_council.webp';
+    if (showcaseVisualMode === 'INGAME') {
+      if (member.isLive && member.videoId) {
+        return `https://i.ytimg.com/vi/${member.videoId}/maxresdefault.jpg`;
+      }
+      return member.featuredThumb || '/assets/streams/nahmier_roxwood.jpg';
+    }
+    return (
+      DEFAULT_SHOWCASE_FANARTS[member.name] ||
+      (member.rank === 'OG'
+        ? '/assets/generated/fanart_council.webp'
+        : member.rank === 'Under OG'
+          ? '/assets/generated/fanart_roxwood.webp'
+          : '/assets/generated/fanart_west_to_ssr.webp')
+    );
+  };
+
+  return (
+    <div
+      className={`theme-smooth min-h-screen relative selection:bg-red-600 selection:text-white ${
+        isDark ? 'bg-[#070506] text-[#F4F4F6]' : 'bg-[#F4F1EC] text-[#141113]'
+      }`}
+    >
+      {/* Clean Top Navbar */}
+      <Navbar liveCount={liveCount} theme={theme} onToggleTheme={toggleTheme} />
+
+      {/* Right-Edge Pull-Out Drawer (Dedicated 100% to 4BG Song List & Audio Player) */}
+      <StickyAudioPlayer isDark={isDark} />
+
+      {/* Dedicated Bottom-Left Floating Theme Switcher (Separate from Music Player, Smooth Transition) */}
+      <div className="fixed bottom-6 left-6 z-50 select-none">
+        <button
+          onClick={toggleTheme}
+          className={`group p-1.5 border shadow-[0_15px_40px_rgba(0,0,0,0.65)] flex items-center gap-2 cursor-pointer backdrop-blur-xl ${
+            isDark
+              ? 'bg-[#120A0E]/95 border-red-500/40 text-white hover:border-red-500'
+              : 'bg-white/95 border-zinc-300 text-zinc-900 hover:border-red-500'
+          }`}
+          title={isDark ? 'Ganti ke Light Mode (Transisi Halus)' : 'Ganti ke Dark Mode (Transisi Halus)'}
+        >
+          <span
+            className={`w-8 h-8 flex items-center justify-center transition-transform duration-500 ${
+              isDark
+                ? 'bg-red-600 text-white rotate-0'
+                : 'bg-amber-400 text-black rotate-180'
+            }`}
+          >
+            {isDark ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
+          </span>
+          <div className="pr-2.5 text-left">
+            <div className="text-[8px] font-mono-tech text-red-500 font-bold uppercase tracking-widest leading-none">
+              MODE TAMPILAN
+            </div>
+            <div className="text-[11px] font-mono-tech font-bold uppercase tracking-wider mt-0.5">
+              {isDark ? 'DARK // OBSIDIAN' : 'LIGHT // STREET'}
+            </div>
+          </div>
+        </button>
+      </div>
+
+      {/* =====================================================================
+          HERO BANNER — SIMPLE, CLEAR, HIGH-IMPACT SYNDICATE HERO
+      ===================================================================== */}
+      <section
+        className={`relative min-h-[88vh] pt-24 pb-12 flex flex-col justify-between overflow-hidden border-b ${
+          isDark
+            ? 'bg-gradient-to-b from-[#090406] via-[#050304] to-[#0A0507] border-red-500/30'
+            : 'bg-gradient-to-b from-[#F7F4EE] via-[#EDE7DE] to-[#F5F0E8] border-zinc-300'
+        }`}
+      >
+        {/* Clean, Lightweight Atmospheric Backdrop (Zero GPU Blur Lag) */}
+        <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+          <img
+            src="/assets/streams/nahmier_roxwood.jpg"
+            alt=""
+            className={`w-full h-full object-cover object-center ${
+              isDark ? 'opacity-25' : 'opacity-15'
+            }`}
+          />
+          <div
+            className={`absolute inset-0 ${
+              isDark
+                ? 'bg-gradient-to-r from-[#070506] via-[#070506]/90 to-[#070506]/70'
+                : 'bg-gradient-to-r from-[#F4F1EC] via-[#F4F1EC]/92 to-[#F4F1EC]/75'
+            }`}
+          />
+          <div
+            className={`absolute inset-0 ${
+              isDark
+                ? 'bg-gradient-to-t from-[#070506] via-transparent to-[#070506]/85'
+                : 'bg-gradient-to-t from-[#F4F1EC] via-transparent to-[#F4F1EC]/85'
+            }`}
+          />
+          <div
+            className={`absolute inset-0 ${
+              isDark ? 'bg-tactical-grid opacity-35' : 'bg-cam-light-grid opacity-40'
+            }`}
+          />
+        </div>
+
+        {/* Main Hero Content */}
+        <div className="relative z-10 max-w-[1520px] mx-auto px-4 sm:px-8 w-full my-auto py-8">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
+            {/* Left 7 Cols: Clear Headline, Description, CTAs & Working 3-Card Preview */}
+            <div className="lg:col-span-7 space-y-6 text-center lg:text-left">
+              {/* Top Status Badges */}
+              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2.5">
+                <div
+                  className={`inline-flex items-center gap-2 px-3 py-1.5 border ${
+                    isDark
+                      ? 'bg-[#12090C] border-red-500/40 text-zinc-100'
+                      : 'bg-white border-red-500/40 text-zinc-900 shadow-sm'
+                  }`}
+                >
+                  <span className="px-1.5 py-0.5 bg-red-600 text-white text-[10px] font-mono-tech font-bold uppercase tracking-widest">
+                    IME RP
+                  </span>
+                  <span className="text-[11px] font-mono-tech font-bold tracking-[0.15em] uppercase">
+                    SOUTH SIDE ROXWOOD // POSTAL 1051–1052
+                  </span>
+                </div>
+
+                {liveMembers.length > 0 && (
+                  <Link
+                    href="/cam"
+                    className="inline-flex items-center gap-2 px-3 py-1.5 bg-red-600 hover:bg-red-500 text-white text-[11px] font-mono-tech font-bold uppercase tracking-wider transition-colors cursor-pointer"
+                  >
+                    <span className="w-2 h-2 rounded-full bg-white animate-ping" />
+                    <span>{liveCount} MEMBER SEDANG LIVE</span>
+                  </Link>
+                )}
+              </div>
+
+              {/* Clean Title & Single-Line Headline */}
+              <div className="space-y-3">
+                <div className="text-xs font-mono-tech text-red-500 font-bold tracking-[0.28em] uppercase">
+                  FOUR BLOODS GANG (4BG) — OFFICIAL SYNDICATE PORTAL
+                </div>
+
+                <h1
+                  className={`font-display text-4xl sm:text-6xl md:text-7xl xl:text-[82px] leading-none tracking-wider uppercase whitespace-nowrap ${
+                    isDark ? 'text-white' : 'text-zinc-900'
+                  }`}
+                >
+                  BLOOD IN, <span className="text-red-600">BLOOD OUT</span>
+                </h1>
+
+                <p className="font-script text-2xl sm:text-3xl text-red-500">
+                  &ldquo;Hidup dalam darah, berjalan bersama keluarga, dan mati demi 4Bloods.&rdquo;
+                </p>
+
+                <p
+                  className={`text-sm sm:text-base max-w-2xl mx-auto lg:mx-0 leading-relaxed ${
+                    isDark ? 'text-zinc-300' : 'text-zinc-700'
+                  }`}
+                >
+                  Portal resmi <strong>4Bloods Gang (4BG)</strong> di server{' '}
+                  <strong>IME Roleplay</strong>. Dokumentasi wilayah{' '}
+                  <strong className="text-red-500">South Side Roxwood (Postal 1051–1052)</strong>,
+                  struktur komando High Council, koleksi atribut 3D, arsip MV &amp; Diss Track,
+                  serta pusat pantauan <strong>54 Streamer Multi-POV</strong>.
+                </p>
+              </div>
+
+              {/* Primary CTA Buttons */}
+              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-3.5">
+                <Link
+                  href="/cam"
+                  className="px-6 py-3.5 bg-red-600 hover:bg-red-500 text-white font-mono-tech text-xs sm:text-sm font-bold tracking-[0.16em] uppercase transition-colors shadow-[0_0_25px_rgba(220,38,38,0.4)] flex items-center gap-2.5 cursor-pointer"
+                >
+                  <Tv className="w-4 h-4" />
+                  <span>BUKA 4BLOODS CAM ({liveCount > 0 ? `${liveCount} LIVE` : 'MULTI-POV'})</span>
+                </Link>
+
+                <button
+                  onClick={() =>
+                    setVideoModal({
+                      videoId: 'wJyovquNR24',
+                      title: 'THIS IS 4BLOODS (Official Music Video)',
+                      streamer: '4BLOODS OFFICIAL ANTHEM // IME RP',
+                    })
+                  }
+                  className={`px-5 py-3.5 border font-mono-tech text-xs sm:text-sm font-bold tracking-[0.16em] uppercase transition-colors flex items-center gap-2.5 cursor-pointer ${
+                    isDark
+                      ? 'bg-[#120A0D] hover:bg-white hover:text-black text-white border-white/15'
+                      : 'bg-white hover:bg-zinc-900 hover:text-white text-zinc-900 border-zinc-300 shadow-sm'
+                  }`}
+                >
+                  <Play className="w-4 h-4 text-red-500 fill-red-500" />
+                  <span>TONTON MV &ldquo;THIS IS 4BLOODS&rdquo;</span>
+                </button>
+              </div>
+
+              {/* 3 Highlight Cards (Roxwood Map, High Council, Official Anthem — 100% Valid Paths) */}
+              <div className="pt-2 grid grid-cols-3 gap-3 max-w-xl mx-auto lg:mx-0">
+                {[
+                  {
+                    img: '/assets/hood_roxwood.png',
+                    tag: 'TURF SATELLITE',
+                    title: 'ROXWOOD 1051–1052',
+                  },
+                  {
+                    img: '/assets/streams/nahmier_roxwood.jpg',
+                    tag: 'SYNDICATE OPS',
+                    title: 'HIGH COUNCIL 4BG',
+                  },
+                  {
+                    img: '/assets/yt_this_is_4bloods.jpg',
+                    tag: 'OFFICIAL ANTHEM',
+                    title: 'THIS IS 4BLOODS',
+                  },
+                ].map((card, i) => (
+                  <div
+                    key={i}
+                    onClick={() =>
+                      setLightboxImage({
+                        src: card.img,
+                        title: card.title,
+                        subtitle: `${card.tag} // IME Roleplay`,
+                      })
+                    }
+                    className={`group relative h-24 border overflow-hidden cursor-pointer ${
+                      isDark
+                        ? 'border-white/15 hover:border-red-500 bg-[#0D080A]'
+                        : 'border-zinc-300 hover:border-red-500 bg-white shadow-sm'
+                    }`}
+                  >
+                    <img
+                      src={card.img}
+                      alt={card.title}
+                      className="w-full h-full object-cover opacity-80 group-hover:scale-105 group-hover:opacity-100 transition-transform duration-300"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/35 to-transparent" />
+                    <div className="absolute bottom-2 left-2.5 right-2.5 text-left">
+                      <div className="text-[8px] font-mono-tech text-red-400 font-bold uppercase tracking-widest">
+                        {card.tag}
+                      </div>
+                      <div className="font-display text-sm text-white tracking-wider truncate leading-none mt-0.5">
+                        {card.title}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Right 5 Cols: Large, Crisp HD 4BLOODS 3D Crest Showcase */}
+            <div className="lg:col-span-5 flex items-center justify-center">
+              <Tilt3DCard
+                intensity={14}
+                glare={false}
+                onClick={() =>
+                  setLightboxImage({
+                    src: '/assets/generated/logo_3d_pure.webp',
+                    title: '4BLOODS GANG — OFFICIAL 3D HD INSIGNIA',
+                    subtitle: 'IME Roleplay // South Side Roxwood (Postal 1051–1052)',
+                  })
+                }
+                className="relative w-80 h-80 sm:w-[440px] sm:h-[440px] lg:w-[480px] lg:h-[480px] xl:w-[540px] xl:h-[540px] flex items-center justify-center cursor-pointer group"
+              >
+                {/* Subtle Ambient Ring & Crimson Vignette */}
+                <div
+                  className={`absolute inset-4 rounded-full border ${
+                    isDark ? 'border-red-500/20' : 'border-red-500/30'
+                  } pointer-events-none`}
+                />
+                <div
+                  style={{
+                    background:
+                      'radial-gradient(circle, rgba(220,38,38,0.35) 0%, rgba(220,38,38,0) 72%)',
+                  }}
+                  className="absolute inset-2 rounded-full pointer-events-none"
+                />
+
+                <img
+                  src="/assets/generated/logo_3d_pure.webp"
+                  alt="4BLOODS GANG Official 3D Pure Crest HD"
+                  onError={(e) => {
+                    (e.currentTarget as HTMLImageElement).src = '/assets/logo_v2.png';
+                  }}
+                  style={{ transform: 'translateZ(32px)' }}
+                  className="relative w-72 h-auto max-h-[380px] sm:w-[390px] sm:max-h-[440px] lg:w-[440px] lg:max-h-[480px] xl:w-[500px] xl:max-h-[520px] object-contain drop-shadow-[0_24px_50px_rgba(220,38,38,0.35)] drop-shadow-[0_12px_30px_rgba(0,0,0,0.8)] group-hover:scale-105 transition-transform duration-300 select-none"
+                />
+              </Tilt3DCard>
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom Hero Quick Stats Strip */}
+        <div className="relative z-10 max-w-[1520px] mx-auto px-4 sm:px-8 w-full pt-4">
+          <div
+            className={`grid grid-cols-2 md:grid-cols-4 gap-px border ${
+              isDark ? 'bg-white/10 border-white/15' : 'bg-zinc-300 border-zinc-300'
+            }`}
+          >
+            {[
+              { label: 'SERVER & KOTA', value: 'IME ROLEPLAY', tag: 'GTA V ROLEPLAY INDONESIA' },
+              { label: 'WILAYAH UTAMA', value: 'ROXWOOD SSR', tag: 'POSTAL 1051–1052' },
+              { label: 'STRUKTUR KOMANDO', value: '4 OG // 6 U-OG', tag: '6-TIER SYNDICATE' },
+              { label: 'JARINGAN KREATOR', value: '54 STREAMERS', tag: 'LIVE & UPCOMING CAM' },
+            ].map((item) => (
+              <div
+                key={item.label}
+                className={`px-5 py-3.5 ${isDark ? 'bg-[#0C080A]' : 'bg-white'}`}
+              >
+                <div className="text-[10px] font-mono-tech text-red-500 font-bold tracking-widest">
+                  {item.label}
+                </div>
+                <div
+                  className={`font-display text-2xl sm:text-3xl tracking-wider mt-0.5 ${
+                    isDark ? 'text-white' : 'text-zinc-900'
+                  }`}
+                >
+                  {item.value}
+                </div>
+                <div
+                  className={`text-[10px] font-mono-tech ${
+                    isDark ? 'text-zinc-400' : 'text-zinc-500'
+                  }`}
+                >
+                  {item.tag}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* =====================================================================
+          STREETWEAR MARQUEE TAPE
+      ===================================================================== */}
+      <div className="bg-red-600 text-white py-2.5 border-b border-red-400/30 overflow-hidden select-none">
+        <div className="animate-marquee flex items-center gap-10 text-xs font-mono-tech font-bold tracking-[0.28em] uppercase">
+          {Array.from({ length: 2 }).map((_, idx) => (
+            <React.Fragment key={idx}>
+              <span className="font-gothic text-base tracking-normal">4BG</span>
+              <span>FOUR BLOODS GANG // IME ROLEPLAY</span>
+              <span>✦</span>
+              <span>SOUTH SIDE ROXWOOD // POSTAL 1051–1052</span>
+              <span>✦</span>
+              <span>BLOOD IN, BLOOD OUT</span>
+              <span>✦</span>
+              <span>54 OFFICIAL STREAMERS</span>
+              <span>✦</span>
+            </React.Fragment>
+          ))}
+        </div>
+      </div>
+
+      {/* =====================================================================
+          SECTION 01 — THE 3 CHAPTERS (DYNAMIC SATELLITE MAP BACKDROP)
+          Layout Rhythm: Main Satellite Map on LEFT (7 Cols) | Era Dossier on RIGHT (5 Cols)
+      ===================================================================== */}
+      <section
+        id="chronicles"
+        className={`py-24 border-b relative overflow-hidden ${
+          isDark
+            ? 'bg-gradient-to-br from-[#2D0610] via-[#160308] to-[#24050E] border-red-600/35'
+            : 'bg-gradient-to-br from-[#FDE8EC] via-[#F6D2D9] to-[#FDE8EC] border-red-300'
+        }`}
+      >
+        {/* Dynamic Section 01 Background Art: Active Chapter Map Mural + Tactical Grid */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
+          <div
+            style={{
+              background:
+                'radial-gradient(circle at 20% 40%, rgba(220,38,38,0.24) 0%, rgba(220,38,38,0) 70%)',
+            }}
+            className="absolute inset-0 pointer-events-none"
+          />
+          <img
+            src={currentChapter.mapImage}
+            alt=""
+            loading="lazy"
+            decoding="async"
+            className={`w-full h-full object-cover ${
+              isDark ? 'opacity-15 grayscale' : 'opacity-10 grayscale'
+            }`}
+          />
+          <div
+            className={`absolute inset-0 ${
+              isDark ? 'bg-tactical-grid opacity-60' : 'bg-cam-light-grid opacity-60'
+            }`}
+          />
+          <div
+            className={`absolute -top-24 right-10 font-display text-[180px] sm:text-[240px] leading-none select-none ${
+              isDark ? 'text-red-500/[0.08]' : 'text-red-900/[0.08]'
+            }`}
+          >
+            {currentChapter.roman}
+          </div>
+        </div>
+
+        <div className="max-w-[1520px] mx-auto px-4 sm:px-8 relative z-10">
+          <div className="flex flex-col lg:flex-row lg:items-end justify-between mb-10 gap-6">
+            <div>
+              <div className="text-xs font-mono-tech font-bold text-red-500 tracking-[0.25em] uppercase mb-1">
+                01 // SEJARAH TERITORI DI IME ROLEPLAY (CHAPTER I – III)
+              </div>
+              <h2
+                className={`font-display text-5xl sm:text-7xl uppercase tracking-wider leading-none ${
+                  isDark ? 'text-white' : 'text-zinc-900'
+                }`}
+              >
+                THE <span className="text-red-600">TERRITORY</span> ARCHIVES
+              </h2>
+            </div>
+
+            {/* Chapter Switcher Pills */}
+            <div className="flex flex-wrap gap-2">
+              {LORE_CHAPTERS.map((chap, idx) => {
+                const active = idx === activeChapterIdx;
+                return (
+                  <button
+                    key={chap.id}
+                    onClick={() => setActiveChapterIdx(idx)}
+                    className={`px-5 py-3 font-mono-tech text-xs font-bold tracking-widest uppercase border cursor-pointer flex items-center gap-2.5 ${
+                      active
+                        ? 'bg-red-600 text-white border-red-500 shadow-[0_0_25px_rgba(220,38,38,0.4)]'
+                        : isDark
+                          ? 'bg-[#120A0E]/90 text-zinc-300 border-white/15 hover:text-white'
+                          : 'bg-white text-zinc-700 border-zinc-300 hover:border-red-500'
+                    }`}
+                  >
+                    <span className="font-display text-base">{chap.roman}</span>
+                    <span className="opacity-60">//</span>
+                    <span>{chap.title}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            {/* LEFT 7 COLS: Interactive 3D Satellite Turf Map */}
+            <Tilt3DCard
+              intensity={7}
+              onClick={() =>
+                setLightboxImage({
+                  src: currentChapter.mapImage,
+                  title: `${currentChapter.roman} — ${currentChapter.turfName}`,
+                  subtitle: `${currentChapter.postalCode} // IME Roleplay`,
+                })
+              }
+              className="lg:col-span-7 relative bg-black border border-red-500/40 overflow-hidden group cursor-pointer min-h-[380px] sm:min-h-[480px] shadow-2xl"
+            >
+              <img
+                src={currentChapter.mapImage}
+                alt={currentChapter.turfName}
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
+
+              <div
+                style={{ transform: 'translateZ(30px)' }}
+                className="absolute top-4 left-4 right-4 flex items-center justify-between"
+              >
+                <span className="px-3 py-1 bg-black/85 border border-red-500/50 text-red-400 text-xs font-mono-tech font-bold uppercase tracking-widest flex items-center gap-2">
+                  <MapPin className="w-3.5 h-3.5 text-red-500" />
+                  {currentChapter.postalCode}
+                </span>
+                <span className="px-3 py-1 bg-red-600 text-white text-xs font-mono-tech font-bold uppercase flex items-center gap-1.5">
+                  <Maximize2 className="w-3.5 h-3.5" />
+                  PERBESAR PETA
+                </span>
+              </div>
+
+              <div
+                style={{ transform: 'translateZ(35px)' }}
+                className="absolute bottom-5 left-5 right-5"
+              >
+                <div className="text-xs font-mono-tech text-red-400 uppercase tracking-widest">
+                  IME RP SATELLITE TURF // {currentChapter.era}
+                </div>
+                <h3 className="font-display text-4xl sm:text-6xl text-white uppercase tracking-wider mt-1">
+                  {currentChapter.turfName}
+                </h3>
+              </div>
+            </Tilt3DCard>
+
+            {/* RIGHT 5 COLS: Action Photo + Narrative + Milestones */}
+            <div className="lg:col-span-5 flex flex-col justify-between gap-5">
+              <div
+                onClick={() =>
+                  setLightboxImage({
+                    src: currentChapter.actionImage,
+                    title: currentChapter.title,
+                    subtitle: currentChapter.subtitle,
+                  })
+                }
+                className="relative h-52 sm:h-60 bg-black border border-red-500/40 overflow-hidden group cursor-pointer shadow-xl"
+              >
+                <img
+                  src={currentChapter.actionImage}
+                  alt={currentChapter.title}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
+                <div className="absolute bottom-4 left-4 right-4 flex items-end justify-between">
+                  <div>
+                    <span className="px-2 py-0.5 bg-red-600 text-white text-[10px] font-mono-tech font-bold">
+                      {currentChapter.roman}
+                    </span>
+                    <h4 className="font-display text-3xl text-white uppercase tracking-wider mt-1">
+                      {currentChapter.title}
+                    </h4>
+                  </div>
+                  <img
+                    src={currentChapter.logoUsed}
+                    alt="Era Logo"
+                    className="w-14 h-14 object-contain drop-shadow-lg"
+                  />
+                </div>
+              </div>
+
+              <div
+                className={`border p-6 flex-1 flex flex-col justify-between space-y-4 ${
+                  isDark
+                    ? 'bg-[#120A0E]/90 border-red-500/25'
+                    : 'bg-white/95 border-zinc-300 shadow-md'
+                }`}
+              >
+                <div className="space-y-2">
+                  <blockquote className="font-script text-2xl text-red-500 border-l-4 border-red-600 pl-3.5">
+                    &ldquo;{currentChapter.quote}&rdquo;
+                  </blockquote>
+                  <p
+                    className={`text-xs sm:text-sm leading-relaxed ${
+                      isDark ? 'text-zinc-300' : 'text-zinc-700'
+                    }`}
+                  >
+                    {currentChapter.summary}
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 gap-2">
+                  {currentChapter.milestones.map((ms, i) => (
+                    <div
+                      key={i}
+                      className={`px-3.5 py-2 border flex items-center justify-between gap-3 ${
+                        isDark
+                          ? 'bg-black/75 border-white/10'
+                          : 'bg-zinc-50 border-zinc-200'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <span className="font-mono-tech text-xs font-bold text-red-500">
+                          0{i + 1}
+                        </span>
+                        <span
+                          className={`text-xs font-bold uppercase tracking-wider ${
+                            isDark ? 'text-white' : 'text-zinc-900'
+                          }`}
+                        >
+                          {ms.label}
+                        </span>
+                      </div>
+                      <span
+                        className={`text-[11px] font-mono-tech truncate max-w-[200px] ${
+                          isDark ? 'text-zinc-400' : 'text-zinc-600'
+                        }`}
+                      >
+                        {ms.detail}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* =====================================================================
+          SECTION 02 — GANG STRUCTURE INTERACTIVE SHOWCASE
+          Layout Rhythm FLIPPED: Selector Rail on LEFT (4 Cols) | Giant Character Stage on RIGHT (8 Cols)!
+          Background: Crimson Bandana Mural & Diagonal Streetwear Slashes
+      ===================================================================== */}
+      <section
+        id="hierarchy"
+        className={`py-24 border-b relative overflow-hidden ${
+          isDark
+            ? 'bg-gradient-to-tr from-[#0B0A0D] via-[#060507] to-[#120F14] border-red-500/20'
+            : 'bg-gradient-to-tr from-[#ECEAE4] via-[#DFDDD6] to-[#ECEAE4] border-zinc-300'
+        }`}
+      >
+        {/* Rich Section 02 Background Art */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
+          <img
+            src="/assets/generated/fanart_west_to_ssr.webp"
+            alt=""
+            loading="lazy"
+            decoding="async"
+            className={`w-full h-full object-cover ${
+              isDark ? 'opacity-12' : 'opacity-[0.06]'
+            }`}
+          />
+          <div
+            className={`absolute inset-0 ${
+              isDark ? 'bg-diagonal-slashes opacity-85' : 'bg-diagonal-slashes-light opacity-75'
+            }`}
+          />
+          <div
+            className={`absolute -bottom-10 left-8 font-gothic text-[200px] sm:text-[280px] leading-none select-none ${
+              isDark ? 'text-red-600/[0.05]' : 'text-red-900/[0.05]'
+            }`}
+          >
+            4BG
+          </div>
+        </div>
+
+        <div className="max-w-[1520px] mx-auto px-4 sm:px-8 relative z-10">
+          <div className="flex flex-col lg:flex-row lg:items-end justify-between mb-8 gap-6">
+            <div>
+              <div className="text-xs font-mono-tech font-bold text-red-500 tracking-[0.25em] uppercase mb-1">
+                02 // STRUKTUR KOMANDO &amp; CHARACTER SHOWCASE (IME RP)
+              </div>
+              <h2
+                className={`font-display text-5xl sm:text-7xl uppercase tracking-wider leading-none ${
+                  isDark ? 'text-white' : 'text-zinc-900'
+                }`}
+              >
+                SYNDICATE <span className="text-red-600">HIERARCHY</span> SHOWCASE
+              </h2>
+            </div>
+
+            <div className="flex flex-wrap gap-1.5">
+              {[
+                { id: 'ALL', label: 'ALL SHOWCASE (14)' },
+                { id: 'OG', label: 'TIER 01 // OG (4)' },
+                { id: 'Under OG', label: 'TIER 02 // UNDER OG (6)' },
+                { id: 'Young Bloods', label: 'TIER 03 // YOUNG BLOODS' },
+                { id: 'Member', label: 'TIER 04 // KEY CREATORS' },
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => {
+                    setShowcaseTierFilter(tab.id);
+                    setSelectedShowcaseIdx(0);
+                  }}
+                  className={`px-3.5 py-2 text-xs font-mono-tech font-bold uppercase border cursor-pointer ${
+                    showcaseTierFilter === tab.id
+                      ? 'bg-red-600 text-white border-red-500 shadow-[0_0_20px_rgba(220,38,38,0.4)]'
+                      : isDark
+                        ? 'bg-[#120A0E]/90 text-zinc-300 border-white/15 hover:text-white'
+                        : 'bg-white text-zinc-700 border-zinc-300 hover:border-red-500'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* 6-Tier Architectural Command Ribbon */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 mb-8">
+            {HIERARCHY_TIERS.map((t) => (
+              <div
+                key={t.tier}
+                className={`border px-3.5 py-3 flex flex-col justify-between hover:border-red-500/50 ${
+                  isDark
+                    ? 'bg-[#11090D]/90 border-white/15'
+                    : 'bg-white/95 border-zinc-300 shadow-sm'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className="font-mono-tech text-[10px] font-bold text-red-500">
+                    TIER {t.tier}
+                  </span>
+                  <Shield className="w-3 h-3 text-red-500/60" />
+                </div>
+                <div
+                  className={`font-display text-xl tracking-wider mt-1 ${
+                    isDark ? 'text-white' : 'text-zinc-900'
+                  }`}
+                >
+                  {t.code}
+                </div>
+                <div
+                  className={`text-[10px] font-mono-tech truncate ${
+                    isDark ? 'text-zinc-400' : 'text-zinc-500'
+                  }`}
+                >
+                  {t.name}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* ALTERNATED LAYOUT: Left 4 Cols Roster Selector | RIGHT 8 Cols Giant Character Stage */}
+          {activeShowcaseMember && (
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+              {/* LEFT 4 COLUMNS: Interactive Character Selector Rail */}
+              <div
+                className={`lg:col-span-4 border flex flex-col justify-between overflow-hidden max-h-[580px] order-2 lg:order-1 ${
+                  isDark
+                    ? 'bg-[#0E080B]/95 border-white/15'
+                    : 'bg-white/95 border-zinc-300 shadow-lg'
+                }`}
+              >
+                <div
+                  className={`px-4 py-3.5 border-b flex items-center justify-between ${
+                    isDark ? 'bg-[#160C10] border-white/10' : 'bg-zinc-100 border-zinc-200'
+                  }`}
+                >
+                  <span
+                    className={`text-xs font-mono-tech font-bold uppercase tracking-wider ${
+                      isDark ? 'text-white' : 'text-zinc-900'
+                    }`}
+                  >
+                    PILIH KARAKTER SHOWCASE ({showcaseList.length})
+                  </span>
+                  <span className="font-gothic text-lg text-red-500">4BG</span>
+                </div>
+
+                <div className="flex-1 overflow-y-auto p-3 space-y-2">
+                  {showcaseList.map((member, idx) => {
+                    const isSelected = activeShowcaseMember?.channelId === member.channelId;
+                    return (
+                      <button
+                        key={member.channelId}
+                        onClick={() => setSelectedShowcaseIdx(idx)}
+                        className={`w-full text-left p-3 border flex items-center justify-between gap-3 cursor-pointer ${
+                          isSelected
+                            ? 'bg-red-600/15 border-red-500 shadow-[inset_4px_0_0_#dc2626]'
+                            : isDark
+                              ? 'bg-[#120A0E] border-white/10 hover:border-white/30'
+                              : 'bg-zinc-50 border-zinc-200 hover:border-red-400'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <img
+                            src={member.avatar || '/assets/logo_v2.png'}
+                            alt={member.name}
+                            onError={(e) => {
+                              (e.currentTarget as HTMLImageElement).src = '/assets/logo_v2.png';
+                            }}
+                            className={`w-11 h-11 object-cover border shrink-0 ${
+                              isSelected ? 'border-red-500' : 'border-zinc-400/30'
+                            }`}
+                          />
+                          <div className="min-w-0">
+                            <div
+                              className={`font-display text-xl tracking-wider truncate leading-none ${
+                                isDark ? 'text-white' : 'text-zinc-900'
+                              }`}
+                            >
+                              {member.name}
+                            </div>
+                            <div
+                              className={`text-[10px] font-mono-tech truncate mt-1 ${
+                                isDark ? 'text-zinc-400' : 'text-zinc-500'
+                              }`}
+                            >
+                              <span className="text-red-500 font-bold">{member.rank}</span>
+                              {member.handle ? ` • ${member.handle}` : ''}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="shrink-0 flex items-center gap-1.5">
+                          {member.isLive && (
+                            <span className="px-1.5 py-0.5 bg-red-600 text-white text-[9px] font-mono-tech font-bold">
+                              LIVE
+                            </span>
+                          )}
+                          <ChevronRight
+                            className={`w-4 h-4 ${
+                              isSelected ? 'text-red-500' : 'text-zinc-500'
+                            }`}
+                          />
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div
+                  className={`p-3 border-t text-[10px] font-mono-tech text-center ${
+                    isDark
+                      ? 'bg-[#080507] border-white/10 text-zinc-400'
+                      : 'bg-zinc-100 border-zinc-200 text-zinc-600'
+                  }`}
+                >
+                  Artwork latar tiap anggota dapat diganti dengan Fan Art resmi komunitas 4Bloods.
+                </div>
+              </div>
+
+              {/* RIGHT 8 COLUMNS: Giant Character & Fan Art Showcase Canvas (MAIN PREVIEW ON RIGHT) */}
+              <div className="lg:col-span-8 relative bg-[#0C080A] border border-red-500/40 overflow-hidden min-h-[520px] sm:min-h-[580px] flex flex-col justify-between shadow-2xl order-1 lg:order-2">
+                <div className="absolute inset-0 z-0">
+                  <img
+                    src={getMemberShowcaseArtwork(activeShowcaseMember)}
+                    alt={activeShowcaseMember.name}
+                    onError={(e) => {
+                      (e.currentTarget as HTMLImageElement).src =
+                        '/assets/generated/fanart_council.webp';
+                    }}
+                    className="w-full h-full object-cover opacity-65 transition-all duration-700"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#070506] via-[#070506]/65 to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-[#070506]/95 via-[#070506]/40 to-transparent" />
+                </div>
+
+                {/* Top Showcase Bar */}
+                <div className="relative z-10 p-5 sm:p-7 flex flex-wrap items-center justify-between gap-3">
+                  <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-black/85 border border-amber-500/40 text-amber-300 text-[10px] font-mono-tech">
+                    <ImageIcon className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                    <span>
+                      {showcaseVisualMode === 'FANART'
+                        ? 'DEFAULT AI CONCEPT ART — SIAP DIGANTI FAN ART ANAK-ANAK 4BLOODS'
+                        : 'IN-GAME STREAM POV SNAPSHOT (IME RP)'}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-1.5 bg-black/85 p-1 border border-white/15">
+                    <button
+                      onClick={() => setShowcaseVisualMode('FANART')}
+                      className={`px-3 py-1 text-[10px] font-mono-tech font-bold uppercase cursor-pointer ${
+                        showcaseVisualMode === 'FANART'
+                          ? 'bg-red-600 text-white'
+                          : 'text-zinc-400 hover:text-white'
+                      }`}
+                    >
+                      DEFAULT FAN ART
+                    </button>
+                    <button
+                      onClick={() => setShowcaseVisualMode('INGAME')}
+                      className={`px-3 py-1 text-[10px] font-mono-tech font-bold uppercase cursor-pointer ${
+                        showcaseVisualMode === 'INGAME'
+                          ? 'bg-red-600 text-white'
+                          : 'text-zinc-400 hover:text-white'
+                      }`}
+                    >
+                      STREAM SNAPSHOT
+                    </button>
+                    <button
+                      onClick={() =>
+                        setLightboxImage({
+                          src: getMemberShowcaseArtwork(activeShowcaseMember),
+                          title: `${activeShowcaseMember.name} — ${activeShowcaseMember.rank}`,
+                          subtitle:
+                            'Slot Fan Art Karakter (Dapat diganti dengan Fan Art Komunitas 4Bloods)',
+                        })
+                      }
+                      className="p-1.5 text-zinc-300 hover:text-white cursor-pointer"
+                      title="Perbesar Artwork"
+                    >
+                      <Maximize2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Bottom Character Dossier Overlay */}
+                <div className="relative z-10 p-6 sm:p-8 space-y-6 mt-auto text-white">
+                  <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6">
+                    <div className="flex items-end gap-5">
+                      <div className="relative shrink-0">
+                        <img
+                          src={activeShowcaseMember.avatar || '/assets/logo_v2.png'}
+                          alt={activeShowcaseMember.name}
+                          onError={(e) => {
+                            (e.currentTarget as HTMLImageElement).src = '/assets/logo_v2.png';
+                          }}
+                          className="w-20 h-20 sm:w-24 sm:h-24 object-cover border-2 border-red-600 bg-zinc-900 shadow-[0_0_30px_rgba(220,38,38,0.5)]"
+                        />
+                        <span className="absolute -top-2.5 -left-2.5 px-2 py-0.5 bg-red-600 text-white font-gothic text-sm">
+                          4BG
+                        </span>
+                      </div>
+
+                      <div className="space-y-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="px-2.5 py-0.5 bg-red-600 text-white text-[10px] font-mono-tech font-bold uppercase tracking-widest">
+                            {activeShowcaseMember.rank}
+                          </span>
+                          <span className="text-xs font-mono-tech text-zinc-300">
+                            {activeShowcaseMember.handle || '@4bloods_member'}
+                          </span>
+                          {activeShowcaseMember.isLive && (
+                            <span className="px-2 py-0.5 bg-emerald-600 text-white text-[10px] font-mono-tech font-bold uppercase flex items-center gap-1">
+                              <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />
+                              LIVE DI IME RP
+                            </span>
+                          )}
+                        </div>
+
+                        <h3 className="font-display text-5xl sm:text-7xl text-white uppercase tracking-wider leading-none">
+                          {activeShowcaseMember.name}
+                        </h3>
+
+                        <p className="font-script text-2xl text-red-400">
+                          {activeShowcaseMember.role ||
+                            `${activeShowcaseMember.rank} // Four Bloods Gang`}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Prev / Next Character Showcase Controls */}
+                    <div className="flex items-center gap-2 self-start sm:self-end">
+                      <button
+                        onClick={() =>
+                          setSelectedShowcaseIdx(
+                            (prev) => (prev - 1 + showcaseList.length) % showcaseList.length
+                          )
+                        }
+                        className="p-3 bg-black/80 hover:bg-red-600 border border-white/15 text-white transition-colors cursor-pointer"
+                      >
+                        <ChevronLeft className="w-4 h-4" />
+                      </button>
+                      <span className="px-3 py-2 bg-black/80 border border-white/15 text-xs font-mono-tech text-zinc-300">
+                        {selectedShowcaseIdx + 1} / {showcaseList.length}
+                      </span>
+                      <button
+                        onClick={() =>
+                          setSelectedShowcaseIdx((prev) => (prev + 1) % showcaseList.length)
+                        }
+                        className="p-3 bg-black/80 hover:bg-red-600 border border-white/15 text-white transition-colors cursor-pointer"
+                      >
+                        <ChevronRight className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Character Actions */}
+                  <div className="pt-4 border-t border-white/15 flex flex-wrap items-center justify-between gap-3">
+                    <div className="flex flex-wrap items-center gap-3">
+                      {(activeShowcaseMember.isLive || activeShowcaseMember.featuredVideoId) && (
+                        <button
+                          onClick={() =>
+                            setVideoModal({
+                              videoId: activeShowcaseMember.isLive
+                                ? activeShowcaseMember.videoId
+                                : activeShowcaseMember.featuredVideoId,
+                              title:
+                                (activeShowcaseMember.isLive
+                                  ? activeShowcaseMember.streamTitle
+                                  : activeShowcaseMember.featuredTitle) ||
+                                `${activeShowcaseMember.name} — 4Bloods IME RP POV`,
+                              streamer: `${activeShowcaseMember.name} (${activeShowcaseMember.rank})`,
+                            })
+                          }
+                          className="px-5 py-2.5 bg-red-600 hover:bg-red-500 text-white text-xs font-mono-tech font-bold uppercase tracking-wider flex items-center gap-2 cursor-pointer"
+                        >
+                          <Play className="w-3.5 h-3.5 fill-white" />
+                          {activeShowcaseMember.isLive ? 'TONTON LIVE STREAM' : 'PUTAR POV UNGGULAN'}
+                        </button>
+                      )}
+
+                      {activeShowcaseMember.isLive && (
+                        <Link
+                          href={`/cam?watch=${activeShowcaseMember.channelId}`}
+                          className="px-4 py-2.5 bg-white text-black hover:bg-zinc-200 text-xs font-mono-tech font-bold uppercase tracking-wider flex items-center gap-2 cursor-pointer"
+                        >
+                          <Tv className="w-3.5 h-3.5 text-red-600" />
+                          BUKA DI MULTI-POV CAM
+                        </Link>
+                      )}
+
+                      <a
+                        href={
+                          activeShowcaseMember.handle
+                            ? `https://www.youtube.com/${activeShowcaseMember.handle}`
+                            : `https://www.youtube.com/channel/${activeShowcaseMember.channelId}`
+                        }
+                        target="_blank"
+                        rel="noreferrer"
+                        className="px-4 py-2.5 bg-black/80 hover:bg-white/10 border border-white/20 text-xs font-mono-tech text-zinc-200 flex items-center gap-2 cursor-pointer"
+                      >
+                        <span>YOUTUBE CHANNEL</span>
+                        <ExternalLink className="w-3.5 h-3.5" />
+                      </a>
+                    </div>
+
+                    <span className="text-[11px] font-mono-tech text-zinc-400">
+                      IME ROLEPLAY // SOUTH SIDE ROXWOOD
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* =====================================================================
+          SECTION 03 — OFFICIAL 3D SHOWROOM
+          Layout Rhythm: Left 5 Cols 13-Piece Apparel Locker | RIGHT 7 Cols 3D Studio Stage
+          Background: Industrial Concrete & Gunmetal Blueprint Vault with Spotlight Cones
+      ===================================================================== */}
+      <section
+        id="wardrobe"
+        className={`py-24 border-b relative overflow-hidden ${
+          isDark
+            ? 'bg-gradient-to-b from-[#330814] via-[#1B050B] to-[#290610] border-red-600/35'
+            : 'bg-gradient-to-b from-[#FCEAF0] via-[#F3D7DF] to-[#FAEBEE] border-red-300'
+        }`}
+      >
+        {/* Rich Section 03 Background Art: Blueprint Dots + Studio Ceiling Spotlights */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
+          <div className="absolute inset-0 bg-blueprint-dots opacity-50" />
+          <div
+            style={{
+              background: 'radial-gradient(circle, rgba(220,38,38,0.25) 0%, rgba(220,38,38,0) 70%)',
+            }}
+            className="absolute -top-32 left-1/2 -translate-x-1/2 w-[900px] h-[450px] rounded-full pointer-events-none"
+          />
+          <div
+            className={`absolute top-12 right-12 font-display text-[170px] sm:text-[240px] leading-none select-none ${
+              isDark ? 'text-red-500/[0.06]' : 'text-red-900/[0.06]'
+            }`}
+          >
+            WARDROBE
+          </div>
+        </div>
+
+        <div className="max-w-[1520px] mx-auto px-4 sm:px-8 relative z-10">
+          <div className="flex flex-col lg:flex-row lg:items-end justify-between mb-10 gap-6">
+            <div>
+              <div className="inline-flex items-center gap-2 text-xs font-mono-tech font-bold text-red-500 tracking-[0.25em] uppercase mb-1">
+                <Box className="w-3.5 h-3.5" />
+                <span>03 // VIRTUAL 3D FITTING ROOM — 13 IN-GAME GARMENTS</span>
+              </div>
+              <h2
+                className={`font-display text-5xl sm:text-7xl uppercase tracking-wider leading-none ${
+                  isDark ? 'text-white' : 'text-zinc-900'
+                }`}
+              >
+                OFFICIAL <span className="text-red-600">3D SHOWROOM</span>
+              </h2>
+            </div>
+
+            {/* Category Filter Pills */}
+            <div className="flex flex-wrap gap-2">
+              {[
+                { id: 'all', label: 'ALL PIECES (13)' },
+                { id: 'hoodie', label: 'HOODIES' },
+                { id: 'workshirt', label: 'WORKSHIRTS' },
+                { id: 'tee', label: 'HOOD DAYS TEES' },
+                { id: 'headwear', label: 'CAPS' },
+                { id: 'bag', label: 'TACTICAL BAGS' },
+              ].map((cat) => (
+                <button
+                  key={cat.id}
+                  onClick={() => {
+                    setWardrobeCategory(cat.id);
+                    const firstInCat =
+                      cat.id === 'all'
+                        ? WARDROBE_ITEMS[0]
+                        : WARDROBE_ITEMS.find((i) => i.category === cat.id);
+                    if (firstInCat) setSelectedGarmentId(firstInCat.id);
+                  }}
+                  className={`px-4 py-2.5 text-xs font-mono-tech font-bold tracking-wider uppercase border cursor-pointer ${
+                    wardrobeCategory === cat.id
+                      ? 'bg-red-600 text-white border-red-500 shadow-[0_0_20px_rgba(220,38,38,0.4)]'
+                      : isDark
+                        ? 'bg-[#120A0E]/90 text-zinc-300 border-white/15 hover:text-white'
+                        : 'bg-white text-zinc-700 border-zinc-300 hover:border-red-500'
+                  }`}
+                >
+                  {cat.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Left 5 Cols Locker Rack | RIGHT 7 Cols 3D Studio Pedestal */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+            {/* LEFT 5 COLUMNS: 13-PIECE INTERACTIVE LOCKER RACK */}
+            <div
+              className={`lg:col-span-5 border flex flex-col justify-between overflow-hidden max-h-[640px] order-2 lg:order-1 ${
+                isDark
+                  ? 'bg-[#0D080B]/95 border-white/15'
+                  : 'bg-white/95 border-zinc-300 shadow-lg'
+              }`}
+            >
+              <div
+                className={`px-5 py-3.5 border-b flex items-center justify-between ${
+                  isDark ? 'bg-[#150C10] border-white/10' : 'bg-zinc-100 border-zinc-200'
+                }`}
+              >
+                <div>
+                  <span
+                    className={`text-xs font-mono-tech font-bold uppercase tracking-wider block ${
+                      isDark ? 'text-white' : 'text-zinc-900'
+                    }`}
+                  >
+                    4BG APPAREL LOCKER ({filteredWardrobe.length} ITEMS)
+                  </span>
+                  <span className="text-[10px] font-mono-tech text-red-500">
+                    KLIK ITEM UNTUK MEMUAT KE PANGGUNG 3D KANAN →
+                  </span>
+                </div>
+                <span className="font-gothic text-2xl text-red-600">4BG</span>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-3.5 grid grid-cols-2 gap-2.5 content-start">
+                {filteredWardrobe.map((item, idx) => {
+                  const isSelected = item.id === activeGarment.id;
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => setSelectedGarmentId(item.id)}
+                      className={`p-3 border text-left flex flex-col justify-between gap-2 cursor-pointer group ${
+                        isSelected
+                          ? 'bg-red-600/15 border-red-500 shadow-[inset_0_0_20px_rgba(220,38,38,0.25)]'
+                          : isDark
+                            ? 'bg-[#120B0F] border-white/10 hover:border-white/30'
+                            : 'bg-zinc-50 border-zinc-200 hover:border-red-400'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between w-full">
+                        <span className="text-[10px] font-mono-tech font-bold text-red-500">
+                          #{String(idx + 1).padStart(2, '0')}
+                        </span>
+                        {item.backImage && (
+                          <span className="px-1.5 py-0.2 bg-red-600/20 border border-red-500/40 text-red-400 text-[8px] font-mono-tech font-bold uppercase">
+                            F+B
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="h-24 w-full flex items-center justify-center my-1">
+                        <img
+                          src={item.frontImage}
+                          alt={item.name}
+                          className="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform"
+                        />
+                      </div>
+
+                      <div>
+                        <div
+                          className={`text-[9px] font-mono-tech uppercase truncate ${
+                            isDark ? 'text-zinc-400' : 'text-zinc-500'
+                          }`}
+                        >
+                          {item.categoryLabel}
+                        </div>
+                        <div
+                          className={`font-display text-lg tracking-wider truncate leading-tight ${
+                            isDark ? 'text-white' : 'text-zinc-900'
+                          }`}
+                        >
+                          {item.name}
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div
+                className={`px-4 py-3 border-t text-[10px] font-mono-tech flex items-center justify-between ${
+                  isDark
+                    ? 'bg-[#080507] border-white/10 text-zinc-400'
+                    : 'bg-zinc-100 border-zinc-200 text-zinc-600'
+                }`}
+              >
+                <span>IME RP CUSTOM EUP ASSETS</span>
+                <span className="text-red-500 font-bold">SOUTH SIDE ROXWOOD</span>
+              </div>
+            </div>
+
+            {/* RIGHT 7 COLUMNS: 3D STUDIO PEDESTAL (MAIN PREVIEW ON RIGHT, ZERO COLLISION) */}
+            <div
+              className={`lg:col-span-7 border flex flex-col justify-between overflow-hidden order-1 lg:order-2 ${
+                isDark
+                  ? 'bg-[#0C080A] border-red-500/40 shadow-[0_25px_70px_rgba(0,0,0,0.85)]'
+                  : 'bg-white border-zinc-300 shadow-xl'
+              }`}
+            >
+              {/* 1. Dedicated Top Control Bar */}
+              <div
+                className={`px-5 py-3.5 border-b flex flex-wrap items-center justify-between gap-3 ${
+                  isDark ? 'bg-[#140B0F] border-white/10' : 'bg-zinc-100 border-zinc-200'
+                }`}
+              >
+                <div className="flex items-center gap-2.5">
+                  <span className="px-2.5 py-1 bg-red-600 text-white text-[10px] font-mono-tech font-bold uppercase tracking-widest">
+                    PIECE {String(activeGarmentIndex + 1).padStart(2, '0')} /{' '}
+                    {String(filteredWardrobe.length).padStart(2, '0')}
+                  </span>
+                  <span
+                    className={`text-xs font-mono-tech font-bold uppercase tracking-wider ${
+                      isDark ? 'text-zinc-300' : 'text-zinc-700'
+                    }`}
+                  >
+                    {activeGarment.era} // {activeGarment.categoryLabel}
+                  </span>
+                </div>
+
+                {/* View Mode Switcher */}
+                <div className="flex items-center gap-1.5">
+                  {activeGarment.backImage ? (
+                    <div
+                      className={`flex items-center p-0.5 border ${
+                        isDark ? 'bg-black border-white/15' : 'bg-white border-zinc-300'
+                      }`}
+                    >
+                      <button
+                        onClick={() => setGarmentViewMode('DUAL')}
+                        className={`px-2.5 py-1 text-[10px] font-mono-tech font-bold uppercase flex items-center gap-1 cursor-pointer ${
+                          garmentViewMode === 'DUAL'
+                            ? 'bg-red-600 text-white'
+                            : isDark
+                              ? 'text-zinc-400 hover:text-white'
+                              : 'text-zinc-600 hover:text-zinc-900'
+                        }`}
+                      >
+                        <Columns2 className="w-3 h-3" />
+                        <span>FRONT + BACK</span>
+                      </button>
+                      <button
+                        onClick={() => setGarmentViewMode('FRONT')}
+                        className={`px-2.5 py-1 text-[10px] font-mono-tech font-bold uppercase cursor-pointer ${
+                          garmentViewMode === 'FRONT'
+                            ? 'bg-red-600 text-white'
+                            : isDark
+                              ? 'text-zinc-400 hover:text-white'
+                              : 'text-zinc-600 hover:text-zinc-900'
+                        }`}
+                      >
+                        FRONT ONLY
+                      </button>
+                      <button
+                        onClick={() => setGarmentViewMode('BACK')}
+                        className={`px-2.5 py-1 text-[10px] font-mono-tech font-bold uppercase flex items-center gap-1 cursor-pointer ${
+                          garmentViewMode === 'BACK'
+                            ? 'bg-red-600 text-white'
+                            : isDark
+                              ? 'text-zinc-400 hover:text-white'
+                              : 'text-zinc-600 hover:text-zinc-900'
+                        }`}
+                      >
+                        <RotateCw className="w-3 h-3" />
+                        <span>BACK ONLY</span>
+                      </button>
+                    </div>
+                  ) : (
+                    <span className="px-2.5 py-1 bg-black/40 border border-white/10 text-[10px] font-mono-tech text-zinc-400 uppercase">
+                      3D STUDIO RENDER
+                    </span>
+                  )}
+
+                  <button
+                    onClick={() =>
+                      setLightboxImage({
+                        src:
+                          garmentViewMode === 'BACK' && activeGarment.backImage
+                            ? activeGarment.backImage
+                            : activeGarment.frontImage,
+                        title: activeGarment.name,
+                        subtitle: `${activeGarment.categoryLabel} // ${activeGarment.tier}`,
+                      })
+                    }
+                    className="p-2 bg-red-600 hover:bg-red-500 text-white cursor-pointer"
+                    title="Perbesar Render 3D"
+                  >
+                    <Maximize2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+
+              {/* 2. Spacious 3D Interactive Turntable Stage */}
+              <Tilt3DCard
+                intensity={11}
+                className={`relative flex-1 min-h-[400px] sm:min-h-[440px] flex items-center justify-center p-8 sm:p-12 overflow-hidden ${
+                  isDark
+                    ? 'bg-gradient-to-b from-[#1A1016] via-[#0E080C] to-[#080507]'
+                    : 'bg-gradient-to-b from-[#FAF8F5] via-[#EFECE6] to-[#E2DDD5]'
+                }`}
+              >
+                <div
+                  className={`absolute inset-0 pointer-events-none ${
+                    isDark ? 'bg-tactical-grid opacity-45' : 'bg-cam-light-grid opacity-60'
+                  }`}
+                />
+                <div
+                  style={{
+                    background: 'radial-gradient(circle, rgba(220,38,38,0.22) 0%, rgba(220,38,38,0) 70%)',
+                  }}
+                  className="absolute w-80 h-80 rounded-full pointer-events-none"
+                />
+                <div
+                  style={{ transform: 'rotateX(75deg) translateZ(-60px)' }}
+                  className="absolute bottom-6 w-72 sm:w-96 h-32 rounded-full border-2 border-red-500/35 shadow-[0_0_50px_rgba(220,38,38,0.4)] pointer-events-none"
+                />
+                <span
+                  style={{ transform: 'translateZ(-25px)' }}
+                  className={`font-gothic text-[140px] sm:text-[180px] select-none pointer-events-none absolute leading-none ${
+                    isDark ? 'text-white/[0.03]' : 'text-red-950/[0.05]'
+                  }`}
+                >
+                  4BG
+                </span>
+
+                {activeGarment.backImage && garmentViewMode === 'DUAL' ? (
+                  <div
+                    style={{ transform: 'translateZ(42px)' }}
+                    className="relative z-10 grid grid-cols-1 sm:grid-cols-2 gap-6 w-full items-center justify-items-center"
+                  >
+                    <div
+                      onClick={() =>
+                        setLightboxImage({
+                          src: activeGarment.frontImage,
+                          title: `${activeGarment.name} (TAMPAK DEPAN)`,
+                          subtitle: activeGarment.categoryLabel,
+                        })
+                      }
+                      className="flex flex-col items-center group cursor-pointer"
+                    >
+                      <img
+                        src={activeGarment.frontImage}
+                        alt={`${activeGarment.name} Front`}
+                        className="h-56 sm:h-72 w-auto object-contain drop-shadow-[0_28px_40px_rgba(0,0,0,0.8)] group-hover:scale-105 transition-transform duration-300"
+                      />
+                      <span
+                        className={`mt-3 px-3 py-0.5 text-[10px] font-mono-tech font-bold uppercase tracking-widest border ${
+                          isDark
+                            ? 'bg-black/80 border-white/15 text-zinc-300'
+                            : 'bg-white/90 border-zinc-300 text-zinc-800'
+                        }`}
+                      >
+                        TAMPAK DEPAN (FRONT)
+                      </span>
+                    </div>
+
+                    <div
+                      onClick={() =>
+                        setLightboxImage({
+                          src: activeGarment.backImage!,
+                          title: `${activeGarment.name} (TAMPAK BELAKANG)`,
+                          subtitle: activeGarment.categoryLabel,
+                        })
+                      }
+                      className="flex flex-col items-center group cursor-pointer"
+                    >
+                      <img
+                        src={activeGarment.backImage}
+                        alt={`${activeGarment.name} Back`}
+                        className="h-56 sm:h-72 w-auto object-contain drop-shadow-[0_28px_40px_rgba(0,0,0,0.8)] group-hover:scale-105 transition-transform duration-300"
+                      />
+                      <span className="mt-3 px-3 py-0.5 bg-red-600 text-white text-[10px] font-mono-tech font-bold uppercase tracking-widest">
+                        TAMPAK BELAKANG (BACK)
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  <div
+                    style={{ transform: 'translateZ(48px)' }}
+                    onClick={() =>
+                      setLightboxImage({
+                        src:
+                          garmentViewMode === 'BACK' && activeGarment.backImage
+                            ? activeGarment.backImage
+                            : activeGarment.frontImage,
+                        title: activeGarment.name,
+                        subtitle: activeGarment.categoryLabel,
+                      })
+                    }
+                    className="relative z-10 flex flex-col items-center cursor-pointer group"
+                  >
+                    <img
+                      src={
+                        garmentViewMode === 'BACK' && activeGarment.backImage
+                          ? activeGarment.backImage
+                          : activeGarment.frontImage
+                      }
+                      alt={activeGarment.name}
+                      className="h-64 sm:h-80 w-auto object-contain drop-shadow-[0_30px_45px_rgba(0,0,0,0.85)] group-hover:scale-105 transition-transform duration-300"
+                    />
+                    <span
+                      className={`mt-4 px-3 py-1 text-[10px] font-mono-tech font-bold uppercase tracking-widest border ${
+                        isDark
+                          ? 'bg-black/80 border-red-500/40 text-red-400'
+                          : 'bg-white border-red-500/40 text-red-600'
+                      }`}
+                    >
+                      GERAKKAN KURSOR UNTUK EFEK 3D TILT • KLIK UNTUK ZOOM HD
+                    </span>
+                  </div>
+                )}
+              </Tilt3DCard>
+
+              {/* 3. Dedicated Bottom Garment Spec Sheet Bar */}
+              <div
+                className={`p-5 sm:p-6 border-t flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
+                  isDark ? 'bg-[#100A0D] border-white/10' : 'bg-zinc-50 border-zinc-200'
+                }`}
+              >
+                <div>
+                  <div className="flex items-center gap-2 text-[10px] font-mono-tech text-red-500 font-bold uppercase tracking-widest">
+                    <span>{activeGarment.categoryLabel}</span>
+                    <span>•</span>
+                    <span>{activeGarment.tier}</span>
+                  </div>
+                  <h3
+                    className={`font-display text-3xl sm:text-4xl tracking-wider uppercase mt-0.5 ${
+                      isDark ? 'text-white' : 'text-zinc-900'
+                    }`}
+                  >
+                    {activeGarment.name}
+                  </h3>
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    onClick={() => {
+                      const prevIdx =
+                        (activeGarmentIndex - 1 + filteredWardrobe.length) %
+                        filteredWardrobe.length;
+                      setSelectedGarmentId(filteredWardrobe[prevIdx].id);
+                    }}
+                    className={`px-3.5 py-2.5 border text-xs font-mono-tech font-bold uppercase flex items-center gap-1.5 cursor-pointer ${
+                      isDark
+                        ? 'bg-black hover:bg-red-600 text-white border-white/15'
+                        : 'bg-white hover:bg-red-600 hover:text-white text-zinc-900 border-zinc-300'
+                    }`}
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                    <span>PREV</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      const nextIdx = (activeGarmentIndex + 1) % filteredWardrobe.length;
+                      setSelectedGarmentId(filteredWardrobe[nextIdx].id);
+                    }}
+                    className="px-4 py-2.5 bg-red-600 hover:bg-red-500 text-white text-xs font-mono-tech font-bold uppercase flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <span>NEXT PIECE</span>
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* =====================================================================
+          SECTION 04 — 4BLOODS RECORDS: SPINNING VINYL SLEEVE & STUDIO TRACKLIST
+          Layout Rhythm: LEFT 5 Cols Spinning Vinyl Sleeve | Right 7 Cols Studio Tracklist
+          Background: Warm Analog Recording Studio + Concentric Vinyl Grooves
+      ===================================================================== */}
+      <section
+        id="records"
+        className={`py-24 border-b relative overflow-hidden ${
+          isDark
+            ? 'bg-gradient-to-tr from-[#08080C] via-[#0E0C12] to-[#07060A] border-red-500/20'
+            : 'bg-gradient-to-tr from-[#EDE9E1] via-[#E2DED5] to-[#EDE9E1] border-zinc-300'
+        }`}
+      >
+        {/* Rich Section 04 Background Art: Concentric Vinyl Grooves + Blurred Track Cover */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
+          <img
+            src={activeTrack.thumb}
+            alt=""
+            loading="lazy"
+            decoding="async"
+            className={`w-full h-full object-cover ${
+              isDark ? 'opacity-15' : 'opacity-10'
+            }`}
+          />
+          <div className="absolute inset-0 bg-vinyl-grooves opacity-85" />
+          <div
+            className={`absolute -bottom-14 right-10 font-display text-[170px] sm:text-[240px] leading-none select-none ${
+              isDark ? 'text-red-500/[0.05]' : 'text-red-900/[0.05]'
+            }`}
+          >
+            RECORDS
+          </div>
+        </div>
+
+        <div className="max-w-[1520px] mx-auto px-4 sm:px-8 relative z-10">
+          <div className="flex flex-col lg:flex-row lg:items-end justify-between mb-10 gap-6">
+            <div>
+              <div className="inline-flex items-center gap-2 text-xs font-mono-tech font-bold text-red-500 tracking-[0.25em] uppercase mb-1">
+                <Disc3 className="w-3.5 h-3.5 animate-spin" style={{ animationDuration: '6s' }} />
+                <span>04 // 4BLOODS RECORDS — UNDERGROUND SOUNDTRACK &amp; DISS TRACKS</span>
+              </div>
+              <h2
+                className={`font-display text-5xl sm:text-7xl uppercase tracking-wider leading-none ${
+                  isDark ? 'text-white' : 'text-zinc-900'
+                }`}
+              >
+                OFFICIAL <span className="text-red-600">MV &amp; DISS TRACKS</span>
+              </h2>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              {[
+                { id: 'ALL', label: 'ALL RELEASES (5)' },
+                { id: 'MV', label: 'OFFICIAL MV & ANTHEMS (3)' },
+                { id: 'DISS', label: 'WAR DISS TRACKS (2)' },
+              ].map((t) => (
+                <button
+                  key={t.id}
+                  onClick={() => {
+                    setTrackFilter(t.id as any);
+                    const first = OFFICIAL_MEDIA_TRACKS.find((tr) =>
+                      t.id === 'MV'
+                        ? tr.type !== 'DISS TRACK'
+                        : t.id === 'DISS'
+                          ? tr.type === 'DISS TRACK'
+                          : true
+                    );
+                    if (first) setSelectedTrackId(first.id);
+                  }}
+                  className={`px-4 py-2.5 text-xs font-mono-tech font-bold uppercase border cursor-pointer ${
+                    trackFilter === t.id
+                      ? 'bg-red-600 text-white border-red-500 shadow-[0_0_20px_rgba(220,38,38,0.4)]'
+                      : isDark
+                        ? 'bg-[#120A0E]/90 text-zinc-300 border-white/15 hover:text-white'
+                        : 'bg-white text-zinc-700 border-zinc-300 hover:border-red-500'
+                  }`}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
+            {/* LEFT 5 COLUMNS: Active Vinyl Record Sleeve & Direct MV Trigger */}
+            <Tilt3DCard
+              intensity={10}
+              onClick={() =>
+                setVideoModal({
+                  videoId: activeTrack.videoId,
+                  title: activeTrack.title,
+                  streamer: `${activeTrack.artist} // ${activeTrack.type}`,
+                })
+              }
+              className={`lg:col-span-5 border p-6 sm:p-8 flex flex-col justify-between cursor-pointer group relative overflow-hidden ${
+                isDark
+                  ? 'bg-[#0E080B]/95 border-red-500/40 shadow-2xl'
+                  : 'bg-white/95 border-zinc-300 shadow-xl'
+              }`}
+            >
+              <div className="relative my-4 flex items-center justify-center">
+                <div
+                  className="w-56 h-56 sm:w-64 sm:h-64 rounded-full bg-zinc-950 border-4 border-zinc-800 shadow-2xl flex items-center justify-center translate-x-10 sm:translate-x-14 group-hover:translate-x-20 transition-transform duration-500 animate-spin"
+                  style={{ animationDuration: '9s' }}
+                >
+                  <div className="w-44 h-44 rounded-full border border-white/10 flex items-center justify-center">
+                    <div className="w-20 h-20 rounded-full bg-red-600 border-4 border-black flex items-center justify-center">
+                      <span className="font-gothic text-lg text-white">4BG</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="relative z-10 w-60 h-60 sm:w-68 sm:h-68 -translate-x-8 sm:-translate-x-10 bg-black border-2 border-white/20 shadow-[0_25px_50px_rgba(0,0,0,0.9)] overflow-hidden">
+                  <img
+                    src={activeTrack.thumb}
+                    alt={activeTrack.title}
+                    onError={(e) => {
+                      (e.currentTarget as HTMLImageElement).src = '/assets/yt_this_is_4bloods.jpg';
+                    }}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
+                  <div className="absolute top-3 left-3">
+                    <span className="px-2.5 py-0.5 bg-red-600 text-white text-[10px] font-mono-tech font-bold uppercase">
+                      {activeTrack.type}
+                    </span>
+                  </div>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-14 h-14 bg-red-600 text-white flex items-center justify-center shadow-[0_0_30px_rgba(220,38,38,0.8)] group-hover:scale-110 transition-transform">
+                      <Play className="w-6 h-6 fill-white ml-0.5" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-3 pt-4 border-t border-red-500/20">
+                <div className="flex items-center justify-between text-xs font-mono-tech">
+                  <span className="text-red-500 font-bold uppercase">{activeTrack.artist}</span>
+                  <span className={isDark ? 'text-zinc-400' : 'text-zinc-500'}>
+                    DURASI: {activeTrack.duration}
+                  </span>
+                </div>
+                <h3
+                  className={`font-display text-4xl sm:text-5xl tracking-wider uppercase leading-none ${
+                    isDark ? 'text-white' : 'text-zinc-900'
+                  }`}
+                >
+                  {activeTrack.title}
+                </h3>
+                <p
+                  className={`text-xs sm:text-sm leading-relaxed ${
+                    isDark ? 'text-zinc-300' : 'text-zinc-600'
+                  }`}
+                >
+                  {activeTrack.description}
+                </p>
+                <div className="pt-2">
+                  <span className="w-full py-3 bg-red-600 group-hover:bg-red-500 text-white text-xs font-mono-tech font-bold uppercase tracking-widest flex items-center justify-center gap-2">
+                    <Play className="w-4 h-4 fill-white" />
+                    PUTAR VIDEO KLIP (MV) SEKARANG
+                  </span>
+                </div>
+              </div>
+            </Tilt3DCard>
+
+            {/* RIGHT 7 COLUMNS: Interactive Studio Master Tracklist Ledger */}
+            <div
+              className={`lg:col-span-7 border flex flex-col justify-between ${
+                isDark
+                  ? 'bg-[#0D080B]/95 border-white/15'
+                  : 'bg-white/95 border-zinc-300 shadow-lg'
+              }`}
+            >
+              <div
+                className={`px-6 py-4 border-b flex items-center justify-between ${
+                  isDark ? 'bg-[#150C10] border-white/10' : 'bg-zinc-100 border-zinc-200'
+                }`}
+              >
+                <span
+                  className={`text-xs font-mono-tech font-bold uppercase tracking-widest ${
+                    isDark ? 'text-white' : 'text-zinc-900'
+                  }`}
+                >
+                  4BG MASTER RECORDINGS // TRACKLIST DECK
+                </span>
+                <span className="text-[11px] font-mono-tech text-red-500 font-bold">
+                  KLIK BARIS UNTUK PREVIEW • KLIK PLAY UNTUK MV
+                </span>
+              </div>
+
+              <div className="divide-y divide-current/10 flex-1">
+                {filteredTracks.map((track, idx) => {
+                  const isSelected = track.id === activeTrack.id;
+                  return (
+                    <div
+                      key={track.id}
+                      onClick={() => setSelectedTrackId(track.id)}
+                      className={`p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 cursor-pointer ${
+                        isSelected
+                          ? isDark
+                            ? 'bg-red-600/15 shadow-[inset_4px_0_0_#dc2626]'
+                            : 'bg-red-50 shadow-[inset_4px_0_0_#dc2626]'
+                          : isDark
+                            ? 'hover:bg-white/[0.03]'
+                            : 'hover:bg-zinc-50'
+                      }`}
+                    >
+                      <div className="flex items-center gap-4 min-w-0">
+                        <span
+                          className={`font-display text-3xl w-8 shrink-0 ${
+                            isSelected
+                              ? 'text-red-500'
+                              : isDark
+                                ? 'text-zinc-600'
+                                : 'text-zinc-400'
+                          }`}
+                        >
+                          0{idx + 1}
+                        </span>
+
+                        <img
+                          src={track.thumb}
+                          alt={track.title}
+                          onError={(e) => {
+                            (e.currentTarget as HTMLImageElement).src =
+                              '/assets/yt_this_is_4bloods.jpg';
+                          }}
+                          className="w-16 h-11 object-cover border border-red-500/30 shrink-0"
+                        />
+
+                        <div className="min-w-0">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span
+                              className={`px-2 py-0.5 text-[9px] font-mono-tech font-bold uppercase ${
+                                track.type === 'DISS TRACK'
+                                  ? 'bg-red-600 text-white'
+                                  : isDark
+                                    ? 'bg-white/10 text-zinc-200'
+                                    : 'bg-zinc-200 text-zinc-800'
+                              }`}
+                            >
+                              {track.type}
+                            </span>
+                            <span
+                              className={`text-[11px] font-mono-tech truncate ${
+                                isDark ? 'text-zinc-400' : 'text-zinc-500'
+                              }`}
+                            >
+                              {track.artist} {track.target ? `• ${track.target}` : ''}
+                            </span>
+                          </div>
+                          <h4
+                            className={`font-display text-2xl sm:text-3xl tracking-wider truncate mt-0.5 ${
+                              isDark ? 'text-white' : 'text-zinc-900'
+                            }`}
+                          >
+                            {track.title}
+                          </h4>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-3 self-end sm:self-center shrink-0">
+                        <span
+                          className={`text-xs font-mono-tech ${
+                            isDark ? 'text-zinc-400' : 'text-zinc-500'
+                          }`}
+                        >
+                          {track.duration}
+                        </span>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setVideoModal({
+                              videoId: track.videoId,
+                              title: track.title,
+                              streamer: `${track.artist} // ${track.type}`,
+                            });
+                          }}
+                          className="px-4 py-2 bg-red-600 hover:bg-red-500 text-white text-xs font-mono-tech font-bold uppercase flex items-center gap-1.5 cursor-pointer"
+                        >
+                          <Play className="w-3.5 h-3.5 fill-white" />
+                          <span>PLAY MV</span>
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div
+                className={`px-6 py-3.5 border-t text-xs font-mono-tech flex flex-wrap items-center justify-between gap-2 ${
+                  isDark
+                    ? 'bg-[#080507] border-white/10 text-zinc-400'
+                    : 'bg-zinc-100 border-zinc-200 text-zinc-600'
+                }`}
+              >
+                <span>INGIN DENGAR LAGU SAMBIL SCROLL?</span>
+                <span className="text-red-500 font-bold">
+                  TARIK TAB &ldquo;4BG SONG LIST&rdquo; DI SISI KANAN LAYAR →
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* =====================================================================
+          SECTION 05 — IME RP WAR CINEMA & ARCHIVES
+          Layout Rhythm: TOP WIDESCREEN CINEMA BANNER + BOTTOM HORIZONTAL VHS FILMSTRIP GRID
+          Background: Tactical War Room Mural & Film Grain
+      ===================================================================== */}
+      <section
+        id="archives"
+        className={`py-24 border-b relative overflow-hidden ${
+          isDark
+            ? 'bg-gradient-to-br from-[#380715] via-[#1C040B] to-[#2B0510] border-red-600/35'
+            : 'bg-gradient-to-br from-[#FEE8EB] via-[#F5D0D7] to-[#FEE8EB] border-red-300'
+        }`}
+      >
+        {/* Rich Section 05 Background Art: War Action Mural + Film Grain */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
+          <div
+            style={{
+              background:
+                'radial-gradient(circle at 80% 30%, rgba(220,38,38,0.25) 0%, rgba(220,38,38,0) 65%)',
+            }}
+            className="absolute inset-0 pointer-events-none"
+          />
+          <img
+            src="/assets/streams/war_allstar.jpg"
+            alt=""
+            className={`w-full h-full object-cover ${
+              isDark ? 'opacity-15 grayscale' : 'opacity-[0.08] grayscale'
+            }`}
+          />
+          <div className="absolute inset-0 bg-film-grain opacity-90" />
+          <div
+            className={`absolute top-8 left-8 font-display text-[170px] sm:text-[230px] leading-none select-none ${
+              isDark ? 'text-red-500/[0.08]' : 'text-red-950/[0.06]'
+            }`}
+          >
+            WAR TAPES
+          </div>
+        </div>
+
+        <div className="max-w-[1520px] mx-auto px-4 sm:px-8 relative z-10">
+          <div className="flex flex-col lg:flex-row lg:items-end justify-between mb-10 gap-6">
+            <div>
+              <div className="inline-flex items-center gap-2 text-xs font-mono-tech font-bold text-red-500 tracking-[0.25em] uppercase mb-1">
+                <Film className="w-3.5 h-3.5" />
+                <span>05 // DOKUMENTASI PERANG, KOMANDO &amp; SOLIDARITAS IME RP</span>
+              </div>
+              <h2
+                className={`font-display text-5xl sm:text-7xl uppercase tracking-wider leading-none ${
+                  isDark ? 'text-white' : 'text-zinc-900'
+                }`}
+              >
+                WAR CINEMA &amp; <span className="text-red-600">ARCHIVES</span>
+              </h2>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              {[
+                { id: 'ALL', label: 'SEMUA REKAMAN (9)' },
+                { id: 'WAR', label: 'WAR & PURSUIT POV' },
+                { id: 'LORE', label: 'COMMAND & SOLIDARITY' },
+              ].map((w) => (
+                <button
+                  key={w.id}
+                  onClick={() => {
+                    setWarFilter(w.id as any);
+                    const first = WAR_ARCHIVES.find((war) =>
+                      w.id === 'WAR'
+                        ? war.category.includes('WAR') || war.category.includes('PURSUIT')
+                        : w.id === 'LORE'
+                          ? !war.category.includes('WAR') && !war.category.includes('PURSUIT')
+                          : true
+                    );
+                    if (first) setSelectedWarId(first.id);
+                  }}
+                  className={`px-4 py-2.5 text-xs font-mono-tech font-bold uppercase border cursor-pointer ${
+                    warFilter === w.id
+                      ? 'bg-red-600 text-white border-red-500 shadow-[0_0_20px_rgba(220,38,38,0.4)]'
+                      : isDark
+                        ? 'bg-[#120A0E]/90 text-zinc-300 border-white/15 hover:text-white'
+                        : 'bg-white text-zinc-700 border-zinc-300 hover:border-red-500'
+                  }`}
+                >
+                  {w.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* 1. TOP FULL-WIDTH WIDESCREEN FEATURED WAR CINEMA STAGE */}
+          <div
+            onClick={() =>
+              setVideoModal({
+                videoId: activeWarTape.videoId,
+                title: activeWarTape.title,
+                streamer: `${activeWarTape.streamer} // ${activeWarTape.rank}`,
+              })
+            }
+            className={`border overflow-hidden grid grid-cols-1 lg:grid-cols-12 cursor-pointer group mb-6 ${
+              isDark
+                ? 'bg-[#0C070A]/95 border-red-500/45 shadow-[0_25px_70px_rgba(0,0,0,0.85)]'
+                : 'bg-white border-zinc-300 shadow-2xl'
+            }`}
+          >
+            {/* Widescreen Dossier Info on Left 5 Cols */}
+            <div className="lg:col-span-5 p-6 sm:p-10 flex flex-col justify-between gap-6 order-2 lg:order-1">
+              <div className="space-y-4">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="px-3 py-1 bg-red-600 text-white text-[10px] font-mono-tech font-bold uppercase tracking-widest">
+                    FEATURED TAPE // {activeWarTape.category}
+                  </span>
+                  <span
+                    className={`px-2.5 py-1 border text-[10px] font-mono-tech uppercase ${
+                      isDark
+                        ? 'bg-black/60 border-white/15 text-zinc-300'
+                        : 'bg-zinc-100 border-zinc-300 text-zinc-700'
+                    }`}
+                  >
+                    IME ROLEPLAY
+                  </span>
+                </div>
+
+                <div>
+                  <div className="text-xs font-mono-tech text-red-500 font-bold uppercase tracking-widest">
+                    POV KOMANDO: {activeWarTape.streamer} ({activeWarTape.rank})
+                  </div>
+                  <h3
+                    className={`font-display text-4xl sm:text-6xl tracking-wider uppercase leading-none mt-2 ${
+                      isDark ? 'text-white' : 'text-zinc-900'
+                    }`}
+                  >
+                    {activeWarTape.title}
+                  </h3>
+                </div>
+
+                <p
+                  className={`text-xs sm:text-sm leading-relaxed ${
+                    isDark ? 'text-zinc-300' : 'text-zinc-600'
+                  }`}
+                >
+                  Rekaman arsip pertempuran, pengawalan konvoi, dan solidaritas keluarga besar{' '}
+                  <strong>Four Bloods Gang (4BG)</strong> di wilayah South Side Roxwood.
+                </p>
+              </div>
+
+              <div className="pt-4 border-t border-current/10 flex flex-wrap items-center justify-between gap-3">
+                <span className="px-6 py-3.5 bg-red-600 group-hover:bg-red-500 text-white text-xs font-mono-tech font-bold uppercase tracking-widest flex items-center gap-2.5 shadow-lg">
+                  <Play className="w-4 h-4 fill-white" />
+                  PUTAR REKAMAN LAYAR PENUH
+                </span>
+                <span className="font-gothic text-2xl text-red-600">4BG</span>
+              </div>
+            </div>
+
+            {/* Widescreen 16:9 Cinema Frame on Right 7 Cols */}
+            <div className="lg:col-span-7 relative aspect-video bg-black overflow-hidden order-1 lg:order-2">
+              <img
+                src={activeWarTape.thumb}
+                alt={activeWarTape.title}
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).src = '/assets/streams/war_allstar.jpg';
+                }}
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+              />
+              <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-transparent to-transparent hidden lg:block" />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-16 h-16 bg-red-600 text-white flex items-center justify-center shadow-[0_0_40px_rgba(220,38,38,0.85)] group-hover:scale-110 transition-transform">
+                  <Play className="w-7 h-7 fill-white ml-0.5" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* 2. BOTTOM HORIZONTAL VHS TAPE SELECTOR STRIP */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+            {filteredWarArchives.map((war, idx) => {
+              const isSelected = war.id === activeWarTape.id;
+              return (
+                <div
+                  key={war.id}
+                  onClick={() => setSelectedWarId(war.id)}
+                  className={`p-3 border flex items-center justify-between gap-3 cursor-pointer ${
+                    isSelected
+                      ? isDark
+                        ? 'bg-red-600/20 border-red-500 shadow-[inset_4px_0_0_#dc2626]'
+                        : 'bg-red-50 border-red-500 shadow-[inset_4px_0_0_#dc2626]'
+                      : isDark
+                        ? 'bg-[#0E090C]/90 border-white/15 hover:border-red-500/50'
+                        : 'bg-white/95 border-zinc-300 hover:border-red-400'
+                  }`}
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <span className="font-mono-tech text-xs font-bold text-red-500 w-5 shrink-0">
+                      0{idx + 1}
+                    </span>
+                    <img
+                      src={war.thumb}
+                      alt={war.title}
+                      onError={(e) => {
+                        (e.currentTarget as HTMLImageElement).src =
+                          '/assets/streams/war_allstar.jpg';
+                      }}
+                      className="w-20 h-12 object-cover border border-red-500/30 shrink-0"
+                    />
+                    <div className="min-w-0">
+                      <div className="text-[9px] font-mono-tech text-red-500 font-bold uppercase truncate">
+                        {war.category} • {war.streamer}
+                      </div>
+                      <div
+                        className={`font-display text-lg tracking-wider truncate ${
+                          isDark ? 'text-white' : 'text-zinc-900'
+                        }`}
+                      >
+                        {war.title}
+                      </div>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setVideoModal({
+                        videoId: war.videoId,
+                        title: war.title,
+                        streamer: `${war.streamer} // ${war.rank}`,
+                      });
+                    }}
+                    className="p-2 bg-red-600 hover:bg-red-500 text-white shrink-0 cursor-pointer"
+                    title="Langsung Putar Video"
+                  >
+                    <Play className="w-3.5 h-3.5 fill-white" />
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* =====================================================================
+          SECTION 06 — 54 OFFICIAL STREAMERS WALL (IME RP)
+          Background: Roxwood Broadcast Matrix with Dual Crimson/Amber Spotlights
+      ===================================================================== */}
+      <section
+        id="roster"
+        className={`py-24 border-b relative overflow-hidden ${
+          isDark
+            ? 'bg-gradient-to-b from-[#09080C] via-[#050406] to-[#0E0A10] border-red-500/25'
+            : 'bg-gradient-to-b from-[#EAE8E2] via-[#DFDCD5] to-[#E9E7E0] border-zinc-300'
+        }`}
+      >
+        <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
+          <div
+            className={`absolute inset-0 ${
+              isDark ? 'bg-tactical-grid opacity-65' : 'bg-cam-light-grid opacity-65'
+            }`}
+          />
+          <div
+            style={{
+              background: 'radial-gradient(circle, rgba(220,38,38,0.18) 0%, rgba(220,38,38,0) 70%)',
+            }}
+            className="absolute -top-24 left-1/3 w-[600px] h-[600px] rounded-full pointer-events-none"
+          />
+          <div
+            className={`absolute bottom-0 right-10 font-display text-[180px] sm:text-[250px] leading-none select-none ${
+              isDark ? 'text-red-500/[0.05]' : 'text-zinc-900/[0.04]'
+            }`}
+          >
+            54 POV
+          </div>
+        </div>
+
+        <div className="max-w-[1520px] mx-auto px-4 sm:px-8 relative z-10">
+          <div className="flex flex-col lg:flex-row lg:items-end justify-between mb-10 gap-6">
+            <div>
+              <div className="text-xs font-mono-tech font-bold text-red-500 tracking-[0.25em] uppercase mb-1">
+                06 // JARINGAN KREATOR RESMI 4BLOODS DI IME RP
+              </div>
+              <h2
+                className={`font-display text-5xl sm:text-7xl uppercase tracking-wider leading-none ${
+                  isDark ? 'text-white' : 'text-zinc-900'
+                }`}
+              >
+                54 OFFICIAL <span className="text-red-600">STREAMERS</span>
+              </h2>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2.5">
+              <div className="relative">
+                <Search className="w-4 h-4 text-zinc-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  value={rosterSearch}
+                  onChange={(e) => setRosterSearch(e.target.value)}
+                  placeholder="Cari member / @handle..."
+                  className={`pl-10 pr-4 py-2.5 border text-xs font-mono-tech focus:outline-none focus:border-red-500 w-56 ${
+                    isDark
+                      ? 'bg-[#120A0E] border-white/15 text-white placeholder:text-zinc-500'
+                      : 'bg-white border-zinc-300 text-zinc-900 placeholder:text-zinc-400'
+                  }`}
+                />
+              </div>
+
+              {(['ALL', 'LIVE', 'OG', 'Under OG', 'Young Bloods'] as const).map((f) => (
+                <button
+                  key={f}
+                  onClick={() => setRosterFilter(f)}
+                  className={`px-3.5 py-2.5 text-xs font-mono-tech font-bold uppercase border cursor-pointer ${
+                    rosterFilter === f
+                      ? 'bg-red-600 text-white border-red-500'
+                      : isDark
+                        ? 'bg-[#120A0E] text-zinc-300 border-white/10 hover:text-white'
+                        : 'bg-white text-zinc-700 border-zinc-300 hover:border-red-500'
+                  }`}
+                >
+                  {f === 'LIVE' ? `LIVE (${liveCount})` : f}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+            {filteredRoster.map((member) => (
+              <div
+                key={member.channelId}
+                className={`p-3.5 border flex items-center justify-between gap-3 ${
+                  member.isLive
+                    ? isDark
+                      ? 'border-red-500 bg-red-950/30 shadow-[0_0_20px_rgba(220,38,38,0.25)]'
+                      : 'border-red-500 bg-red-50 shadow-sm'
+                    : isDark
+                      ? 'bg-[#0E090C]/90 border-white/10 hover:border-white/30'
+                      : 'bg-white/95 border-zinc-300 hover:border-red-400 shadow-xs'
+                }`}
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="relative w-11 h-11 bg-zinc-900 border border-red-500/30 shrink-0 overflow-hidden">
+                    <img
+                      src={member.avatar || '/assets/logo_v2.png'}
+                      alt={member.name}
+                      onError={(e) => {
+                        (e.currentTarget as HTMLImageElement).src = '/assets/logo_v2.png';
+                      }}
+                      className="w-full h-full object-cover"
+                    />
+                    {member.isLive && (
+                      <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full ring-2 ring-black" />
+                    )}
+                  </div>
+
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <span
+                        className={`font-display text-lg tracking-wider truncate ${
+                          isDark ? 'text-white' : 'text-zinc-900'
+                        }`}
+                      >
+                        {member.name}
+                      </span>
+                      {member.isLive && (
+                        <span className="px-1.5 py-0.2 bg-red-600 text-white text-[9px] font-mono-tech font-bold">
+                          LIVE
+                        </span>
+                      )}
+                    </div>
+                    <div
+                      className={`text-[11px] font-mono-tech truncate ${
+                        isDark ? 'text-zinc-400' : 'text-zinc-500'
+                      }`}
+                    >
+                      {member.handle ? `${member.handle} • ` : ''}
+                      <span className="text-red-500 font-bold">{member.rank}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-1.5 shrink-0">
+                  {member.isLive && (
+                    <Link
+                      href={`/cam?watch=${member.channelId}`}
+                      className="p-2 bg-red-600 hover:bg-red-500 text-white cursor-pointer"
+                      title="Tonton di 4Bloods Multi-POV Cam"
+                    >
+                      <Tv className="w-3.5 h-3.5" />
+                    </Link>
+                  )}
+                  <a
+                    href={
+                      member.handle
+                        ? `https://www.youtube.com/${member.handle}`
+                        : `https://www.youtube.com/channel/${member.channelId}`
+                    }
+                    target="_blank"
+                    rel="noreferrer"
+                    className={`p-2 border cursor-pointer ${
+                      isDark
+                        ? 'bg-white/[0.04] hover:bg-white/[0.12] border-white/10 text-zinc-300 hover:text-white'
+                        : 'bg-zinc-100 hover:bg-zinc-200 border-zinc-300 text-zinc-700'
+                    }`}
+                    title="Buka YouTube Channel"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* =====================================================================
+          MONUMENTAL FOOTER & SIGNATURE BOTTOM BAR — FAN-MADE BY (FINN)EGAN DAVIS
+      ===================================================================== */}
+      <footer
+        className={`border-t ${
+          isDark ? 'bg-[#050304] border-white/10' : 'bg-[#120D10] border-zinc-300 text-white'
+        }`}
+      >
+        <div className="max-w-[1520px] mx-auto px-4 sm:px-8 py-14 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-10 border-b border-white/10">
+          <div className="flex items-center gap-5">
+            <img
+              src="/assets/logo_v2.png"
+              alt="4BG Emblem"
+              className="w-16 h-16 object-contain drop-shadow-[0_0_25px_rgba(220,38,38,0.5)]"
+            />
+            <div>
+              <div className="flex items-baseline gap-2.5">
+                <span className="font-gothic text-3xl sm:text-4xl text-white">4BG</span>
+                <span className="font-script text-2xl text-red-400">Four Bloods Gang</span>
+              </div>
+              <p className="text-xs font-mono-tech text-zinc-400 tracking-widest uppercase mt-1">
+                IME ROLEPLAY (IME RP) // SOUTH SIDE ROXWOOD // POSTAL 1051–1052
+              </p>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3">
+            <Link
+              href="/cam"
+              className="px-6 py-3 bg-red-600 hover:bg-red-500 text-white font-mono-tech text-xs font-bold uppercase tracking-widest flex items-center gap-2 cursor-pointer"
+            >
+              <Tv className="w-4 h-4" />
+              OPEN 4BLOODS CAM
+            </Link>
+          </div>
+        </div>
+
+        {/* Signature Bottom Bar: Fan-Made by (Finn)egan Davis */}
+        <div className="bg-[#030203] py-5 px-4 sm:px-8">
+          <div className="max-w-[1520px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-mono-tech text-zinc-400">
+            <div className="flex items-center gap-2 tracking-wider uppercase">
+              <span className="w-2 h-2 bg-red-600 inline-block" />
+              <span>IME ROLEPLAY // BLOOD IN, BLOOD OUT // FOUR BLOODS GANG ARCHIVE</span>
+            </div>
+
+            <div className="px-4 py-2 bg-white/[0.03] border border-white/10 text-zinc-300 tracking-wider">
+              FAN-MADE OFFICIAL CONCEPT BY{' '}
+              <span className="text-white">
+                (<strong className="font-extrabold text-red-500">Finn</strong>)egan Davis
+              </span>
+            </div>
+          </div>
+        </div>
+      </footer>
+
+      {/* =====================================================================
+          LIGHTBOX MODAL
+      ===================================================================== */}
+      {lightboxImage && (
+        <div
+          onClick={() => setLightboxImage(null)}
+          className="fixed inset-0 z-50 bg-black/92 backdrop-blur-xl flex items-center justify-center p-4"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="max-w-5xl w-full bg-[#0B0709] border border-white/20 overflow-hidden"
+          >
+            <div className="px-5 py-3.5 bg-[#120B0E] border-b border-white/10 flex items-center justify-between">
+              <div>
+                <h4 className="font-display text-2xl text-white tracking-wider">
+                  {lightboxImage.title}
+                </h4>
+                {lightboxImage.subtitle && (
+                  <p className="text-xs font-mono-tech text-red-400">{lightboxImage.subtitle}</p>
+                )}
+              </div>
+              <button
+                onClick={() => setLightboxImage(null)}
+                className="p-2 bg-white/5 hover:bg-red-600 text-white cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-6 bg-black flex items-center justify-center max-h-[80vh]">
+              <img
+                src={lightboxImage.src}
+                alt={lightboxImage.title}
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).src = '/assets/logo_v2.png';
+                }}
+                className="max-h-[72vh] w-auto object-contain"
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* =====================================================================
+          FULLSCREEN VIDEO STREAM / MV MODAL
+      ===================================================================== */}
+      {videoModal && (
+        <div
+          onClick={() => setVideoModal(null)}
+          className="fixed inset-0 z-50 bg-black/92 backdrop-blur-xl flex items-center justify-center p-4"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="max-w-5xl w-full bg-[#0B0709] border border-red-500/50 overflow-hidden shadow-[0_0_60px_rgba(220,38,38,0.3)]"
+          >
+            <div className="px-5 py-3.5 bg-[#120B0E] border-b border-white/10 flex items-center justify-between">
+              <div>
+                <span className="text-[10px] font-mono-tech text-red-500 font-bold uppercase tracking-widest">
+                  {videoModal.streamer}
+                </span>
+                <h4 className="font-display text-2xl text-white tracking-wider">
+                  {videoModal.title}
+                </h4>
+              </div>
+              <button
+                onClick={() => setVideoModal(null)}
+                className="p-2 bg-white/5 hover:bg-red-600 text-white cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="aspect-video w-full bg-black">
+              <iframe
+                src={`https://www.youtube.com/embed/${videoModal.videoId}?autoplay=1&rel=0`}
+                title={videoModal.title}
+                className="w-full h-full"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}

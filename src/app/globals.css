@@ -1,0 +1,165 @@
+@import "tailwindcss";
+
+:root {
+  --bg-obsidian: #070506;
+  --bg-surface: #0d090b;
+  --bg-elevated: #140e11;
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-crimson: rgba(220, 38, 38, 0.45);
+  --crimson-primary: #dc2626;
+  --crimson-bright: #ef4444;
+  --crimson-deep: #7f1d1d;
+  --text-bone: #f4f4f6;
+  --text-muted: #9ca3af;
+  --ease-out-expo: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+html {
+  scroll-behavior: smooth;
+  background-color: var(--bg-obsidian);
+  color: var(--text-bone);
+}
+
+body {
+  background-color: var(--bg-obsidian);
+  color: var(--text-bone);
+  font-family: var(--font-sans), sans-serif;
+  overflow-x: hidden;
+  selection-background-color: #dc2626;
+  selection-color: #ffffff;
+}
+
+/* High-Performance 60FPS Scroll & Rendering Optimization */
+section:not(:first-of-type) {
+  content-visibility: auto;
+  contain-intrinsic-size: 1px 750px;
+}
+
+/* Lightweight Smooth Theme Transition */
+.theme-smooth {
+  transition: background-color 300ms cubic-bezier(0.22, 1, 0.36, 1),
+              color 250ms ease;
+}
+
+::selection {
+  background: #dc2626;
+  color: #ffffff;
+}
+
+/* Official 4BG Logo Typography System */
+.font-display {
+  font-family: var(--font-display), serif;
+  letter-spacing: 0.04em;
+  font-weight: 400;
+}
+
+.font-gothic {
+  font-family: var(--font-gothic), serif;
+}
+
+.font-script {
+  font-family: var(--font-script), cursive;
+}
+
+.font-mono-tech {
+  font-family: var(--font-mono), monospace;
+}
+
+/* Lightweight Zero-Blur Section Background Patterns (60FPS GPU Friendly) */
+.bg-film-grain {
+  background-image: radial-gradient(rgba(220, 38, 38, 0.12) 1px, transparent 0),
+    radial-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 0);
+  background-size: 28px 28px;
+  background-position: 0 0, 14px 14px;
+}
+
+.bg-tactical-grid {
+  background-size: 56px 56px;
+  background-image:
+    linear-gradient(to right, rgba(220, 38, 38, 0.07) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+}
+
+.bg-cam-light-grid {
+  background-size: 48px 48px;
+  background-image:
+    linear-gradient(to right, rgba(220, 38, 38, 0.08) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(17, 17, 21, 0.05) 1px, transparent 1px);
+}
+
+.bg-diagonal-slashes {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    rgba(220, 38, 38, 0.06),
+    rgba(220, 38, 38, 0.06) 1px,
+    transparent 1px,
+    transparent 18px
+  );
+}
+
+.bg-diagonal-slashes-light {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    rgba(220, 38, 38, 0.08),
+    rgba(220, 38, 38, 0.08) 1px,
+    transparent 1px,
+    transparent 18px
+  );
+}
+
+.bg-vinyl-grooves {
+  background-image: repeating-radial-gradient(
+    circle at 80% 50%,
+    rgba(220, 38, 38, 0.06) 0px,
+    rgba(220, 38, 38, 0.06) 1px,
+    transparent 1px,
+    transparent 24px
+  );
+}
+
+.bg-blueprint-dots {
+  background-image: radial-gradient(rgba(220, 38, 38, 0.16) 1.25px, transparent 1.25px);
+  background-size: 24px 24px;
+}
+
+/* Marquee Animation */
+@keyframes marquee-scroll {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-marquee {
+  display: flex;
+  width: max-content;
+  animation: marquee-scroll 34s linear infinite;
+}
+
+.animate-marquee:hover {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-marquee {
+    animation: none;
+  }
+}
+
+/* Clean Theme-Agnostic Scrollbar */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(161, 161, 170, 0.3);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #dc2626;
+}
