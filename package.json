@@ -10,6 +10,7 @@
     "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
     "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
     "scan": "node scripts/scan-streamers.mjs",
+    "scrape:community": "node scripts/scrape-community.mjs",
     "test:e2e": "playwright test"
   },
   "dependencies": {
