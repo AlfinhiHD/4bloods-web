@@ -296,10 +296,10 @@ export default function CompanyProfilePage() {
       </div>
 
       {/* =====================================================================
-          HERO BANNER — SIMPLE, ELEGANT LUXURY 3D SYNDICATE HERO
+          HERO BANNER — EXACT 1 VIEWPORT HEIGHT (100dvh)
       ===================================================================== */}
       <section
-        className={`relative min-h-[88vh] pt-28 pb-14 flex flex-col justify-between overflow-hidden border-b ${
+        className={`relative min-h-[100dvh] lg:h-[100dvh] pt-16 sm:pt-20 flex flex-col justify-between overflow-hidden border-b ${
           isDark
             ? 'bg-[#090306] border-red-500/25'
             : 'bg-gradient-to-b from-[#FAF8F5] via-[#EDE7DE] to-[#F5F0E8] border-zinc-200'
@@ -347,14 +347,14 @@ export default function CompanyProfilePage() {
         </div>
 
         {/* Main Hero Content */}
-        <div className="relative z-10 max-w-[1520px] mx-auto px-4 sm:px-8 w-full my-auto py-6">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
+        <div className="relative z-10 max-w-[1520px] mx-auto px-4 sm:px-8 w-full my-auto py-3 sm:py-5">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-8 items-center">
             {/* Left Column: Refined Editorial Typography & CTAs */}
-            <div className="lg:col-span-7 space-y-7 text-center lg:text-left">
+            <div className="lg:col-span-7 space-y-4 sm:space-y-5 text-center lg:text-left">
               {/* Status Pill */}
-              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-3">
+              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2.5">
                 <div
-                  className={`inline-flex items-center gap-2.5 px-3.5 py-1.5 border text-xs font-mono-tech tracking-wider uppercase backdrop-blur-md ${
+                  className={`inline-flex items-center gap-2 px-3 py-1 border text-xs font-mono-tech tracking-wider uppercase backdrop-blur-md ${
                     isDark
                       ? 'bg-[#12080B]/90 border-red-500/30 text-zinc-200'
                       : 'bg-white/90 border-red-500/30 text-zinc-900 shadow-sm'
@@ -369,7 +369,7 @@ export default function CompanyProfilePage() {
                 {liveMembers.length > 0 && (
                   <Link
                     href="/cam"
-                    className="inline-flex items-center gap-2 px-3 py-1.5 bg-red-600/90 hover:bg-red-500 text-white text-[11px] font-mono-tech font-bold uppercase tracking-wider transition-colors cursor-pointer"
+                    className="inline-flex items-center gap-2 px-3 py-1 bg-red-600/90 hover:bg-red-500 text-white text-[11px] font-mono-tech font-bold uppercase tracking-wider transition-colors cursor-pointer"
                   >
                     <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />
                     <span>{liveCount} STREAMER LIVE</span>
@@ -384,13 +384,13 @@ export default function CompanyProfilePage() {
               </div>
 
               {/* Bold Headline & Clean Tagline */}
-              <div className="space-y-4">
-                <div className="text-xs font-mono-tech text-red-500 font-bold tracking-[0.3em] uppercase">
+              <div className="space-y-3">
+                <div className="text-[11px] sm:text-xs font-mono-tech text-red-500 font-bold tracking-[0.3em] uppercase">
                   FOUR BLOODS GANG (4BG) // OFFICIAL PORTAL
                 </div>
 
                 <h1
-                  className={`font-display text-5xl sm:text-7xl md:text-8xl xl:text-[92px] leading-[0.92] tracking-wider uppercase ${
+                  className={`font-display text-4xl sm:text-6xl md:text-7xl xl:text-[84px] leading-[0.92] tracking-wider uppercase ${
                     isDark ? 'text-white' : 'text-zinc-950'
                   }`}
                 >
@@ -400,16 +400,16 @@ export default function CompanyProfilePage() {
                   </span>
                 </h1>
 
-                <p className="font-script text-2xl sm:text-3xl lg:text-4xl text-red-500 drop-shadow-[0_2px_15px_rgba(220,38,38,0.4)] max-w-2xl mx-auto lg:mx-0">
+                <p className="font-script text-xl sm:text-2xl lg:text-3xl text-red-500 drop-shadow-[0_2px_15px_rgba(220,38,38,0.4)] max-w-2xl mx-auto lg:mx-0">
                   &ldquo;Hidup dalam darah, berjalan bersama keluarga, dan mati demi 4Bloods.&rdquo;
                 </p>
               </div>
 
               {/* Direct Action CTAs */}
-              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-4 pt-1">
+              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-3.5 pt-0.5">
                 <Link
                   href="/cam"
-                  className="px-8 py-4 bg-red-600 hover:bg-red-500 text-white font-mono-tech text-xs sm:text-sm font-bold tracking-[0.18em] uppercase transition-all shadow-[0_0_30px_rgba(220,38,38,0.35)] hover:shadow-[0_0_40px_rgba(220,38,38,0.6)] flex items-center gap-3 cursor-pointer group"
+                  className="px-7 py-3.5 bg-red-600 hover:bg-red-500 text-white font-mono-tech text-xs sm:text-sm font-bold tracking-[0.18em] uppercase transition-all shadow-[0_0_30px_rgba(220,38,38,0.35)] hover:shadow-[0_0_40px_rgba(220,38,38,0.6)] flex items-center gap-2.5 cursor-pointer group"
                 >
                   <Tv className="w-4 h-4 transition-transform group-hover:scale-110" />
                   <span>BUKA 4BLOODS CAM ({liveCount > 0 ? `${liveCount} LIVE` : 'MULTI-POV'})</span>
@@ -423,7 +423,7 @@ export default function CompanyProfilePage() {
                       streamer: '4BLOODS OFFICIAL ANTHEM // IME RP',
                     })
                   }
-                  className={`px-6 py-4 border font-mono-tech text-xs sm:text-sm font-bold tracking-[0.16em] uppercase transition-colors flex items-center gap-2.5 cursor-pointer ${
+                  className={`px-6 py-3.5 border font-mono-tech text-xs sm:text-sm font-bold tracking-[0.16em] uppercase transition-colors flex items-center gap-2.5 cursor-pointer ${
                     isDark
                       ? 'bg-[#120A0D] hover:bg-white hover:text-black text-white border-white/15'
                       : 'bg-white hover:bg-zinc-900 hover:text-white text-zinc-900 border-zinc-300 shadow-sm'
@@ -436,7 +436,7 @@ export default function CompanyProfilePage() {
 
               {/* Sleek Minimalist Metadata Bar */}
               <div
-                className={`pt-5 flex items-center justify-center lg:justify-start gap-6 sm:gap-10 border-t ${
+                className={`pt-3 sm:pt-4 flex items-center justify-center lg:justify-start gap-6 sm:gap-10 border-t ${
                   isDark ? 'border-white/10' : 'border-zinc-300/80'
                 }`}
               >
@@ -453,7 +453,7 @@ export default function CompanyProfilePage() {
                   </div>
                 </div>
 
-                <div className={`w-px h-8 ${isDark ? 'bg-white/10' : 'bg-zinc-300'}`} />
+                <div className={`w-px h-7 ${isDark ? 'bg-white/10' : 'bg-zinc-300'}`} />
 
                 <div>
                   <div className="text-[10px] font-mono-tech text-red-500 font-bold uppercase tracking-widest">
@@ -468,7 +468,7 @@ export default function CompanyProfilePage() {
                   </div>
                 </div>
 
-                <div className={`w-px h-8 ${isDark ? 'bg-white/10' : 'bg-zinc-300'}`} />
+                <div className={`w-px h-7 ${isDark ? 'bg-white/10' : 'bg-zinc-300'}`} />
 
                 <div>
                   <div className="text-[10px] font-mono-tech text-red-500 font-bold uppercase tracking-widest">
@@ -497,7 +497,7 @@ export default function CompanyProfilePage() {
                     subtitle: 'IME Roleplay // South Side Roxwood (Postal 1051–1052)',
                   })
                 }
-                className="relative w-80 h-80 sm:w-[420px] sm:h-[420px] lg:w-[460px] lg:h-[460px] xl:w-[500px] xl:h-[500px] flex items-center justify-center cursor-pointer group"
+                className="relative w-64 h-64 sm:w-80 sm:h-80 md:w-[360px] md:h-[360px] lg:w-[420px] lg:h-[420px] xl:w-[460px] xl:h-[460px] flex items-center justify-center cursor-pointer group"
               >
                 {/* Volumetric Crimson Ambient Lighting Ring */}
                 <div
@@ -518,13 +518,13 @@ export default function CompanyProfilePage() {
                   src="/assets/generated/crest_v1_3d.webp"
                   alt="4BLOODS GANG Official 3D Emblem"
                   style={{ transform: 'translateZ(30px)' }}
-                  className="relative w-72 h-auto max-h-[380px] sm:w-[380px] sm:max-h-[420px] lg:w-[420px] lg:max-h-[460px] object-contain drop-shadow-[0_20px_45px_rgba(220,38,38,0.45)] drop-shadow-[0_10px_25px_rgba(0,0,0,0.85)] group-hover:scale-105 transition-transform duration-300 select-none"
+                  className="relative w-56 h-auto max-h-[300px] sm:w-[320px] sm:max-h-[360px] lg:w-[380px] lg:max-h-[420px] object-contain drop-shadow-[0_20px_45px_rgba(220,38,38,0.45)] drop-shadow-[0_10px_25px_rgba(0,0,0,0.85)] group-hover:scale-105 transition-transform duration-300 select-none"
                 />
               </Tilt3DCard>
 
               {/* Dedicated Heritage V1 Label Badge */}
               <div
-                className={`mt-4 inline-flex items-center gap-2 px-3.5 py-1.5 border backdrop-blur-md rounded-xs ${
+                className={`mt-3 inline-flex items-center gap-2 px-3 py-1 border backdrop-blur-md rounded-xs ${
                   isDark
                     ? 'bg-black/60 border-white/10 text-zinc-300'
                     : 'bg-white/80 border-zinc-300 text-zinc-800 shadow-sm'
@@ -542,28 +542,26 @@ export default function CompanyProfilePage() {
             </div>
           </div>
         </div>
-      </section>
 
-      {/* =====================================================================
-          STREETWEAR MARQUEE TAPE
-      ===================================================================== */}
-      <div className="bg-red-600 text-white py-2.5 border-b border-red-400/30 overflow-hidden select-none">
-        <div className="animate-marquee flex items-center gap-10 text-xs font-mono-tech font-bold tracking-[0.28em] uppercase">
-          {Array.from({ length: 2 }).map((_, idx) => (
-            <React.Fragment key={idx}>
-              <span className="font-gothic text-base tracking-normal">4BG</span>
-              <span>FOUR BLOODS GANG // IME ROLEPLAY</span>
-              <span>✦</span>
-              <span>SOUTH SIDE ROXWOOD // POSTAL 1051–1052</span>
-              <span>✦</span>
-              <span>BLOOD IN, BLOOD OUT</span>
-              <span>✦</span>
-              <span>54 OFFICIAL STREAMERS</span>
-              <span>✦</span>
-            </React.Fragment>
-          ))}
+        {/* STREETWEAR MARQUEE TAPE — Sits exactly at bottom of 100dvh Hero */}
+        <div className="relative z-10 w-full bg-red-600 text-white py-2 sm:py-2.5 border-t border-red-400/30 overflow-hidden select-none shrink-0">
+          <div className="animate-marquee flex items-center gap-10 text-xs font-mono-tech font-bold tracking-[0.28em] uppercase">
+            {Array.from({ length: 2 }).map((_, idx) => (
+              <React.Fragment key={idx}>
+                <span className="font-gothic text-base tracking-normal">4BG</span>
+                <span>FOUR BLOODS GANG // IME ROLEPLAY</span>
+                <span>✦</span>
+                <span>SOUTH SIDE ROXWOOD // POSTAL 1051–1052</span>
+                <span>✦</span>
+                <span>BLOOD IN, BLOOD OUT</span>
+                <span>✦</span>
+                <span>54 OFFICIAL STREAMERS</span>
+                <span>✦</span>
+              </React.Fragment>
+            ))}
+          </div>
         </div>
-      </div>
+      </section>
 
       {/* =====================================================================
           TWO MAJOR GATEWAYS: 01 WIKI & ARCHIVE  vs  02 COMMUNITY & ACHIEVEMENTS
