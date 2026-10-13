@@ -305,33 +305,32 @@ export default function CompanyProfilePage() {
             : 'bg-gradient-to-b from-[#FAF8F5] via-[#EDE7DE] to-[#F5F0E8] border-zinc-200'
         }`}
       >
-        {/* Moodily Darkened Atmospheric Hero Wallpaper (Non-HD Artifact Masking) */}
+        {/* Prominent High-Visibility Hero Wallpaper (Vivid, Clear & Cinematic) */}
         <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
           <img
             src="/assets/hero_bg.webp"
             alt="Hero Background"
             className={`w-full h-full object-cover object-center ${
-              isDark ? 'opacity-40 brightness-65 contrast-115 blur-[0.5px]' : 'opacity-20 brightness-90'
+              isDark ? 'opacity-85 brightness-95 contrast-105' : 'opacity-40 brightness-100'
             }`}
           />
           <div
             className={`absolute inset-0 ${
               isDark
-                ? 'bg-gradient-to-b from-black/85 via-black/70 to-[#090306]'
-                : 'bg-gradient-to-b from-white/85 via-white/70 to-[#FAF8F5]'
+                ? 'bg-gradient-to-b from-black/55 via-black/30 to-[#090306]/95'
+                : 'bg-gradient-to-b from-white/75 via-white/50 to-[#FAF8F5]'
             }`}
           />
           <div
             style={{
               background:
-                'radial-gradient(circle at 50% 45%, rgba(0,0,0,0.35) 0%, rgba(9,3,6,0.92) 80%)',
+                'radial-gradient(circle at 50% 50%, rgba(0,0,0,0) 0%, rgba(9,3,6,0.6) 80%)',
             }}
             className="absolute inset-0 pointer-events-none"
           />
-          <div className="absolute inset-0 bg-film-grain opacity-55" />
           <div
             className={`absolute inset-0 ${
-              isDark ? 'bg-tactical-grid opacity-20' : 'bg-cam-light-grid opacity-20'
+              isDark ? 'bg-tactical-grid opacity-15' : 'bg-cam-light-grid opacity-20'
             }`}
           />
           <div
