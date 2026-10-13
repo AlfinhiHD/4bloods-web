@@ -178,17 +178,36 @@ export async function GET(request: Request) {
     console.warn('[API /api/streamers] Firebase fetch warning:', err);
   }
 
-  // 2. If Firebase did not respond, or if specific VIP channels need quick check (max 2 channels, with strict 2s timeout)
-  if (!firebaseSuccess) {
-    const fallbackVIPs = ['UCvseheuTcY-BnPGsmfQ5K5g', 'UCHi0xCfpNPut25e_jcRcC3A'];
+  // 2. ACTIVE STREAM VERIFIER: Check currently live video IDs to ensure ended streams don't get stuck
+  const activeLiveEntries = Object.entries(snapshotMap).filter(
+    ([_, s]: [string, any]) => s.isLive && s.videoId
+  );
+
+  if (activeLiveEntries.length > 0) {
     await Promise.all(
-      fallbackVIPs.map(async (cid) => {
-        const fresh = await safeCheckYouTubeChannel(cid);
-        if (fresh && fresh.isLive) {
-          snapshotMap[cid] = {
-            ...(snapshotMap[cid] || {}),
-            ...fresh,
-          };
+      activeLiveEntries.map(async ([cid, snap]) => {
+        try {
+          const checkRes = await fetch(`https://www.youtube.com/watch?v=${snap.videoId}`, {
+            headers: {
+              'User-Agent':
+                'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+            },
+            cache: 'no-store',
+            signal: AbortSignal.timeout(1800),
+          });
+          if (checkRes.ok) {
+            const html = await checkRes.text();
+            const hasEnded = html.includes('"endTimestamp":"');
+            const isLiveNow = html.includes('"isLiveNow":true');
+            if (hasEnded || !isLiveNow) {
+              // Stream has finished on YouTube! Auto-clear stuck live status
+              snapshotMap[cid].isLive = false;
+              snapshotMap[cid].videoId = null;
+              snapshotMap[cid].streamTitle = null;
+            }
+          }
+        } catch {
+          // Keep current status if YouTube timeout
         }
       })
     );
