@@ -377,7 +377,7 @@ export default function FourBloodsCamPage() {
           const enriched = STREAMER_ROSTER.map((member) => {
             const fb = fbStreamers?.[member.channelId] || {};
             const isStale =
-              fb.lastChecked && Date.now() - new Date(fb.lastChecked).getTime() > 25 * 60 * 1000;
+              fb.lastChecked && Date.now() - new Date(fb.lastChecked).getTime() > 8 * 60 * 60 * 1000;
             const isLive = !isStale && Boolean(fb.isLive && fb.videoId);
             const avatar = fbAvatars?.[member.channelId] || member.featuredThumb || '/assets/logo_v2.png';
             return {

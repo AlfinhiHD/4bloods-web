@@ -116,7 +116,7 @@ export default function CompanyProfilePage() {
               const liveCount = Object.values(fb).filter((v: any) => {
                 const isStale =
                   v?.lastChecked &&
-                  Date.now() - new Date(v.lastChecked).getTime() > 25 * 60 * 1000;
+                  Date.now() - new Date(v.lastChecked).getTime() > 8 * 60 * 60 * 1000;
                 return !isStale && Boolean(v?.isLive && v?.videoId);
               }).length;
               setLiveCount(liveCount);
@@ -125,7 +125,7 @@ export default function CompanyProfilePage() {
                   const s = fb[m.channelId];
                   const isStale =
                     s?.lastChecked &&
-                    Date.now() - new Date(s.lastChecked).getTime() > 25 * 60 * 1000;
+                    Date.now() - new Date(s.lastChecked).getTime() > 8 * 60 * 60 * 1000;
                   const isLive = !isStale && Boolean(s?.isLive && s?.videoId);
                   return isLive
                     ? { ...m, isLive: true, videoId: s.videoId }
@@ -300,25 +300,39 @@ export default function CompanyProfilePage() {
       <section
         className={`relative min-h-[88vh] pt-28 pb-14 flex flex-col justify-between overflow-hidden border-b ${
           isDark
-            ? 'bg-gradient-to-b from-[#090406] via-[#050304] to-[#0A0507] border-red-500/20'
+            ? 'bg-[#080305] border-red-500/20'
             : 'bg-gradient-to-b from-[#FAF8F5] via-[#EDE7DE] to-[#F5F0E8] border-zinc-200'
         }`}
       >
-        {/* Subtle Atmospheric Backdrop (Clean, Lightweight, Zero GPU Drain) */}
+        {/* Subtle Atmospheric Backdrop with Custom 20260708_160828 / hero_bg.webp */}
         <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+          <img
+            src="/assets/hero_bg.webp"
+            alt="Hero Background"
+            className={`w-full h-full object-cover object-center ${
+              isDark ? 'opacity-35 brightness-60 contrast-110' : 'opacity-15 brightness-90'
+            }`}
+          />
           <div
             className={`absolute inset-0 ${
-              isDark ? 'bg-tactical-grid opacity-25' : 'bg-cam-light-grid opacity-30'
+              isDark
+                ? 'bg-gradient-to-b from-black/85 via-black/65 to-[#080305]'
+                : 'bg-gradient-to-b from-white/85 via-white/70 to-[#FAF8F5]'
+            }`}
+          />
+          <div
+            className={`absolute inset-0 ${
+              isDark ? 'bg-tactical-grid opacity-20' : 'bg-cam-light-grid opacity-25'
             }`}
           />
           <div
             className={`absolute -top-32 -left-32 w-96 h-96 rounded-full blur-[120px] pointer-events-none ${
-              isDark ? 'bg-red-600/10' : 'bg-red-500/5'
+              isDark ? 'bg-red-600/15' : 'bg-red-500/5'
             }`}
           />
           <div
             className={`absolute top-1/2 -right-32 w-[500px] h-[500px] rounded-full blur-[140px] pointer-events-none ${
-              isDark ? 'bg-red-900/15' : 'bg-red-400/10'
+              isDark ? 'bg-red-900/20' : 'bg-red-400/10'
             }`}
           />
         </div>
@@ -1487,34 +1501,27 @@ export default function CompanyProfilePage() {
         id="archives"
         className={`py-24 border-b relative overflow-hidden ${
           isDark
-            ? 'bg-gradient-to-br from-[#380715] via-[#1C040B] to-[#2B0510] border-red-600/35'
-            : 'bg-gradient-to-br from-[#FEE8EB] via-[#F5D0D7] to-[#FEE8EB] border-red-300'
+            ? 'bg-gradient-to-br from-[#0F0508] via-[#070305] to-[#0D0407] border-red-600/35'
+            : 'bg-gradient-to-br from-[#FDF2F4] via-[#F8E2E6] to-[#FDF2F4] border-red-300'
         }`}
       >
-        {/* Rich Section 05 Background Art: War Action Mural + Film Grain */}
+        {/* Clean Atmospheric Cinema Backdrop (Non-Clashing, Deep Cinematic Focus) */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
+          <img
+            src="/assets/hood_roxwood.webp"
+            alt="Cinematic Backdrop"
+            className={`w-full h-full object-cover object-center ${
+              isDark ? 'opacity-15 brightness-50 contrast-125' : 'opacity-[0.06] grayscale'
+            }`}
+          />
           <div
             style={{
               background:
-                'radial-gradient(circle at 80% 30%, rgba(220,38,38,0.25) 0%, rgba(220,38,38,0) 65%)',
+                'radial-gradient(circle at 50% 35%, rgba(220,38,38,0.12) 0%, rgba(7,3,5,0.92) 80%)',
             }}
             className="absolute inset-0 pointer-events-none"
           />
-          <img
-            src="/assets/streams/war_allstar.jpg"
-            alt=""
-            className={`w-full h-full object-cover ${
-              isDark ? 'opacity-15 grayscale' : 'opacity-[0.08] grayscale'
-            }`}
-          />
-          <div className="absolute inset-0 bg-film-grain opacity-90" />
-          <div
-            className={`absolute top-8 left-8 font-display text-[170px] sm:text-[230px] leading-none select-none ${
-              isDark ? 'text-red-500/[0.08]' : 'text-red-950/[0.06]'
-            }`}
-          >
-            WAR TAPES
-          </div>
+          <div className="absolute inset-0 bg-film-grain opacity-50" />
         </div>
 
         <div className="max-w-[1520px] mx-auto px-4 sm:px-8 relative z-10">

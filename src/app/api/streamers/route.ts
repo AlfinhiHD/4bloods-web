@@ -58,7 +58,14 @@ async function safeCheckYouTubeChannel(channelId: string) {
     if (!watchRes.ok) return null;
 
     const watchHtml = await watchRes.text();
-    const isLiveNow = watchHtml.includes('"liveBroadcastDetails":{"isLiveNow":true');
+    const isLiveNow =
+      (watchHtml.includes('"liveBroadcastDetails":{"isLiveNow":true') ||
+        watchHtml.includes('"isLiveNow":true') ||
+        watchHtml.includes('"isLive":true') ||
+        watchHtml.includes('"isLiveBroadcast":true')) &&
+      !watchHtml.includes('"endTimestamp":"') &&
+      !watchHtml.includes('This live stream has ended') &&
+      !watchHtml.includes('Siaran langsung telah berakhir');
     const titleMatch = watchHtml.match(/<meta name="title" content="([^"]+)"/);
     const streamTitle = titleMatch ? titleMatch[1] : null;
     const startMatch = watchHtml.match(/"startTimestamp":"([^"]+)"/);
@@ -278,7 +285,65 @@ export async function GET(request: Request) {
     );
   }
 
-  // 3. Optional: YouTube Data API v3 check if user provided YOUTUBE_API_KEY in Vercel environment
+  // 3. PROACTIVE LIVE CHECK: Check priority / unconfirmed channels directly on YouTube so newly started streams are detected immediately even if Firebase is delayed
+  const candidateCheckIds = [
+    'UCI1hbc1-qfszyjNYoNgkV2w', // Asep Teriyaki (@BarevsKi)
+    'UCVbGCNvads9e5vZCfGva4-g', // Kim (@NanzSpace)
+    'UCgO8kYJBkm5jvUJkV9H9mIw', // Nahmier Davies (@NAHMIER)
+    'UCzjGSL8HMCRUi1sWH5VYGjQ', // Ilham Joseph
+    'UC79cKOK5rTIABhvXxeINdHw', // Louis Ven
+    'UCWpOmCvUcYgjMrNW4LjvmCw', // Deja Amari
+    'UC6a-XQK_U4lsMfODIbgrFAA', // Muhammad Sumbul
+    'UCiAlUeYsA39S5x_nQS2aT-Q', // Joy Braxton
+    'UC9LmRRwAzHkCxlgbKW3tMjA', // Jane Elisha
+    'UCHi0xCfpNPut25e_jcRcC3A', // Azmi Wildan
+    'UCCEDmX6Jl-fwm4fywtwo4pQ', // Patra
+    'UCYG2Pp0MZvxyziNXO8puT-Q', // znah
+    'UC7KiVxdO5HiAwIrbz--RG1w', // Geo Blitz
+    'UC8opURjNDJhx5OtgMsekvMQ', // Grimm Jow
+    'UCuTN4Rl32nqN6WoIRaElEpQ', // Robbe Loxse
+    'UCi2Oz3Upz9HIPWQWfZKKyDg', // Ruby Joseph
+    'UCvseheuTcY-BnPGsmfQ5K5g', // Ackai
+    'UCtjLmmgBzjtND3i7bvyjLRQ', // Flip Flop
+    'UCqUhn7QlVk9MJStkR5Q_59g', // Ujang Walker
+  ];
+
+  const unconfirmedCheckIds = candidateCheckIds.filter((cid) => !snapshotMap[cid]?.isLive);
+  const toScan = forceRefresh ? unconfirmedCheckIds.slice(0, 10) : unconfirmedCheckIds.slice(0, 6);
+
+  if (toScan.length > 0) {
+    await Promise.all(
+      toScan.map(async (cid) => {
+        const liveInfo = await safeCheckYouTubeChannel(cid);
+        if (liveInfo?.isLive && liveInfo.videoId) {
+          snapshotMap[cid] = {
+            ...(snapshotMap[cid] || {}),
+            isLive: true,
+            videoId: liveInfo.videoId,
+            streamTitle: liveInfo.streamTitle || snapshotMap[cid]?.streamTitle,
+            startTimestamp: liveInfo.startTimestamp || snapshotMap[cid]?.startTimestamp,
+            lastChecked: new Date().toISOString(),
+          };
+
+          // Self-healing: Asynchronously sync back to Firebase RTDB so client fallbacks receive it
+          fetch(`https://blood-186bd-default-rtdb.firebaseio.com/streamers/${cid}.json`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              channelId: cid,
+              isLive: true,
+              videoId: liveInfo.videoId,
+              title: liveInfo.streamTitle,
+              actualStartTime: liveInfo.startTimestamp,
+              lastChecked: new Date().toISOString(),
+            }),
+          }).catch(() => {});
+        }
+      })
+    );
+  }
+
+  // 4. Optional: YouTube Data API v3 check if user provided YOUTUBE_API_KEY in Vercel environment
   const apiKey = process.env.YOUTUBE_API_KEY || process.env.NEXT_PUBLIC_YOUTUBE_API_KEY;
   if (apiKey) {
     try {
