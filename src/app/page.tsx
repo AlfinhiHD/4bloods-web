@@ -311,20 +311,20 @@ export default function CompanyProfilePage() {
             src="/assets/hero_bg.webp"
             alt="Hero Background"
             className={`w-full h-full object-cover object-center ${
-              isDark ? 'opacity-85 brightness-95 contrast-105' : 'opacity-40 brightness-100'
+              isDark ? 'opacity-55 brightness-75 contrast-110' : 'opacity-30 brightness-95'
             }`}
           />
           <div
             className={`absolute inset-0 ${
               isDark
-                ? 'bg-gradient-to-b from-black/55 via-black/30 to-[#090306]/95'
-                : 'bg-gradient-to-b from-white/75 via-white/50 to-[#FAF8F5]'
+                ? 'bg-gradient-to-b from-black/75 via-black/55 to-[#090306]/98'
+                : 'bg-gradient-to-b from-white/80 via-white/60 to-[#FAF8F5]'
             }`}
           />
           <div
             style={{
               background:
-                'radial-gradient(circle at 50% 50%, rgba(0,0,0,0) 0%, rgba(9,3,6,0.6) 80%)',
+                'radial-gradient(circle at 50% 50%, rgba(0,0,0,0.2) 0%, rgba(9,3,6,0.85) 75%)',
             }}
             className="absolute inset-0 pointer-events-none"
           />

@@ -48,13 +48,18 @@ async function checkChannel(streamer) {
     if (!watchRes.ok) return { ...streamer, isLive: false, videoId: null };
 
     const watchHtml = await watchRes.text();
+    const isOffline =
+      watchHtml.includes('LIVE_STREAM_OFFLINE') ||
+      watchHtml.includes('"isLiveNow":false') ||
+      watchHtml.includes('"endTimestamp":"') ||
+      watchHtml.includes('This live stream has ended') ||
+      watchHtml.includes('Siaran langsung telah berakhir') ||
+      watchHtml.includes('Stream telah berakhir');
+
     const isLiveNow =
-      (watchHtml.includes('"isLiveNow":true') ||
-        watchHtml.includes('"isLive":true') ||
-        watchHtml.includes('"liveBroadcastDetails":{"isLiveNow":true')) &&
-      !watchHtml.includes('"endTimestamp":"') &&
-      !watchHtml.includes('This live stream has ended') &&
-      !watchHtml.includes('Siaran langsung telah berakhir');
+      !isOffline &&
+      (watchHtml.includes('"liveBroadcastDetails":{"isLiveNow":true') ||
+        watchHtml.includes('"isLiveNow":true'));
 
     const titleMatch =
       watchHtml.match(/<meta name="title" content="([^"]+)"/) ||

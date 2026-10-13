@@ -145,14 +145,55 @@ export default function WikiPage() {
       <section
         className={`relative pt-32 pb-16 border-b overflow-hidden ${
           isDark
-            ? 'bg-[#0A0407] border-red-500/20'
+            ? 'bg-[#090306] border-red-500/25'
             : 'bg-gradient-to-b from-[#FAF8F5] via-[#EDE7DE] to-[#F5F0E8] border-zinc-200'
         }`}
       >
+        {/* Cinematic Atmospheric Turf & Lore Backdrop */}
+        <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+          <img
+            src="/assets/generated/fanart_west_to_ssr.webp"
+            alt="Lore Backdrop"
+            className={`w-full h-full object-cover object-center ${
+              isDark ? 'opacity-35 brightness-75 contrast-120 blur-[0.5px]' : 'opacity-15 brightness-95'
+            }`}
+          />
+          <div
+            className={`absolute inset-0 ${
+              isDark
+                ? 'bg-gradient-to-b from-[#090306]/85 via-[#090306]/70 to-[#090306]'
+                : 'bg-gradient-to-b from-white/85 via-white/70 to-[#FAF8F5]'
+            }`}
+          />
+          <div
+            style={{
+              background:
+                'radial-gradient(circle at 60% 40%, rgba(220,38,38,0.22) 0%, rgba(9,3,6,0.92) 75%)',
+            }}
+            className="absolute inset-0 pointer-events-none"
+          />
+          <div className="absolute inset-0 bg-film-grain opacity-50" />
+          <div
+            className={`absolute inset-0 ${
+              isDark ? 'bg-tactical-grid opacity-20' : 'bg-cam-light-grid opacity-25'
+            }`}
+          />
+          <div
+            className={`absolute -top-24 -left-24 w-96 h-96 rounded-full blur-[130px] pointer-events-none ${
+              isDark ? 'bg-red-600/15' : 'bg-red-500/5'
+            }`}
+          />
+          <div
+            className={`absolute top-1/2 -right-24 w-[500px] h-[500px] rounded-full blur-[140px] pointer-events-none ${
+              isDark ? 'bg-red-900/25' : 'bg-red-400/10'
+            }`}
+          />
+        </div>
+
         <div className="max-w-[1520px] mx-auto px-4 sm:px-8 relative z-10">
           <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-8">
             <div className="space-y-4 max-w-3xl">
-              <div className="inline-flex items-center gap-2 px-3 py-1 bg-red-600/15 border border-red-500/30 text-red-500 text-xs font-mono-tech font-bold tracking-widest uppercase">
+              <div className="inline-flex items-center gap-2 px-3 py-1 bg-red-600/15 border border-red-500/30 text-red-500 text-xs font-mono-tech font-bold tracking-widest uppercase backdrop-blur-md">
                 <BookOpen className="w-3.5 h-3.5" />
                 <span>OFFICIAL FACTION CODEX // EST. 23 JUNI 2025</span>
               </div>
@@ -161,10 +202,10 @@ export default function WikiPage() {
                   isDark ? 'text-white' : 'text-zinc-950'
                 }`}
               >
-                4BLOODS <span className="text-red-600">WIKI & ARCHIVE</span>
+                4BLOODS <span className="text-red-600 drop-shadow-[0_0_35px_rgba(220,38,38,0.35)]">WIKI & ARCHIVE</span>
               </h1>
               <p
-                className={`text-sm sm:text-base font-mono-tech leading-relaxed ${
+                className={`text-sm sm:text-base font-mono-tech leading-relaxed max-w-2xl ${
                   isDark ? 'text-zinc-300' : 'text-zinc-700'
                 }`}
               >
@@ -173,31 +214,53 @@ export default function WikiPage() {
               </p>
             </div>
 
-            {/* Quick Metadata Box */}
+            {/* Tactical Syndicate Dossier Box */}
             <div
-              className={`p-6 border min-w-[280px] lg:min-w-[320px] space-y-3 ${
-                isDark ? 'bg-[#12080B]/90 border-red-500/30' : 'bg-white border-zinc-300 shadow-md'
+              className={`relative p-6 border min-w-[280px] sm:min-w-[340px] lg:min-w-[380px] space-y-4 rounded-xs overflow-hidden transition-all duration-300 shadow-[0_15px_40px_rgba(0,0,0,0.7)] ${
+                isDark
+                  ? 'bg-gradient-to-br from-[#1C0911]/95 via-[#12050B]/90 to-[#0A0205]/95 border-red-500/40 hover:border-red-500/70 shadow-[0_0_35px_rgba(220,38,38,0.2)]'
+                  : 'bg-white border-zinc-300 shadow-xl'
               }`}
             >
-              <div className="text-[10px] font-mono-tech text-red-500 font-bold uppercase tracking-widest">
-                FACTION BRIEF
+              {/* Top Laser Accent */}
+              <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-red-600 via-red-500 to-transparent" />
+
+              <div className="flex items-center justify-between border-b border-white/10 pb-2.5">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-red-600 animate-pulse" />
+                  <span className="text-[10px] font-mono-tech text-red-500 font-bold uppercase tracking-widest">
+                    FACTION BRIEF // CODEX
+                  </span>
+                </div>
+                <span className="text-[9px] font-mono-tech px-2 py-0.5 bg-red-600/20 text-red-400 border border-red-500/30 uppercase">
+                  VERIFIED
+                </span>
               </div>
-              <div className="space-y-1.5 text-xs font-mono-tech">
-                <div className="flex justify-between border-b border-white/10 pb-1">
-                  <span className="text-zinc-500">Nama Resmi:</span>
-                  <span className="font-bold">Four Bloods Gang (4BG)</span>
+
+              <div className="space-y-2.5 text-xs font-mono-tech">
+                <div className="flex items-center justify-between border-b border-white/10 pb-1.5">
+                  <span className="text-zinc-400">Nama Resmi:</span>
+                  <span className={`font-bold font-mono ${isDark ? 'text-white' : 'text-zinc-900'}`}>
+                    Four Bloods Gang (4BG)
+                  </span>
                 </div>
-                <div className="flex justify-between border-b border-white/10 pb-1">
-                  <span className="text-zinc-500">Tanggal Berdiri:</span>
-                  <span className="font-bold text-red-500">{originData.foundedDate}</span>
+                <div className="flex items-center justify-between border-b border-white/10 pb-1.5">
+                  <span className="text-zinc-400">Tanggal Berdiri:</span>
+                  <span className="font-bold text-red-500 font-mono">
+                    {originData.foundedDate}
+                  </span>
                 </div>
-                <div className="flex justify-between border-b border-white/10 pb-1">
-                  <span className="text-zinc-500">Wilayah Utama:</span>
-                  <span className="font-bold">South Side Roxwood (1051-1052)</span>
+                <div className="flex items-center justify-between border-b border-white/10 pb-1.5">
+                  <span className="text-zinc-400">Wilayah Utama:</span>
+                  <span className={`font-bold font-mono ${isDark ? 'text-zinc-100' : 'text-zinc-900'}`}>
+                    South Side Roxwood (1051–1052)
+                  </span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-zinc-500">Semboyan:</span>
-                  <span className="font-bold text-red-500">Blood In, Blood Out</span>
+                <div className="flex items-center justify-between pt-0.5">
+                  <span className="text-zinc-400">Semboyan:</span>
+                  <span className="font-bold text-red-500 font-script text-base">
+                    &ldquo;Blood In, Blood Out&rdquo;
+                  </span>
                 </div>
               </div>
             </div>

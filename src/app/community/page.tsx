@@ -23,6 +23,7 @@ import {
   X,
   Radio,
   ShoppingBag,
+  Film,
 } from 'lucide-react';
 
 // Authentic Social SVG Icons
@@ -156,28 +157,69 @@ export default function CommunityPage() {
 
       {/* Hero Community & Scale */}
       <section
-        className={`relative pt-32 pb-16 border-b overflow-hidden ${
+        className={`relative pt-32 pb-20 border-b overflow-hidden ${
           isDark
             ? 'bg-[#090306] border-red-500/25'
             : 'bg-gradient-to-b from-[#FAF8F5] via-[#EDE7DE] to-[#F5F0E8] border-zinc-200'
         }`}
       >
+        {/* Cinematic Atmospheric Turf & Council Backdrop */}
+        <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+          <img
+            src="/assets/generated/fanart_council.webp"
+            alt="Council Backdrop"
+            className={`w-full h-full object-cover object-center ${
+              isDark ? 'opacity-30 brightness-70 contrast-120 blur-[0.5px]' : 'opacity-15 brightness-95'
+            }`}
+          />
+          <div
+            className={`absolute inset-0 ${
+              isDark
+                ? 'bg-gradient-to-b from-[#090306]/80 via-[#090306]/70 to-[#090306]'
+                : 'bg-gradient-to-b from-white/85 via-white/70 to-[#FAF8F5]'
+            }`}
+          />
+          <div
+            style={{
+              background:
+                'radial-gradient(circle at 65% 35%, rgba(220,38,38,0.22) 0%, rgba(9,3,6,0.92) 75%)',
+            }}
+            className="absolute inset-0 pointer-events-none"
+          />
+          <div className="absolute inset-0 bg-film-grain opacity-50" />
+          <div
+            className={`absolute inset-0 ${
+              isDark ? 'bg-tactical-grid opacity-20' : 'bg-cam-light-grid opacity-25'
+            }`}
+          />
+          <div
+            className={`absolute -top-24 -left-24 w-96 h-96 rounded-full blur-[130px] pointer-events-none ${
+              isDark ? 'bg-red-600/15' : 'bg-red-500/5'
+            }`}
+          />
+          <div
+            className={`absolute top-1/2 -right-24 w-[500px] h-[500px] rounded-full blur-[140px] pointer-events-none ${
+              isDark ? 'bg-red-900/25' : 'bg-red-400/10'
+            }`}
+          />
+        </div>
+
         <div className="max-w-[1520px] mx-auto px-4 sm:px-8 relative z-10 space-y-12">
           <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-8">
             <div className="space-y-4 max-w-3xl">
-              <div className="inline-flex items-center gap-2 px-3 py-1 bg-red-600/15 border border-red-500/30 text-red-500 text-xs font-mono-tech font-bold tracking-widest uppercase">
+              <div className="inline-flex items-center gap-2 px-3 py-1 bg-red-600/15 border border-red-500/30 text-red-500 text-xs font-mono-tech font-bold tracking-widest uppercase backdrop-blur-md">
                 <Users className="w-3.5 h-3.5" />
-                <span>COMMUNITY ECOSYSTEM & ACHIEVEMENTS</span>
+                <span>COMMUNITY ECOSYSTEM & ACHIEVEMENTS // IME RP</span>
               </div>
               <h1
                 className={`font-display text-5xl sm:text-7xl lg:text-8xl tracking-wider uppercase leading-[0.92] ${
                   isDark ? 'text-white' : 'text-zinc-950'
                 }`}
               >
-                THE <span className="text-red-600">4BLOODS</span> ARMY
+                THE <span className="text-red-600 drop-shadow-[0_0_35px_rgba(220,38,38,0.35)]">4BLOODS</span> ARMY
               </h1>
               <p
-                className={`text-sm sm:text-base font-mono-tech leading-relaxed ${
+                className={`text-sm sm:text-base font-mono-tech leading-relaxed max-w-2xl ${
                   isDark ? 'text-zinc-300' : 'text-zinc-700'
                 }`}
               >
@@ -191,15 +233,15 @@ export default function CommunityPage() {
                 href={curatedData.socialHub.discord.invite}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="px-6 py-3.5 bg-[#5865F2] hover:bg-[#4752C4] text-white font-mono-tech text-xs font-bold uppercase tracking-widest flex items-center gap-2.5 transition-all shadow-lg"
+                className="px-6 py-3.5 bg-[#5865F2] hover:bg-[#4752C4] text-white font-mono-tech text-xs font-bold uppercase tracking-widest flex items-center gap-2.5 transition-all shadow-[0_0_25px_rgba(88,101,242,0.35)] hover:scale-105"
               >
                 <MessageSquare className="w-4 h-4" />
-                <span>JOIN DISCORD ({dcData.members ? `${dcData.members} MEMBERS` : '7.2K+'})</span>
+                <span>JOIN DISCORD ({dcData.members ? `${dcData.members.toLocaleString('id-ID')}` : '7.2K+'})</span>
               </a>
 
               <Link
                 href="/cam"
-                className="px-6 py-3.5 bg-red-600 hover:bg-red-500 text-white font-mono-tech text-xs font-bold uppercase tracking-widest flex items-center gap-2.5 transition-all shadow-[0_0_25px_rgba(220,38,38,0.4)]"
+                className="px-6 py-3.5 bg-red-600 hover:bg-red-500 text-white font-mono-tech text-xs font-bold uppercase tracking-widest flex items-center gap-2.5 transition-all shadow-[0_0_25px_rgba(220,38,38,0.45)] hover:scale-105"
               >
                 <Tv className="w-4 h-4" />
                 <span>4BLOODS CAM ({liveCount} LIVE)</span>
@@ -207,67 +249,127 @@ export default function CommunityPage() {
             </div>
           </div>
 
-          {/* Massive Metric Stats Strip */}
+          {/* Luxury Bento Metric Stats Strip */}
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-            <div className={`p-5 border ${isDark ? 'bg-[#0E070A] border-white/10' : 'bg-white border-zinc-200'}`}>
-              <div className="text-[10px] font-mono-tech text-red-500 font-bold uppercase tracking-widest">
-                DISCORD COMMUNITY
+            {/* Card 01: Discord */}
+            <div className={`relative p-5 sm:p-6 border overflow-hidden rounded-xs transition-all duration-300 group hover:-translate-y-1 ${
+              isDark
+                ? 'bg-gradient-to-br from-[#180A10]/95 via-[#100508]/90 to-[#090306]/95 border-red-500/25 hover:border-red-500/60 shadow-[0_12px_30px_rgba(0,0,0,0.6)] hover:shadow-[0_0_25px_rgba(88,101,242,0.25)]'
+                : 'bg-white border-zinc-300 shadow-md hover:shadow-xl hover:border-red-500'
+            }`}>
+              <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-[#5865F2] via-red-500 to-transparent group-hover:h-1 transition-all" />
+              <div className="absolute -right-3 -bottom-3 text-white/[0.04] group-hover:text-white/[0.08] transition-colors pointer-events-none">
+                <MessageSquare className="w-20 h-20" />
               </div>
-              <div className="font-display text-3xl sm:text-4xl text-white tracking-wider mt-1">
-                {dcData.members ? dcData.members.toLocaleString() : '7,229'}
-              </div>
-              <div className="text-[11px] font-mono-tech text-zinc-400 mt-0.5 flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                <span>{dcData.online ? dcData.online.toLocaleString() : '1,019'} Online</span>
-              </div>
-            </div>
-
-            <div className={`p-5 border ${isDark ? 'bg-[#0E070A] border-white/10' : 'bg-white border-zinc-200'}`}>
-              <div className="text-[10px] font-mono-tech text-red-500 font-bold uppercase tracking-widest">
-                YOUTUBE @4BLOOD-PLUG
-              </div>
-              <div className="font-display text-3xl sm:text-4xl text-white tracking-wider mt-1">
-                {ytData.channel?.subscribersText || '8.99K'}
-              </div>
-              <div className="text-[11px] font-mono-tech text-zinc-400 mt-0.5">
-                {ytData.channel?.videoCountText || '16 videos'} // 628K+ views
-              </div>
-            </div>
-
-            <div className={`p-5 border ${isDark ? 'bg-[#0E070A] border-white/10' : 'bg-white border-zinc-200'}`}>
-              <div className="text-[10px] font-mono-tech text-red-500 font-bold uppercase tracking-widest">
-                INSTAGRAM @4BLOODMEDIA
-              </div>
-              <div className="font-display text-3xl sm:text-4xl text-white tracking-wider mt-1">
-                {igData.followers ? `${igData.followers.toLocaleString()}` : '4,394'}
-              </div>
-              <div className="text-[11px] font-mono-tech text-zinc-400 mt-0.5">
-                {igData.posts || 30} Official Posts
+              <div className="relative z-10 space-y-2">
+                <div className="text-[10px] font-mono-tech text-red-500 font-bold uppercase tracking-widest flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#5865F2]" />
+                  <span>DISCORD COMMUNITY</span>
+                </div>
+                <div className={`font-display text-3xl sm:text-4xl tracking-wider ${isDark ? 'text-white' : 'text-zinc-900'}`}>
+                  {dcData.members ? dcData.members.toLocaleString('id-ID') : '7.229'}
+                </div>
+                <div className="text-[11px] font-mono-tech text-zinc-400 flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                  <span>{dcData.online ? dcData.online.toLocaleString('id-ID') : '1.019'} Online Sekarang</span>
+                </div>
               </div>
             </div>
 
-            <div className={`p-5 border ${isDark ? 'bg-[#0E070A] border-white/10' : 'bg-white border-zinc-200'}`}>
-              <div className="text-[10px] font-mono-tech text-red-500 font-bold uppercase tracking-widest">
-                TIKTOK @4BLOODMEDIA
+            {/* Card 02: YouTube Plug */}
+            <div className={`relative p-5 sm:p-6 border overflow-hidden rounded-xs transition-all duration-300 group hover:-translate-y-1 ${
+              isDark
+                ? 'bg-gradient-to-br from-[#180A10]/95 via-[#100508]/90 to-[#090306]/95 border-red-500/25 hover:border-red-500/60 shadow-[0_12px_30px_rgba(0,0,0,0.6)] hover:shadow-[0_0_25px_rgba(220,38,38,0.3)]'
+                : 'bg-white border-zinc-300 shadow-md hover:shadow-xl hover:border-red-500'
+            }`}>
+              <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-red-600 via-red-500 to-transparent group-hover:h-1 transition-all" />
+              <div className="absolute -right-3 -bottom-3 text-red-600/[0.05] group-hover:text-red-600/[0.1] transition-colors pointer-events-none">
+                <YouTubeIcon className="w-20 h-20" />
               </div>
-              <div className="font-display text-3xl sm:text-4xl text-white tracking-wider mt-1">
-                {ttData.followers ? `${ttData.followers.toLocaleString()}` : '2,577'}
-              </div>
-              <div className="text-[11px] font-mono-tech text-zinc-400 mt-0.5">
-                {ttData.likes ? `${ttData.likes.toLocaleString()} Likes` : '27.3K Likes'}
+              <div className="relative z-10 space-y-2">
+                <div className="text-[10px] font-mono-tech text-red-500 font-bold uppercase tracking-widest flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-red-600" />
+                  <span>YOUTUBE @4BLOOD-PLUG</span>
+                </div>
+                <div className={`font-display text-3xl sm:text-4xl tracking-wider ${isDark ? 'text-white' : 'text-zinc-900'}`}>
+                  {ytData.channel?.subscribersText || '8.99K'}
+                </div>
+                <div className="text-[11px] font-mono-tech text-zinc-400">
+                  {ytData.channel?.videoCountText || '16 videos'} // 628K+ views
+                </div>
               </div>
             </div>
 
-            <div className={`p-5 border col-span-2 md:col-span-1 ${isDark ? 'bg-[#0E070A] border-white/10' : 'bg-white border-zinc-200'}`}>
-              <div className="text-[10px] font-mono-tech text-red-500 font-bold uppercase tracking-widest">
-                ROSTER KREATOR
+            {/* Card 03: Instagram */}
+            <div className={`relative p-5 sm:p-6 border overflow-hidden rounded-xs transition-all duration-300 group hover:-translate-y-1 ${
+              isDark
+                ? 'bg-gradient-to-br from-[#180A10]/95 via-[#100508]/90 to-[#090306]/95 border-red-500/25 hover:border-red-500/60 shadow-[0_12px_30px_rgba(0,0,0,0.6)] hover:shadow-[0_0_25px_rgba(236,72,153,0.25)]'
+                : 'bg-white border-zinc-300 shadow-md hover:shadow-xl hover:border-red-500'
+            }`}>
+              <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-pink-500 via-red-500 to-transparent group-hover:h-1 transition-all" />
+              <div className="absolute -right-3 -bottom-3 text-pink-500/[0.05] group-hover:text-pink-500/[0.1] transition-colors pointer-events-none">
+                <InstagramIcon className="w-20 h-20" />
               </div>
-              <div className="font-display text-3xl sm:text-4xl text-white tracking-wider mt-1">
-                54 STREAMER
+              <div className="relative z-10 space-y-2">
+                <div className="text-[10px] font-mono-tech text-red-500 font-bold uppercase tracking-widest flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-pink-500" />
+                  <span>INSTAGRAM @4BLOODMEDIA</span>
+                </div>
+                <div className={`font-display text-3xl sm:text-4xl tracking-wider ${isDark ? 'text-white' : 'text-zinc-900'}`}>
+                  {igData.followers ? `${igData.followers.toLocaleString('id-ID')}` : '4.394'}
+                </div>
+                <div className="text-[11px] font-mono-tech text-zinc-400">
+                  {igData.posts || 30} Official Press Releases
+                </div>
               </div>
-              <div className="text-[11px] font-mono-tech text-zinc-400 mt-0.5 flex items-center gap-1.5">
-                <span className="w-2 h-2 rounded-full bg-red-600 animate-ping" />
-                <span className="text-red-400 font-bold">{liveCount} Live Sekarang</span>
+            </div>
+
+            {/* Card 04: TikTok */}
+            <div className={`relative p-5 sm:p-6 border overflow-hidden rounded-xs transition-all duration-300 group hover:-translate-y-1 ${
+              isDark
+                ? 'bg-gradient-to-br from-[#180A10]/95 via-[#100508]/90 to-[#090306]/95 border-red-500/25 hover:border-red-500/60 shadow-[0_12px_30px_rgba(0,0,0,0.6)] hover:shadow-[0_0_25px_rgba(220,38,38,0.25)]'
+                : 'bg-white border-zinc-300 shadow-md hover:shadow-xl hover:border-red-500'
+            }`}>
+              <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-cyan-400 via-pink-500 to-transparent group-hover:h-1 transition-all" />
+              <div className="absolute -right-3 -bottom-3 text-white/[0.04] group-hover:text-white/[0.08] transition-colors pointer-events-none">
+                <Film className="w-20 h-20" />
+              </div>
+              <div className="relative z-10 space-y-2">
+                <div className="text-[10px] font-mono-tech text-red-500 font-bold uppercase tracking-widest flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
+                  <span>TIKTOK @4BLOODMEDIA</span>
+                </div>
+                <div className={`font-display text-3xl sm:text-4xl tracking-wider ${isDark ? 'text-white' : 'text-zinc-900'}`}>
+                  {ttData.followers ? `${ttData.followers.toLocaleString('id-ID')}` : '2.577'}
+                </div>
+                <div className="text-[11px] font-mono-tech text-zinc-400">
+                  {ttData.likes ? `${ttData.likes.toLocaleString('id-ID')} Likes` : '27.3K Likes'}
+                </div>
+              </div>
+            </div>
+
+            {/* Card 05: Roster Kreator */}
+            <div className={`relative p-5 sm:p-6 border col-span-2 md:col-span-1 overflow-hidden rounded-xs transition-all duration-300 group hover:-translate-y-1 ${
+              isDark
+                ? 'bg-gradient-to-br from-[#200A13]/95 via-[#14050B]/90 to-[#0A0306]/95 border-red-500/35 hover:border-red-500/80 shadow-[0_12px_30px_rgba(0,0,0,0.6)] hover:shadow-[0_0_30px_rgba(220,38,38,0.4)]'
+                : 'bg-white border-zinc-300 shadow-md hover:shadow-xl hover:border-red-500'
+            }`}>
+              <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-red-600 via-amber-500 to-transparent group-hover:h-1 transition-all" />
+              <div className="absolute -right-3 -bottom-3 text-red-600/[0.06] group-hover:text-red-600/[0.12] transition-colors pointer-events-none">
+                <Radio className="w-20 h-20" />
+              </div>
+              <div className="relative z-10 space-y-2">
+                <div className="text-[10px] font-mono-tech text-red-500 font-bold uppercase tracking-widest flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-red-600 animate-pulse" />
+                  <span>ROSTER KREATOR</span>
+                </div>
+                <div className={`font-display text-3xl sm:text-4xl tracking-wider ${isDark ? 'text-white' : 'text-zinc-900'}`}>
+                  54 STREAMER
+                </div>
+                <div className="text-[11px] font-mono-tech text-zinc-400 flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-red-600 animate-ping" />
+                  <span className="text-red-400 font-bold">{liveCount} Live Sekarang</span>
+                </div>
               </div>
             </div>
           </div>
@@ -496,7 +598,7 @@ export default function CommunityPage() {
                   {vid.title}
                 </h4>
                 <div className="flex items-center justify-between text-[10px] font-mono-tech text-zinc-500 pt-1 border-t border-white/10">
-                  <span>{vid.viewCount ? `${vid.viewCount.toLocaleString()} views` : vid.views || 'VOD Stream'}</span>
+                  <span suppressHydrationWarning>{vid.viewCount ? `${Number(vid.viewCount).toLocaleString('id-ID')} views` : vid.views || 'VOD Stream'}</span>
                   <span>{vid.publishedAt ? vid.publishedAt.slice(0, 10) : vid.published || ''}</span>
                 </div>
               </div>

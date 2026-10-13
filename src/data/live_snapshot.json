@@ -103,11 +103,11 @@
     "channelId": "UC7KiVxdO5HiAwIrbz--RG1w",
     "handle": "@xGiww",
     "avatar": "/assets/avatars/UC7KiVxdO5HiAwIrbz--RG1w.jpg",
-    "isLive": true,
-    "videoId": "z74AkYpgCLw",
-    "streamTitle": "Syittt #4Blood #barongfams #imerp",
+    "isLive": false,
+    "videoId": null,
+    "streamTitle": null,
     "startTimestamp": null,
-    "viewerCount": 1
+    "viewerCount": null
   },
   {
     "name": "Vall Diego",
@@ -125,11 +125,11 @@
     "channelId": "UC8opURjNDJhx5OtgMsekvMQ",
     "handle": "@9rimmJ",
     "avatar": "/assets/avatars/UC8opURjNDJhx5OtgMsekvMQ.jpg",
-    "isLive": true,
-    "videoId": "ptwfZpig9sE",
-    "streamTitle": "seperti biasa #4BLOOD #IMEROLEPLAY #ILHAMTERRORGANG",
+    "isLive": false,
+    "videoId": null,
+    "streamTitle": null,
     "startTimestamp": null,
-    "viewerCount": 1
+    "viewerCount": null
   },
   {
     "name": "NiM",
@@ -169,11 +169,11 @@
     "channelId": "UCCEDmX6Jl-fwm4fywtwo4pQ",
     "handle": "@patraaa13",
     "avatar": "/assets/avatars/UCCEDmX6Jl-fwm4fywtwo4pQ.jpg",
-    "isLive": true,
-    "videoId": "IVmVnkrluu4",
-    "streamTitle": "freelance. #anakceokopat #goldenboy #redzone #imeroleplay",
+    "isLive": false,
+    "videoId": null,
+    "streamTitle": null,
     "startTimestamp": null,
-    "viewerCount": 1
+    "viewerCount": null
   },
   {
     "name": "Al Pacino",
@@ -389,11 +389,11 @@
     "channelId": "UCYG2Pp0MZvxyziNXO8puT-Q",
     "handle": "@OnlyHanz_",
     "avatar": "/assets/avatars/UCYG2Pp0MZvxyziNXO8puT-Q.jpg",
-    "isLive": true,
-    "videoId": "Boz4--5Eu78",
-    "streamTitle": "DUH GUSTI!!! #4blood #goldenboys #vanityxjester",
+    "isLive": false,
+    "videoId": null,
+    "streamTitle": null,
     "startTimestamp": null,
-    "viewerCount": 1
+    "viewerCount": null
   },
   {
     "name": "Aeon",

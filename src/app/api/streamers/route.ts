@@ -58,14 +58,20 @@ async function safeCheckYouTubeChannel(channelId: string) {
     if (!watchRes.ok) return null;
 
     const watchHtml = await watchRes.text();
+
+    const isOffline =
+      watchHtml.includes('LIVE_STREAM_OFFLINE') ||
+      watchHtml.includes('"isLiveNow":false') ||
+      watchHtml.includes('"endTimestamp":"') ||
+      watchHtml.includes('This live stream has ended') ||
+      watchHtml.includes('Siaran langsung telah berakhir') ||
+      watchHtml.includes('Stream telah berakhir');
+
     const isLiveNow =
+      !isOffline &&
       (watchHtml.includes('"liveBroadcastDetails":{"isLiveNow":true') ||
-        watchHtml.includes('"isLiveNow":true') ||
-        watchHtml.includes('"isLive":true') ||
-        watchHtml.includes('"isLiveBroadcast":true')) &&
-      !watchHtml.includes('"endTimestamp":"') &&
-      !watchHtml.includes('This live stream has ended') &&
-      !watchHtml.includes('Siaran langsung telah berakhir');
+        watchHtml.includes('"isLiveNow":true'));
+
     const titleMatch = watchHtml.match(/<meta name="title" content="([^"]+)"/);
     const streamTitle = titleMatch ? titleMatch[1] : null;
     const startMatch = watchHtml.match(/"startTimestamp":"([^"]+)"/);
@@ -81,29 +87,28 @@ async function safeCheckYouTubeChannel(channelId: string) {
       };
     }
 
-    // Check upcoming scheduled streams > end of today WIB
-    const hasEnded = watchHtml.includes('"endTimestamp":"');
-    if (!hasEnded) {
-      const upcomingEpochMatch = watchHtml.match(/"upcomingEventData":\{"startTime":"(\d+)"/);
-      let scheduledMs = 0;
-      if (upcomingEpochMatch) {
-        scheduledMs = Number(upcomingEpochMatch[1]) * 1000;
-      } else if (startTimestamp) {
-        scheduledMs = new Date(startTimestamp).getTime();
-      }
+    // Check upcoming scheduled streams > end of today WIB (must be in the FUTURE)
+    const upcomingEpochMatch = watchHtml.match(/"upcomingEventData":\{"startTime":"(\d+)"/);
+    let scheduledMs = 0;
+    if (upcomingEpochMatch) {
+      scheduledMs = Number(upcomingEpochMatch[1]) * 1000;
+    } else if (startTimestamp) {
+      scheduledMs = new Date(startTimestamp).getTime();
+    }
 
-      if (scheduledMs > getEndOfTodayWibMs()) {
-        return {
-          isLive: false,
-          videoId: null,
-          streamTitle: null,
-          startTimestamp: null,
-          isUpcoming: true,
-          upcomingVideoId: videoId,
-          upcomingTitle: streamTitle,
-          scheduledStartTime: new Date(scheduledMs).toISOString(),
-        };
-      }
+    const nowMs = Date.now();
+    // Only valid if in future and after today WIB
+    if (scheduledMs > nowMs && scheduledMs > getEndOfTodayWibMs(nowMs)) {
+      return {
+        isLive: false,
+        videoId: null,
+        streamTitle: null,
+        startTimestamp: null,
+        isUpcoming: true,
+        upcomingVideoId: videoId,
+        upcomingTitle: streamTitle,
+        scheduledStartTime: new Date(scheduledMs).toISOString(),
+      };
     }
 
     return null;
@@ -243,8 +248,7 @@ export async function GET(request: Request) {
           const isLiveNow =
             !hasExplicitlyEnded &&
             (html.includes('"isLiveNow":true') ||
-              html.includes('"isLive":true') ||
-              html.includes('"isLiveBroadcast":true'));
+              html.includes('"liveBroadcastDetails":{"isLiveNow":true'));
 
           if (!isBotChallenge) {
             if (hasExplicitlyEnded || !isLiveNow) {
