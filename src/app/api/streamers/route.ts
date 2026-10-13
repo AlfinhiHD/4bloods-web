@@ -141,19 +141,25 @@ export async function GET(request: Request) {
     ]);
 
     if (fbStreamersRes.ok) {
-      const fbStreamers = await fbStreamersRes.json();
+      const fbStreamersText = await fbStreamersRes.text();
+      let fbStreamers: any = null;
+      try {
+        fbStreamers = fbStreamersText ? JSON.parse(fbStreamersText) : null;
+      } catch {}
       if (fbStreamers && typeof fbStreamers === 'object') {
         firebaseSuccess = true;
         for (const [cid, fbData] of Object.entries(fbStreamers) as [string, any][]) {
           if (!fbData) continue;
           const prev = snapshotMap[cid] || {};
-          const isLiveNow = Boolean(fbData.isLive && fbData.videoId);
+          const isCandidateLive = Boolean(fbData.isLive && fbData.videoId);
           snapshotMap[cid] = {
             ...prev,
-            isLive: isLiveNow,
-            videoId: isLiveNow ? fbData.videoId : prev.videoId || null,
-            streamTitle: isLiveNow ? fbData.title || prev.streamTitle || null : prev.streamTitle || null,
-            startTimestamp: isLiveNow ? fbData.actualStartTime || prev.startTimestamp || null : prev.startTimestamp || null,
+            isLive: isCandidateLive,
+            videoId: isCandidateLive ? fbData.videoId : null,
+            streamTitle: isCandidateLive ? fbData.title || prev.streamTitle || null : null,
+            startTimestamp: isCandidateLive
+              ? fbData.actualStartTime || prev.startTimestamp || null
+              : null,
             lastChecked: fbData.lastChecked || prev.lastChecked || null,
           };
         }
@@ -161,7 +167,11 @@ export async function GET(request: Request) {
     }
 
     if (fbAvatarsRes.ok) {
-      const fbAvatars = await fbAvatarsRes.json();
+      const fbAvatarsText = await fbAvatarsRes.text();
+      let fbAvatars: any = null;
+      try {
+        fbAvatars = fbAvatarsText ? JSON.parse(fbAvatarsText) : null;
+      } catch {}
       if (fbAvatars && typeof fbAvatars === 'object') {
         for (const [cid, avatarUrl] of Object.entries(fbAvatars) as [string, any][]) {
           if (typeof avatarUrl === 'string' && avatarUrl.trim()) {
@@ -178,7 +188,7 @@ export async function GET(request: Request) {
     console.warn('[API /api/streamers] Firebase fetch warning:', err);
   }
 
-  // 2. ACTIVE STREAM VERIFIER: Check currently live video IDs to ensure ended streams don't get stuck
+  // 2. ACTIVE STREAM VERIFIER: Strict YouTube check to ensure ended streams never get stuck
   const activeLiveEntries = Object.entries(snapshotMap).filter(
     ([_, s]: [string, any]) => s.isLive && s.videoId
   );
@@ -193,48 +203,76 @@ export async function GET(request: Request) {
                 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
             },
             cache: 'no-store',
-            signal: AbortSignal.timeout(1800),
+            signal: AbortSignal.timeout(3500),
           });
-          if (checkRes.ok) {
-            const html = await checkRes.text();
-            const isBotChallenge =
-              html.includes('consent.youtube.com') ||
+
+          if (!checkRes.ok) {
+            // Video 404/410/private on YouTube -> definitely offline
+            snapshotMap[cid].isLive = false;
+            snapshotMap[cid].videoId = null;
+            snapshotMap[cid].streamTitle = null;
+            snapshotMap[cid].viewerCount = null;
+            return;
+          }
+
+          const html = await checkRes.text();
+          const isBotChallenge =
+            html.length < 15000 &&
+            (html.includes('consent.youtube.com') ||
+              html.includes('google.com/sorry') ||
               html.includes('unusual traffic') ||
-              html.includes('recaptcha') ||
-              !html.includes('<title>');
+              !html.includes('<title>'));
 
-            if (!isBotChallenge) {
-              const hasExplicitlyEnded =
-                html.includes('"endTimestamp":"') ||
-                html.includes('This live stream has ended') ||
-                html.includes('Live stream offline') ||
-                html.includes('Siaran langsung telah berakhir');
+          const hasExplicitlyEnded =
+            html.includes('"endTimestamp":"') ||
+            html.includes('"isLiveNow":false') ||
+            html.includes('"status":"LIVE_STREAM_OFFLINE"') ||
+            html.includes('LIVE_STREAM_OFFLINE') ||
+            html.includes('This live stream has ended') ||
+            html.includes('Live stream offline') ||
+            html.includes('Siaran langsung telah berakhir') ||
+            html.includes('Stream telah berakhir');
 
-              const isLiveNow =
-                !hasExplicitlyEnded &&
-                (html.includes('"isLiveNow":true') ||
-                 html.includes('"isLive":true') ||
-                 html.includes('"isLiveBroadcast":true'));
+          const isLiveNow =
+            !hasExplicitlyEnded &&
+            (html.includes('"isLiveNow":true') ||
+              html.includes('"isLive":true') ||
+              html.includes('"isLiveBroadcast":true'));
 
-              if (hasExplicitlyEnded) {
-                // Stream has finished on YouTube! Auto-clear stuck live status
-                snapshotMap[cid].isLive = false;
-                snapshotMap[cid].videoId = null;
-                snapshotMap[cid].streamTitle = null;
-                snapshotMap[cid].viewerCount = null;
-              } else if (isLiveNow) {
-                // Extract real concurrent live viewer count
-                const viewerMatch =
-                  html.match(/"originalViewCount":"(\d+)"/) ||
-                  html.match(/"viewCount":\{"runs":\[\{"text":"([\d,.]+)"\}/);
-                if (viewerMatch) {
-                  snapshotMap[cid].viewerCount = Number(viewerMatch[1].replace(/,/g, ''));
+          if (!isBotChallenge) {
+            if (hasExplicitlyEnded || !isLiveNow) {
+              // Stream has finished or is offline on YouTube! Auto-clear stuck live status
+              snapshotMap[cid].isLive = false;
+              snapshotMap[cid].videoId = null;
+              snapshotMap[cid].streamTitle = null;
+              snapshotMap[cid].viewerCount = null;
+            } else if (isLiveNow) {
+              // Extract real concurrent live viewer count
+              const viewerMatch =
+                html.match(/"originalViewCount":"(\d+)"/) ||
+                html.match(/"viewCount":\{"runs":\[\{"text":"([\d,.]+)"\}/) ||
+                html.match(/"viewCount":\{"videoViewCountRenderer":\{"viewCount":\{"runs":\[\{"text":"([\d,.]+)"\}/) ||
+                html.match(/"text":"([\d,.]+)\s*(?:watching now|menonton|viewers|serentak)"/i) ||
+                html.match(/([0-9,.]+)\s*(?:watching now|menonton sekarang)/i);
+
+              if (viewerMatch) {
+                const rawNum = viewerMatch[1].replace(/[,.]/g, '');
+                const parsed = parseInt(rawNum, 10);
+                if (!isNaN(parsed) && parsed > 0) {
+                  snapshotMap[cid].viewerCount = parsed;
                 }
               }
             }
           }
         } catch {
-          // Keep current status if YouTube timeout
+          // If Firebase data is older than 15 mins and YouTube check timed out, clear stuck status
+          const lastCheckMs = snap.lastChecked ? new Date(snap.lastChecked).getTime() : 0;
+          if (lastCheckMs && now - lastCheckMs > 15 * 60 * 1000) {
+            snapshotMap[cid].isLive = false;
+            snapshotMap[cid].videoId = null;
+            snapshotMap[cid].streamTitle = null;
+            snapshotMap[cid].viewerCount = null;
+          }
         }
       })
     );

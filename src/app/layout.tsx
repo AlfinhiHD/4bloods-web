@@ -59,7 +59,8 @@ export default function RootLayout({
   return (
     <html
       lang="id"
-      className={`${pirata.variable} ${gothic.variable} ${caveat.variable} ${jakarta.variable} ${jetbrains.variable} dark`}
+      suppressHydrationWarning
+      className={`${pirata.variable} ${gothic.variable} ${caveat.variable} ${jakarta.variable} ${jetbrains.variable}`}
     >
       <body className="min-h-screen bg-[#070506] text-[#F4F4F6] antialiased selection:bg-red-600 selection:text-white">
         {children}

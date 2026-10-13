@@ -104,13 +104,32 @@ function formatUpcomingTime(scheduledIso?: string | null, nowMs?: number): {
 
 export default function FourBloodsCamPage() {
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+  const [chatThemeMode, setChatThemeMode] = useState<'auto' | 'dark' | 'light'>('auto');
 
   useEffect(() => {
     const saved = localStorage.getItem('4bg_theme');
     if (saved === 'light' || saved === 'dark') {
       setTheme(saved);
     }
+    const savedChatTheme = localStorage.getItem('4bg_chat_theme_mode');
+    if (savedChatTheme === 'auto' || savedChatTheme === 'dark' || savedChatTheme === 'light') {
+      setChatThemeMode(savedChatTheme);
+    }
   }, []);
+
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      if (theme === 'dark') {
+        document.documentElement.classList.add('dark');
+        document.documentElement.classList.remove('light');
+        document.documentElement.style.colorScheme = 'dark';
+      } else {
+        document.documentElement.classList.remove('dark');
+        document.documentElement.classList.add('light');
+        document.documentElement.style.colorScheme = 'light';
+      }
+    }
+  }, [theme]);
 
   const toggleTheme = () => {
     const next = theme === 'dark' ? 'light' : 'dark';
@@ -119,6 +138,17 @@ export default function FourBloodsCamPage() {
   };
 
   const isDark = theme === 'dark';
+
+  const effectiveChatDark =
+    chatThemeMode === 'dark' ? true : chatThemeMode === 'light' ? false : isDark;
+
+  const cycleChatTheme = () => {
+    const modes: Array<'auto' | 'dark' | 'light'> = ['auto', 'dark', 'light'];
+    const nextIdx = (modes.indexOf(chatThemeMode) + 1) % modes.length;
+    const next = modes[nextIdx];
+    setChatThemeMode(next);
+    localStorage.setItem('4bg_chat_theme_mode', next);
+  };
 
   // Streamers list (uniquely identified by channelId)
   const [streamers, setStreamers] = useState<EnrichedStreamer[]>(() =>
@@ -159,6 +189,8 @@ export default function FourBloodsCamPage() {
   // Multi-Live Chat & Resizable Chat Dock
   const [showChat, setShowChat] = useState(true);
   const [activeChatIds, setActiveChatIds] = useState<string[]>([]);
+  const [chatViewMode, setChatViewMode] = useState<'tabs' | 'stacked'>('tabs');
+  const [activeChatTab, setActiveChatTab] = useState<string | null>(null);
   const [chatWidthPx, setChatWidthPx] = useState<number>(360);
   const [isResizingChat, setIsResizingChat] = useState<boolean>(false);
 
@@ -310,20 +342,16 @@ export default function FourBloodsCamPage() {
       if (res.ok) {
         const data = await res.json();
         if (data?.streamers && Array.isArray(data.streamers) && data.streamers.length > 0) {
-          const liveCount = (data.streamers as EnrichedStreamer[]).filter((s) => s.isLive).length;
-          // If server reports live streamers, use server data directly
-          if (liveCount > 0) {
-            setStreamers(data.streamers);
-            setLastScannerTime(
-              new Date(data.lastScannerTime || Date.now()).toLocaleTimeString('id-ID', {
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit',
-              })
-            );
-            applyInitialStreamerSelection(data.streamers);
-            success = true;
-          }
+          setStreamers(data.streamers);
+          setLastScannerTime(
+            new Date(data.lastScannerTime || Date.now()).toLocaleTimeString('id-ID', {
+              hour: '2-digit',
+              minute: '2-digit',
+              second: '2-digit',
+            })
+          );
+          applyInitialStreamerSelection(data.streamers);
+          success = true;
         }
       }
     } catch (err) {
@@ -348,7 +376,9 @@ export default function FourBloodsCamPage() {
 
           const enriched = STREAMER_ROSTER.map((member) => {
             const fb = fbStreamers?.[member.channelId] || {};
-            const isLive = Boolean(fb.isLive && fb.videoId);
+            const isStale =
+              fb.lastChecked && Date.now() - new Date(fb.lastChecked).getTime() > 25 * 60 * 1000;
+            const isLive = !isStale && Boolean(fb.isLive && fb.videoId);
             const avatar = fbAvatars?.[member.channelId] || member.featuredThumb || '/assets/logo_v2.png';
             return {
               ...member,
@@ -496,6 +526,11 @@ export default function FourBloodsCamPage() {
       // Add any newly selected POV members
       const added = povIds.filter((id) => !prev.includes(id));
       return [...kept, ...added];
+    });
+
+    setActiveChatTab((currentTab) => {
+      if (currentTab && povIds.includes(currentTab)) return currentTab;
+      return povIds[0] || null;
     });
   }, [activePovMembers]);
 
@@ -649,17 +684,28 @@ export default function FourBloodsCamPage() {
           : s
       )
     );
+    setSelectedIds((prev) => prev.filter((id) => id !== channelId));
+    setActiveChatIds((prev) => prev.filter((id) => id !== channelId));
   }, []);
 
-  // Auto-detect YouTube iframe ENDED event (state 0) to auto-clear ended streams
+  // Auto-detect YouTube iframe ENDED event (state 0) or errors to auto-clear ended streams
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
       try {
-        if (typeof event.data === 'string') {
-          const parsed = JSON.parse(event.data);
-          if (parsed.event === 'onStateChange' && parsed.info === 0) {
-            fetchLiveStatus(true);
+        let data = event.data;
+        if (typeof data === 'string') {
+          try {
+            data = JSON.parse(data);
+          } catch {
+            return;
           }
+        }
+        if (!data || typeof data !== 'object') return;
+        const isEnded = data.event === 'onStateChange' && data.info === 0;
+        const isError =
+          data.event === 'onError' || (data.info && [100, 101, 150].includes(data.info));
+        if (isEnded || isError) {
+          fetchLiveStatus(true);
         }
       } catch {}
     };
@@ -1074,7 +1120,7 @@ export default function FourBloodsCamPage() {
         {/* LEFT ROSTER SIDEBAR */}
         {sidebarOpen && (
           <aside
-            className={`w-72 sm:w-80 h-full border-r flex flex-col shrink-0 z-20 ${
+            className={`w-80 sm:w-96 h-full border-r flex flex-col shrink-0 z-20 ${
               isDark ? 'bg-[#0A0708] border-white/10' : 'bg-white border-zinc-300'
             }`}
           >
@@ -1192,7 +1238,7 @@ export default function FourBloodsCamPage() {
                               : 'bg-zinc-50 border-zinc-200 hover:border-zinc-300'
                       }`}
                     >
-                      <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="flex items-center gap-2.5 min-w-0 flex-1">
                         <div className="relative shrink-0">
                           <img
                             src={member.avatar || '/assets/logo_v2.png'}
@@ -1202,7 +1248,7 @@ export default function FourBloodsCamPage() {
                               (e.currentTarget as HTMLImageElement).src =
                                 '/assets/logo_v2.png';
                             }}
-                            className={`w-8 h-8 rounded-sm object-cover border ${
+                            className={`w-9 h-9 rounded-sm object-cover border ${
                               member.isLive
                                 ? 'border-emerald-500'
                                 : member.isUpcoming
@@ -1215,8 +1261,9 @@ export default function FourBloodsCamPage() {
                           )}
                         </div>
 
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-1.5">
+                        <div className="min-w-0 flex-1">
+                          {/* Row 1: Streamer Name + Live Viewer Badge */}
+                          <div className="flex items-center justify-between gap-1.5">
                             <span
                               className={`text-xs font-bold truncate ${
                                 isSelected
@@ -1228,21 +1275,35 @@ export default function FourBloodsCamPage() {
                             >
                               {member.name}
                             </span>
+                            {member.isLive &&
+                              typeof member.viewerCount === 'number' &&
+                              member.viewerCount > 0 && (
+                                <span
+                                  className="px-1.5 py-0.5 bg-red-600/20 border border-red-500/40 text-red-400 font-mono-tech text-[10px] font-bold rounded-xs shrink-0 flex items-center gap-1 shadow-xs"
+                                  title={`${member.viewerCount.toLocaleString('id-ID')} penonton sedang menonton`}
+                                >
+                                  <Users className="w-2.5 h-2.5 text-red-500" />
+                                  <span>{member.viewerCount.toLocaleString('id-ID')}</span>
+                                </span>
+                              )}
                           </div>
-                          <div className="flex items-center gap-1.5 mt-0.5">
+
+                          {/* Row 2: Rank Badge + Live Uptime (Guaranteed 1 single clean row) */}
+                          <div className="flex items-center gap-1.5 mt-1 flex-nowrap whitespace-nowrap overflow-hidden">
                             <span
-                              className={`text-[8px] font-mono-tech px-1 py-0.2 border uppercase rounded-sm ${
+                              className={`text-[8px] font-mono-tech px-1.5 py-0.5 border uppercase rounded-xs shrink-0 whitespace-nowrap font-bold ${
                                 RANK_BADGE_STYLE[member.rank]
                               }`}
                             >
                               {member.rank}
                             </span>
                             {member.isLive ? (
-                              <span className="text-[9px] font-mono-tech text-emerald-400 font-bold flex items-center gap-1">
-                                ● LIVE {uptime ? `(${uptime})` : ''}
-                                {typeof member.viewerCount === 'number' && member.viewerCount > 0 && (
-                                  <span className="text-zinc-400 font-normal">
-                                    • 👥 {member.viewerCount.toLocaleString('id-ID')}
+                              <span className="text-[9px] font-mono-tech text-emerald-400 font-bold flex items-center gap-1 shrink-0 whitespace-nowrap">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                                <span>LIVE</span>
+                                {uptime && (
+                                  <span className="text-emerald-300 font-normal">
+                                    ({uptime})
                                   </span>
                                 )}
                               </span>
@@ -1295,6 +1356,42 @@ export default function FourBloodsCamPage() {
 
         {/* CENTER STAGE: MULTI-POV WITH AUTO GRID & LIVE DROP PREVIEW */}
         <main className="flex-1 min-h-0 h-full flex flex-col overflow-hidden relative">
+          {/* Tactical Atmospheric Background Layer */}
+          <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden select-none">
+            {/* Tactical Grid Overlay */}
+            <div
+              className={`absolute inset-0 ${
+                isDark ? 'bg-tactical-grid opacity-35' : 'bg-cam-light-grid opacity-35'
+              }`}
+            />
+
+            {/* Ambient Crimson Glow Accents */}
+            <div
+              className={`absolute -top-32 -left-32 w-[550px] h-[550px] rounded-full blur-[140px] pointer-events-none ${
+                isDark ? 'bg-red-600/15' : 'bg-red-500/10'
+              }`}
+            />
+            <div
+              className={`absolute -bottom-32 -right-32 w-[600px] h-[600px] rounded-full blur-[160px] pointer-events-none ${
+                isDark ? 'bg-red-950/25' : 'bg-red-400/10'
+              }`}
+            />
+            <div
+              className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[650px] h-[650px] rounded-full blur-[180px] pointer-events-none ${
+                isDark ? 'bg-red-600/5' : 'bg-red-500/5'
+              }`}
+            />
+
+            {/* Faint Central Syndicate Watermark */}
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.035] dark:opacity-[0.05]">
+              <img
+                src="/assets/logo_v1.png"
+                alt=""
+                className="w-[520px] h-[520px] object-contain filter grayscale select-none"
+              />
+            </div>
+          </div>
+
           {activePovMembers.length === 0 ? (
             <div className="flex-1 overflow-y-auto cam-scroll p-6 flex flex-col items-center justify-center">
               <div
@@ -1539,28 +1636,34 @@ export default function FourBloodsCamPage() {
                         >
                           <GripVertical className="w-4 h-4 text-red-500 shrink-0" />
                           {member.isLive ? (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                if (
-                                  window.confirm(
-                                    `Tandai ${member.name} sebagai offline jika live-nya sudah selesai di YouTube?`
-                                  )
-                                ) {
-                                  markStreamerOffline(member.channelId);
-                                }
-                              }}
-                              title="Live Aktif (Klik untuk tandai offline jika stream sudah selesai di YouTube)"
-                              className="px-1.5 py-0.5 bg-red-600 hover:bg-red-700 text-white text-[9px] font-mono-tech font-bold uppercase rounded-sm shrink-0 cursor-pointer transition-colors flex items-center gap-1"
-                            >
-                              <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
-                              <span>LIVE</span>
+                            <div className="flex items-center gap-1 shrink-0">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (
+                                    window.confirm(
+                                      `Tandai ${member.name} sebagai offline jika live-nya sudah selesai di YouTube?`
+                                    )
+                                  ) {
+                                    markStreamerOffline(member.channelId);
+                                  }
+                                }}
+                                title="Live Aktif (Klik untuk tandai offline jika stream sudah selesai di YouTube)"
+                                className="px-1.5 py-0.5 bg-red-600 hover:bg-red-700 text-white text-[9px] font-mono-tech font-bold uppercase rounded-xs shrink-0 cursor-pointer transition-colors flex items-center gap-1"
+                              >
+                                <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                                <span>LIVE</span>
+                              </button>
                               {typeof member.viewerCount === 'number' && member.viewerCount > 0 && (
-                                <span className="text-red-100 font-mono text-[8px] border-l border-white/30 pl-1 ml-0.5 font-normal">
-                                  👥 {member.viewerCount.toLocaleString('id-ID')}
+                                <span
+                                  className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-red-950/70 border border-red-500/40 text-red-300 font-mono-tech text-[9px] font-bold rounded-xs shrink-0 shadow-xs"
+                                  title={`${member.viewerCount.toLocaleString('id-ID')} penonton`}
+                                >
+                                  <Users className="w-2.5 h-2.5 text-red-400" />
+                                  <span>{member.viewerCount.toLocaleString('id-ID')}</span>
                                 </span>
                               )}
-                            </button>
+                            </div>
                           ) : member.isUpcoming ? (
                             <span className="px-1.5 py-0.5 bg-amber-500 text-black text-[9px] font-mono-tech font-bold uppercase rounded-sm shrink-0">
                               UPCOMING
@@ -1722,7 +1825,11 @@ export default function FourBloodsCamPage() {
 
                           <button
                             onClick={() => toggleStreamer(member.channelId)}
-                            className="p-1 bg-zinc-800 hover:bg-red-600 text-zinc-400 hover:text-white rounded-sm transition-colors cursor-pointer"
+                            className={`p-1 rounded-sm transition-colors cursor-pointer ${
+                              isDark
+                                ? 'bg-zinc-800 hover:bg-red-600 text-zinc-400 hover:text-white'
+                                : 'bg-zinc-200 hover:bg-red-600 text-zinc-700 hover:text-white'
+                            }`}
                             title="Tutup Stream"
                           >
                             <X className="w-3 h-3" />
@@ -1732,10 +1839,28 @@ export default function FourBloodsCamPage() {
 
                       {/* Video Frame: Dynamically scales to fit the available card height & width */}
                       <div
-                        className={`relative w-full bg-black overflow-hidden flex items-center justify-center ${
+                        className={`relative w-full overflow-hidden flex items-center justify-center border-b ${
                           fitHeightView ? 'flex-1 min-h-0 h-full' : 'aspect-video'
+                        } ${
+                          isDark
+                            ? 'bg-gradient-to-b from-[#14080B] via-[#090507] to-[#040203]'
+                            : 'bg-gradient-to-b from-zinc-200 via-zinc-100 to-zinc-50'
                         }`}
                       >
+                        {/* Background tactical pattern behind video */}
+                        <div
+                          className={`absolute inset-0 pointer-events-none opacity-20 ${
+                            isDark ? 'bg-tactical-grid' : 'bg-cam-light-grid'
+                          }`}
+                        />
+                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.04]">
+                          <img
+                            src="/assets/logo_v1.png"
+                            alt=""
+                            className="w-32 h-32 object-contain grayscale"
+                          />
+                        </div>
+
                         {(resizingChannelId || isResizingChat || draggedChannelId) && (
                           <div className="absolute inset-0 z-20 bg-transparent cursor-move" />
                         )}
@@ -1761,6 +1886,31 @@ export default function FourBloodsCamPage() {
                               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                               allowFullScreen
                             />
+
+                            {/* Broadcast Tactical HUD Viewer Badge Overlay (Crisp, High-Visibility, Esports-Style) */}
+                            {member.isLive &&
+                              typeof member.viewerCount === 'number' &&
+                              member.viewerCount > 0 && (
+                                <div className="absolute top-2.5 left-2.5 z-20 pointer-events-none flex items-center gap-2 px-2.5 py-1 bg-black/85 backdrop-blur-md border border-red-500/40 rounded-xs shadow-lg">
+                                  <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                                  <span className="text-[10px] font-mono-tech font-bold text-white tracking-wider">
+                                    LIVE
+                                  </span>
+                                  <span className="w-px h-3 bg-white/20" />
+                                  <div className="flex items-center gap-1.5 text-[11px] font-mono-tech font-bold text-red-400">
+                                    <Users className="w-3.5 h-3.5 text-red-500" />
+                                    <span>{member.viewerCount.toLocaleString('id-ID')} Penonton</span>
+                                  </div>
+                                  {uptime && (
+                                    <>
+                                      <span className="w-px h-3 bg-white/20" />
+                                      <span className="text-[10px] font-mono-tech text-emerald-400 font-semibold">
+                                        {uptime}
+                                      </span>
+                                    </>
+                                  )}
+                                </div>
+                              )}
                             {member.isUpcoming && upcomingInfo && (
                               <div className="absolute bottom-2 left-2 right-2 bg-black/85 border border-amber-500/50 px-3 py-1.5 flex items-center justify-between gap-2 pointer-events-none z-10">
                                 <div className="flex items-center gap-2 text-amber-400 text-[10px] font-mono-tech font-bold uppercase">
@@ -1822,7 +1972,7 @@ export default function FourBloodsCamPage() {
             className={`h-full border-l flex flex-col shrink-0 z-20 relative ${
               isDark
                 ? 'bg-[#0A0708] border-white/10'
-                : 'bg-white border-zinc-300 shadow-lg'
+                : 'bg-[#FAF8F5] border-zinc-300 shadow-xl'
             }`}
           >
             {/* Left border drag handle to resize chat dock */}
@@ -1832,10 +1982,12 @@ export default function FourBloodsCamPage() {
               className="absolute -left-1.5 top-0 bottom-0 w-3 cursor-ew-resize z-30 group/chathandle flex items-center justify-center"
             >
               <div
-                className={`w-1 h-12 rounded-full transition-all ${
+                className={`w-1.5 h-12 rounded-full transition-all ${
                   isResizingChat
                     ? 'bg-red-500 h-24 shadow-[0_0_10px_rgba(220,38,38,0.9)]'
-                    : 'bg-white/10 group-hover/chathandle:bg-red-500/70 group-hover/chathandle:h-20'
+                    : isDark
+                      ? 'bg-white/20 group-hover/chathandle:bg-red-500/70 group-hover/chathandle:h-20'
+                      : 'bg-zinc-400 group-hover/chathandle:bg-red-500 group-hover/chathandle:h-20 shadow-xs'
                 }`}
               />
             </div>
@@ -1845,7 +1997,7 @@ export default function FourBloodsCamPage() {
               className={`p-3 border-b space-y-2 shrink-0 ${
                 isDark
                   ? 'border-white/10 bg-[#0E090B]'
-                  : 'border-zinc-300 bg-zinc-100 text-zinc-900'
+                  : 'border-zinc-300 bg-white text-zinc-900 shadow-xs'
               }`}
             >
               <div className="flex items-center justify-between">
@@ -1856,17 +2008,49 @@ export default function FourBloodsCamPage() {
                       isDark ? 'text-white' : 'text-zinc-900'
                     }`}
                   >
-                    LIVE CHAT {activeChatMembers.length > 0 ? `(${activeChatMembers.length})` : ''}
+                    LIVE CHAT {activePovMembers.length > 0 ? `(${activePovMembers.length})` : ''}
                   </span>
                 </div>
 
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1.5">
+                  {/* Mode Switcher (Tabs vs Stacked) */}
+                  {activePovMembers.length > 1 && (
+                    <button
+                      onClick={() =>
+                        setChatViewMode((prev) => (prev === 'tabs' ? 'stacked' : 'tabs'))
+                      }
+                      className={`px-2 py-0.5 text-[9px] font-mono-tech font-bold uppercase border rounded-xs transition-colors cursor-pointer flex items-center gap-1 ${
+                        isDark
+                          ? 'bg-zinc-900 border-white/15 text-zinc-300 hover:text-white'
+                          : 'bg-zinc-100 border-zinc-300 text-zinc-800 hover:text-black hover:border-zinc-400'
+                      }`}
+                      title="Ganti Mode Tampilan Chat (Tab Tunggal vs Tumpuk Semua)"
+                    >
+                      <span className="text-red-500">MODE:</span>
+                      <span>{chatViewMode === 'tabs' ? 'TAB' : 'TUMPUK'}</span>
+                    </button>
+                  )}
+
+                  {/* Chat Theme Switcher Button */}
+                  <button
+                    onClick={cycleChatTheme}
+                    className={`px-2 py-0.5 text-[9px] font-mono-tech font-bold uppercase border rounded-xs transition-colors cursor-pointer flex items-center gap-1 ${
+                      isDark
+                        ? 'bg-zinc-900 border-white/15 text-zinc-300 hover:text-white'
+                        : 'bg-zinc-100 border-zinc-300 text-zinc-800 hover:text-black hover:border-zinc-400'
+                    }`}
+                    title="Ganti Tema Chat YouTube (Auto / Dark / Light)"
+                  >
+                    <span className="text-red-500">TEMA:</span>
+                    <span>{chatThemeMode.toUpperCase()}</span>
+                  </button>
+
                   <button
                     onClick={() => setShowChat(false)}
-                    className={`p-1 cursor-pointer ${
+                    className={`p-1 cursor-pointer rounded-xs transition-colors ${
                       isDark
-                        ? 'text-zinc-400 hover:text-white'
-                        : 'text-zinc-700 hover:text-black'
+                        ? 'text-zinc-400 hover:text-white hover:bg-white/10'
+                        : 'text-zinc-700 hover:text-black hover:bg-zinc-200'
                     }`}
                     title="Tutup Panel Chat"
                   >
@@ -1875,38 +2059,70 @@ export default function FourBloodsCamPage() {
                 </div>
               </div>
 
-              {/* Chat Streamer Selector Pills */}
+              {/* Chat Streamer Tabs (In Tabs Mode) or Toggle Pills (In Stacked Mode) */}
               {activePovMembers.length > 0 && (
                 <div className="flex items-center gap-1 overflow-x-auto no-scrollbar pt-0.5">
-                  {activePovMembers.map((m) => {
-                    const isSelected = activeChatMembers.some(
-                      (cm) => cm.channelId === m.channelId
-                    );
-                    return (
-                      <button
-                        key={m.channelId}
-                        onClick={() => toggleChatStream(m.channelId)}
-                        className={`px-2 py-0.5 text-[9px] font-mono-tech font-bold uppercase border shrink-0 transition-colors cursor-pointer rounded-sm flex items-center gap-1 ${
-                          isSelected
-                            ? 'bg-red-600 text-white border-red-500 shadow-xs'
-                            : isDark
-                              ? 'bg-[#140D10] text-zinc-400 border-white/10 hover:text-white'
-                              : 'bg-white text-zinc-700 border-zinc-300 hover:border-red-500'
-                        }`}
-                        title={isSelected ? `Sembunyikan chat ${m.name}` : `Tampilkan chat ${m.name}`}
-                      >
-                        <span>{m.name}</span>
-                        {isSelected ? <X className="w-2.5 h-2.5" /> : <Plus className="w-2.5 h-2.5" />}
-                      </button>
-                    );
-                  })}
+                  {chatViewMode === 'tabs'
+                    ? activePovMembers.map((m) => {
+                        const isTabActive =
+                          (activeChatTab || activePovMembers[0]?.channelId) === m.channelId;
+                        return (
+                          <button
+                            key={m.channelId}
+                            onClick={() => setActiveChatTab(m.channelId)}
+                            className={`px-2.5 py-1 text-[9px] font-mono-tech font-bold uppercase border shrink-0 transition-colors cursor-pointer rounded-xs flex items-center gap-1.5 ${
+                              isTabActive
+                                ? 'bg-red-600 text-white border-red-500 shadow-xs'
+                                : isDark
+                                  ? 'bg-[#140D10] text-zinc-400 border-white/10 hover:text-white'
+                                  : 'bg-zinc-100 text-zinc-800 border-zinc-300 hover:border-red-500 hover:bg-zinc-200'
+                            }`}
+                            title={`Buka live chat ${m.name}`}
+                          >
+                            {m.isLive && (
+                              <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
+                            )}
+                            <span className="truncate max-w-[120px]">{m.name}</span>
+                          </button>
+                        );
+                      })
+                    : activePovMembers.map((m) => {
+                        const isSelected = activeChatMembers.some(
+                          (cm) => cm.channelId === m.channelId
+                        );
+                        return (
+                          <button
+                            key={m.channelId}
+                            onClick={() => toggleChatStream(m.channelId)}
+                            className={`px-2 py-0.5 text-[9px] font-mono-tech font-bold uppercase border shrink-0 transition-colors cursor-pointer rounded-sm flex items-center gap-1 ${
+                              isSelected
+                                ? 'bg-red-600 text-white border-red-500 shadow-xs'
+                                : isDark
+                                  ? 'bg-[#140D10] text-zinc-400 border-white/10 hover:text-white'
+                                  : 'bg-zinc-100 text-zinc-800 border-zinc-300 hover:border-red-500 hover:bg-zinc-200'
+                            }`}
+                            title={
+                              isSelected
+                                ? `Sembunyikan chat ${m.name}`
+                                : `Tampilkan chat ${m.name}`
+                            }
+                          >
+                            <span>{m.name}</span>
+                            {isSelected ? (
+                              <X className="w-2.5 h-2.5" />
+                            ) : (
+                              <Plus className="w-2.5 h-2.5" />
+                            )}
+                          </button>
+                        );
+                      })}
                 </div>
               )}
             </div>
 
-            {/* Chat Iframes: Dynamically adapts to N open chats */}
+            {/* Chat Iframes: Tabbed (Full Height, Send Box Always Visible) or Stacked */}
             <div className="flex-1 min-h-0 flex flex-col overflow-y-auto cam-scroll">
-              {activeChatMembers.length === 0 ? (
+              {activePovMembers.length === 0 ? (
                 <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
                   <MessageSquare className="w-8 h-8 text-red-500/50 mb-2" />
                   <p
@@ -1924,6 +2140,90 @@ export default function FourBloodsCamPage() {
                     Pilih streamer di sidebar untuk memuat Live Chat interaktif.
                   </p>
                 </div>
+              ) : chatViewMode === 'tabs' ? (
+                (() => {
+                  const currentMember =
+                    activePovMembers.find(
+                      (m) =>
+                        m.channelId === (activeChatTab || activePovMembers[0]?.channelId)
+                    ) || activePovMembers[0];
+
+                  const chatVideoId = currentMember.isLive
+                    ? currentMember.videoId
+                    : currentMember.isUpcoming
+                      ? currentMember.upcomingVideoId
+                      : null;
+
+                  return (
+                    <div className="flex-1 min-h-0 h-full flex flex-col overflow-hidden">
+                      <div
+                        className={`px-3 py-1.5 border-b flex items-center justify-between shrink-0 ${
+                          isDark
+                            ? 'bg-[#120C0E] border-white/10'
+                            : 'bg-zinc-100 border-zinc-300'
+                        }`}
+                      >
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          {currentMember.isLive && (
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                          )}
+                          <span
+                            className={`text-[10px] font-mono-tech font-bold uppercase truncate ${
+                              isDark ? 'text-zinc-200' : 'text-zinc-900'
+                            }`}
+                          >
+                            CHAT // {currentMember.name}
+                          </span>
+                        </div>
+                        {chatVideoId && (
+                          <a
+                            href={`https://www.youtube.com/live_chat?v=${chatVideoId}&is_popout=1`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[9px] font-mono-tech text-red-500 hover:underline flex items-center gap-0.5 font-bold"
+                            title="Buka Chat di Pop-up Window Terpisah"
+                          >
+                            <span>POP-OUT</span>
+                            <ExternalLink className="w-2.5 h-2.5" />
+                          </a>
+                        )}
+                      </div>
+
+                      {chatVideoId ? (
+                        <iframe
+                          key={`${chatVideoId}-${effectiveChatDark ? 'dark' : 'light'}`}
+                          src={`https://www.youtube.com/live_chat?v=${chatVideoId}&embed_domain=${embedDomain}&dark_theme=${
+                            effectiveChatDark ? '1' : '0'
+                          }`}
+                          title={`${currentMember.name} Live Chat`}
+                          className={`w-full flex-1 min-h-0 h-full border-0 ${
+                            effectiveChatDark ? 'bg-[#090608]' : 'bg-white'
+                          }`}
+                        />
+                      ) : (
+                        <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
+                          <div className="p-2.5 rounded-full bg-red-500/10 mb-2">
+                            <MessageSquare className="w-5 h-5 text-red-500" />
+                          </div>
+                          <p
+                            className={`text-xs font-bold uppercase ${
+                              isDark ? 'text-zinc-200' : 'text-zinc-900'
+                            }`}
+                          >
+                            {currentMember.name} Tidak Sedang Live
+                          </p>
+                          <p
+                            className={`text-[11px] mt-1 max-w-[200px] ${
+                              isDark ? 'text-zinc-400' : 'text-zinc-600'
+                            }`}
+                          >
+                            Chat dinonaktifkan oleh YouTube karena siaran berakhir atau belum dimulai.
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()
               ) : (
                 activeChatMembers.map((chatMember, idx) => {
                   const chatVideoId = chatMember.isLive
@@ -1935,7 +2235,7 @@ export default function FourBloodsCamPage() {
                   return (
                     <div
                       key={chatMember.channelId}
-                      className={`flex-1 min-h-[180px] flex flex-col overflow-hidden shrink-0 ${
+                      className={`flex-1 min-h-[420px] flex flex-col overflow-hidden shrink-0 ${
                         idx > 0
                           ? isDark
                             ? 'border-t border-white/15'
@@ -1947,7 +2247,7 @@ export default function FourBloodsCamPage() {
                         className={`px-3 py-1.5 border-b flex items-center justify-between shrink-0 ${
                           isDark
                             ? 'bg-[#120C0E] border-white/10'
-                            : 'bg-zinc-200 border-zinc-300'
+                            : 'bg-zinc-100 border-zinc-300'
                         }`}
                       >
                         <span
@@ -1963,7 +2263,7 @@ export default function FourBloodsCamPage() {
                               href={`https://www.youtube.com/live_chat?v=${chatVideoId}&is_popout=1`}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-[9px] font-mono-tech text-red-500 hover:underline flex items-center gap-0.5"
+                              className="text-[9px] font-mono-tech text-red-500 hover:underline flex items-center gap-0.5 font-bold"
                               title="Buka Chat di Pop-up Window Terpisah"
                             >
                               <span>POP-OUT</span>
@@ -1972,7 +2272,11 @@ export default function FourBloodsCamPage() {
                           )}
                           <button
                             onClick={() => toggleChatStream(chatMember.channelId)}
-                            className="p-0.5 text-zinc-400 hover:text-white hover:bg-red-600 rounded-xs transition-colors cursor-pointer"
+                            className={`p-0.5 rounded-xs transition-colors cursor-pointer ${
+                              isDark
+                                ? 'text-zinc-400 hover:text-white hover:bg-red-600'
+                                : 'text-zinc-600 hover:text-white hover:bg-red-600'
+                            }`}
                             title={`Tutup chat ${chatMember.name}`}
                           >
                             <X className="w-3 h-3" />
@@ -1982,30 +2286,33 @@ export default function FourBloodsCamPage() {
 
                       {chatVideoId ? (
                         <iframe
-                          key={`${chatVideoId}-${theme}`}
+                          key={`${chatVideoId}-${effectiveChatDark ? 'dark' : 'light'}`}
                           src={`https://www.youtube.com/live_chat?v=${chatVideoId}&embed_domain=${embedDomain}&dark_theme=${
-                            isDark ? '1' : '0'
+                            effectiveChatDark ? '1' : '0'
                           }`}
                           title={`${chatMember.name} Live Chat`}
                           className={`w-full flex-1 border-0 ${
-                            isDark ? 'bg-[#090608]' : 'bg-white'
+                            effectiveChatDark ? 'bg-[#090608]' : 'bg-white'
                           }`}
                         />
                       ) : (
                         <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
+                          <div className="p-2.5 rounded-full bg-red-500/10 mb-2">
+                            <MessageSquare className="w-5 h-5 text-red-500" />
+                          </div>
                           <p
                             className={`text-xs font-bold uppercase ${
-                              isDark ? 'text-zinc-300' : 'text-zinc-800'
+                              isDark ? 'text-zinc-200' : 'text-zinc-900'
                             }`}
                           >
-                            {chatMember.name} Offline
+                            {chatMember.name} Tidak Sedang Live
                           </p>
                           <p
-                            className={`text-[11px] mt-1 ${
-                              isDark ? 'text-zinc-500' : 'text-zinc-600'
+                            className={`text-[11px] mt-1 max-w-[200px] ${
+                              isDark ? 'text-zinc-400' : 'text-zinc-600'
                             }`}
                           >
-                            Chat hanya aktif ketika streamer sedang siaran langsung.
+                            Chat dinonaktifkan oleh YouTube karena siaran berakhir atau belum dimulai.
                           </p>
                         </div>
                       )}

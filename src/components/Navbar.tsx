@@ -11,7 +11,7 @@ interface NavbarProps {
 }
 
 export default function Navbar({
-  liveCount = 1,
+  liveCount = 0,
   theme = 'dark',
   onToggleTheme,
 }: NavbarProps) {

@@ -65,7 +65,7 @@ test.describe('4Bloods Web Profile & Cam Performance E2E', () => {
 
     // Check if stage container fits within viewport height
     const hasVerticalScroll = await page.evaluate(() => {
-      const stage = document.querySelector('main > div');
+      const stage = document.querySelector('main > div:not(.pointer-events-none)');
       if (!stage) return false;
       return stage.scrollHeight > stage.clientHeight + 4; // allow 4px subpixel margin
     });

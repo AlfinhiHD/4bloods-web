@@ -74,10 +74,10 @@
     "channelId": "UC9LmRRwAzHkCxlgbKW3tMjA",
     "handle": "@Deciii08",
     "avatar": "/assets/avatars/UC9LmRRwAzHkCxlgbKW3tMjA.jpg",
-    "isLive": true,
-    "videoId": "qdXtElgFR-A",
-    "streamTitle": "siang yuk #imeroleplay #4Blood #anakceokopat #Surya #solova #yb",
-    "startTimestamp": "2026-10-13T03:47:51+00:00"
+    "isLive": false,
+    "videoId": null,
+    "streamTitle": null,
+    "startTimestamp": null
   },
   {
     "name": "Keedo Chaser",

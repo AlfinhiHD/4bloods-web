@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import StickyAudioPlayer from '@/components/StickyAudioPlayer';
 import Tilt3DCard from '@/components/Tilt3DCard';
+import ShowroomCodex from '@/components/ShowroomCodex';
 import {
   LORE_CHAPTERS,
   HIERARCHY_TIERS,
@@ -34,6 +35,7 @@ import {
   Sun,
   Moon,
   Sparkles,
+  Users,
 } from 'lucide-react';
 
 // Optimized Lightweight Fan Art visuals per rank/character
@@ -50,11 +52,6 @@ export default function CompanyProfilePage() {
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const [activeChapterIdx, setActiveChapterIdx] = useState(2); // Default Chapter III (SSR)
   const [heroLogoOption, setHeroLogoOption] = useState<'ORI' | '3D' | 'V1'>('ORI');
-
-  // Section 03: Interactive 3D Showroom State
-  const [wardrobeCategory, setWardrobeCategory] = useState<string>('all');
-  const [selectedGarmentId, setSelectedGarmentId] = useState<string>(WARDROBE_ITEMS[0].id);
-  const [garmentViewMode, setGarmentViewMode] = useState<'DUAL' | 'FRONT' | 'BACK'>('DUAL');
 
   // Section 04: Vinyl Record Deck & Studio Tracklist State
   const [trackFilter, setTrackFilter] = useState<'ALL' | 'MV' | 'DISS'>('ALL');
@@ -92,7 +89,8 @@ export default function CompanyProfilePage() {
 
   useEffect(() => {
     try {
-      const savedTheme = localStorage.getItem('4bs_cam_theme');
+      const savedTheme =
+        localStorage.getItem('4bg_theme') || localStorage.getItem('4bs_cam_theme');
       if (savedTheme === 'light' || savedTheme === 'dark') {
         setTheme(savedTheme);
       }
@@ -115,12 +113,23 @@ export default function CompanyProfilePage() {
           .then((r) => r.json())
           .then((fb) => {
             if (fb && typeof fb === 'object') {
-              const liveCount = Object.values(fb).filter((v: any) => v?.isLive).length;
+              const liveCount = Object.values(fb).filter((v: any) => {
+                const isStale =
+                  v?.lastChecked &&
+                  Date.now() - new Date(v.lastChecked).getTime() > 25 * 60 * 1000;
+                return !isStale && Boolean(v?.isLive && v?.videoId);
+              }).length;
               setLiveCount(liveCount);
               setStreamers((prev) =>
                 prev.map((m) => {
                   const s = fb[m.channelId];
-                  return s?.isLive ? { ...m, isLive: true, videoId: s.videoId } : m;
+                  const isStale =
+                    s?.lastChecked &&
+                    Date.now() - new Date(s.lastChecked).getTime() > 25 * 60 * 1000;
+                  const isLive = !isStale && Boolean(s?.isLive && s?.videoId);
+                  return isLive
+                    ? { ...m, isLive: true, videoId: s.videoId }
+                    : { ...m, isLive: false, videoId: null };
                 })
               );
             }
@@ -129,29 +138,37 @@ export default function CompanyProfilePage() {
       });
   }, []);
 
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      if (theme === 'dark') {
+        document.documentElement.classList.add('dark');
+        document.documentElement.classList.remove('light');
+        document.documentElement.style.colorScheme = 'dark';
+      } else {
+        document.documentElement.classList.remove('dark');
+        document.documentElement.classList.add('light');
+        document.documentElement.style.colorScheme = 'light';
+      }
+    }
+  }, [theme]);
+
   const toggleTheme = () => {
     const next = theme === 'dark' ? 'light' : 'dark';
     setTheme(next);
     try {
+      localStorage.setItem('4bg_theme', next);
       localStorage.setItem('4bs_cam_theme', next);
     } catch {}
   };
 
   const currentChapter = LORE_CHAPTERS[activeChapterIdx];
   const liveMembers = streamers.filter((s) => s.isLive);
-
-  // Filtered 3D Lookbook Wardrobe
-  const filteredWardrobe =
-    wardrobeCategory === 'all'
-      ? WARDROBE_ITEMS
-      : WARDROBE_ITEMS.filter((item) => item.category === wardrobeCategory);
-
-  const activeGarment =
-    filteredWardrobe.find((g) => g.id === selectedGarmentId) ||
-    filteredWardrobe[0] ||
-    WARDROBE_ITEMS[0];
-
-  const activeGarmentIndex = filteredWardrobe.findIndex((g) => g.id === activeGarment.id);
+  const totalLiveViewers = useMemo(() => {
+    return streamers.reduce(
+      (acc, s) => acc + (s.isLive && typeof s.viewerCount === 'number' ? s.viewerCount : 0),
+      0
+    );
+  }, [streamers]);
 
   // Filtered MV & Diss Tracks
   const filteredTracks = OFFICIAL_MEDIA_TRACKS.filter((track) => {
@@ -333,6 +350,12 @@ export default function CompanyProfilePage() {
                   >
                     <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />
                     <span>{liveCount} STREAMER LIVE</span>
+                    {totalLiveViewers > 0 && (
+                      <span className="border-l border-white/30 pl-2 text-red-100 font-normal flex items-center gap-1">
+                        <Users className="w-3 h-3" />
+                        <span>{totalLiveViewers.toLocaleString('id-ID')} PENONTON</span>
+                      </span>
+                    )}
                   </Link>
                 )}
               </div>
@@ -439,25 +462,15 @@ export default function CompanyProfilePage() {
               </div>
             </div>
 
-            {/* Right Column: High-Craft 4Bloods Crest Showcase with Interactive Options */}
+            {/* Right Column: 4Bloods Vintage Heritage V1 Crest */}
             <div className="lg:col-span-5 flex flex-col items-center justify-center relative">
               <Tilt3DCard
                 intensity={14}
                 glare={false}
                 onClick={() =>
                   setLightboxImage({
-                    src:
-                      heroLogoOption === 'ORI'
-                        ? '/assets/logo_v2.png'
-                        : heroLogoOption === '3D'
-                          ? '/assets/generated/logo_3d_pure.webp'
-                          : '/assets/logo_v1.png',
-                    title:
-                      heroLogoOption === 'ORI'
-                        ? '4BLOODS GANG — OFFICIAL ORIGINAL CREST (4BG)'
-                        : heroLogoOption === '3D'
-                          ? '4BLOODS GANG — 3D PURE HD INSIGNIA'
-                          : '4BLOODS GANG — VINTAGE HERITAGE V1',
+                    src: '/assets/logo_v1.png',
+                    title: '4BLOODS GANG — VINTAGE HERITAGE V1',
                     subtitle: 'IME Roleplay // South Side Roxwood (Postal 1051–1052)',
                   })
                 }
@@ -479,46 +492,29 @@ export default function CompanyProfilePage() {
                 />
 
                 <img
-                  src={
-                    heroLogoOption === 'ORI'
-                      ? '/assets/logo_v2.png'
-                      : heroLogoOption === '3D'
-                        ? '/assets/generated/logo_3d_pure.webp'
-                        : '/assets/logo_v1.png'
-                  }
+                  src="/assets/logo_v1.png"
                   alt="4BLOODS GANG Official Emblem"
                   style={{ transform: 'translateZ(30px)' }}
                   className="relative w-72 h-auto max-h-[380px] sm:w-[380px] sm:max-h-[420px] lg:w-[420px] lg:max-h-[460px] object-contain drop-shadow-[0_20px_45px_rgba(220,38,38,0.4)] drop-shadow-[0_10px_25px_rgba(0,0,0,0.85)] group-hover:scale-105 transition-transform duration-300 select-none"
                 />
               </Tilt3DCard>
 
-              {/* Interactive Logo Mode Switcher (Options for User) */}
+              {/* Dedicated Heritage V1 Label Badge */}
               <div
-                className={`mt-4 flex items-center gap-1.5 p-1 border backdrop-blur-md ${
+                className={`mt-4 inline-flex items-center gap-2 px-3.5 py-1.5 border backdrop-blur-md rounded-xs ${
                   isDark
-                    ? 'bg-black/60 border-white/10'
-                    : 'bg-white/80 border-zinc-300 shadow-sm'
+                    ? 'bg-black/60 border-white/10 text-zinc-300'
+                    : 'bg-white/80 border-zinc-300 text-zinc-800 shadow-sm'
                 }`}
               >
-                {[
-                  { id: 'ORI', label: 'ORIGINAL 4BG (RESMI)' },
-                  { id: '3D', label: '3D CREST HD' },
-                  { id: 'V1', label: 'HERITAGE V1' },
-                ].map((opt) => (
-                  <button
-                    key={opt.id}
-                    onClick={() => setHeroLogoOption(opt.id as 'ORI' | '3D' | 'V1')}
-                    className={`px-3 py-1.5 text-[10px] font-mono-tech font-bold uppercase tracking-wider transition-all cursor-pointer ${
-                      heroLogoOption === opt.id
-                        ? 'bg-red-600 text-white shadow-[0_0_15px_rgba(220,38,38,0.5)]'
-                        : isDark
-                          ? 'text-zinc-400 hover:text-white hover:bg-white/5'
-                          : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100'
-                    }`}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
+                <span className="w-1.5 h-1.5 rounded-full bg-red-600 animate-pulse" />
+                <span className="text-[10px] font-mono-tech font-bold uppercase tracking-widest text-red-500">
+                  HERITAGE V1
+                </span>
+                <span className="text-zinc-500">//</span>
+                <span className="text-[10px] font-mono-tech tracking-wider">
+                  VINTAGE 4BLOODS CREST
+                </span>
               </div>
             </div>
           </div>
@@ -1056,9 +1052,18 @@ export default function CompanyProfilePage() {
                             {activeShowcaseMember.handle || '@4bloods_member'}
                           </span>
                           {activeShowcaseMember.isLive && (
-                            <span className="px-2 py-0.5 bg-emerald-600 text-white text-[10px] font-mono-tech font-bold uppercase flex items-center gap-1">
+                            <span className="px-2 py-0.5 bg-emerald-600 text-white text-[10px] font-mono-tech font-bold uppercase flex items-center gap-1.5">
                               <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />
-                              LIVE DI IME RP
+                              <span>LIVE DI IME RP</span>
+                              {typeof activeShowcaseMember.viewerCount === 'number' &&
+                                activeShowcaseMember.viewerCount > 0 && (
+                                  <span className="border-l border-white/30 pl-1.5 text-emerald-100 font-normal flex items-center gap-1">
+                                    <Users className="w-2.5 h-2.5" />
+                                    <span>
+                                      {activeShowcaseMember.viewerCount.toLocaleString('id-ID')} PENONTON
+                                    </span>
+                                  </span>
+                                )}
                             </span>
                           )}
                         </div>
@@ -1162,458 +1167,10 @@ export default function CompanyProfilePage() {
       </section>
 
       {/* =====================================================================
-          SECTION 03 — OFFICIAL 3D SHOWROOM
-          Layout Rhythm: Left 5 Cols 13-Piece Apparel Locker | RIGHT 7 Cols 3D Studio Stage
-          Background: Industrial Concrete & Gunmetal Blueprint Vault with Spotlight Cones
+          SECTION 03 — OFFICIAL 3D SHOWROOM & APPAREL CODEX
+          Marketplace Catalog & 3D Interactive Fitting Room Showcase
       ===================================================================== */}
-      <section
-        id="wardrobe"
-        className={`py-24 border-b relative overflow-hidden ${
-          isDark
-            ? 'bg-gradient-to-b from-[#330814] via-[#1B050B] to-[#290610] border-red-600/35'
-            : 'bg-gradient-to-b from-[#FCEAF0] via-[#F3D7DF] to-[#FAEBEE] border-red-300'
-        }`}
-      >
-        {/* Rich Section 03 Background Art: Blueprint Dots + Studio Ceiling Spotlights */}
-        <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
-          <div className="absolute inset-0 bg-blueprint-dots opacity-50" />
-          <div
-            style={{
-              background: 'radial-gradient(circle, rgba(220,38,38,0.25) 0%, rgba(220,38,38,0) 70%)',
-            }}
-            className="absolute -top-32 left-1/2 -translate-x-1/2 w-[900px] h-[450px] rounded-full pointer-events-none"
-          />
-          <div
-            className={`absolute top-12 right-12 font-display text-[170px] sm:text-[240px] leading-none select-none ${
-              isDark ? 'text-red-500/[0.06]' : 'text-red-900/[0.06]'
-            }`}
-          >
-            WARDROBE
-          </div>
-        </div>
-
-        <div className="max-w-[1520px] mx-auto px-4 sm:px-8 relative z-10">
-          <div className="flex flex-col lg:flex-row lg:items-end justify-between mb-10 gap-6">
-            <div>
-              <div className="inline-flex items-center gap-2 text-xs font-mono-tech font-bold text-red-500 tracking-[0.25em] uppercase mb-1">
-                <Box className="w-3.5 h-3.5" />
-                <span>03 // VIRTUAL 3D FITTING ROOM — 13 IN-GAME GARMENTS</span>
-              </div>
-              <h2
-                className={`font-display text-5xl sm:text-7xl uppercase tracking-wider leading-none ${
-                  isDark ? 'text-white' : 'text-zinc-900'
-                }`}
-              >
-                OFFICIAL <span className="text-red-600">3D SHOWROOM</span>
-              </h2>
-            </div>
-
-            {/* Category Filter Pills */}
-            <div className="flex flex-wrap gap-2">
-              {[
-                { id: 'all', label: 'ALL PIECES (13)' },
-                { id: 'hoodie', label: 'HOODIES' },
-                { id: 'workshirt', label: 'WORKSHIRTS' },
-                { id: 'tee', label: 'HOOD DAYS TEES' },
-                { id: 'headwear', label: 'CAPS' },
-                { id: 'bag', label: 'TACTICAL BAGS' },
-              ].map((cat) => (
-                <button
-                  key={cat.id}
-                  onClick={() => {
-                    setWardrobeCategory(cat.id);
-                    const firstInCat =
-                      cat.id === 'all'
-                        ? WARDROBE_ITEMS[0]
-                        : WARDROBE_ITEMS.find((i) => i.category === cat.id);
-                    if (firstInCat) setSelectedGarmentId(firstInCat.id);
-                  }}
-                  className={`px-4 py-2.5 text-xs font-mono-tech font-bold tracking-wider uppercase border cursor-pointer ${
-                    wardrobeCategory === cat.id
-                      ? 'bg-red-600 text-white border-red-500 shadow-[0_0_20px_rgba(220,38,38,0.4)]'
-                      : isDark
-                        ? 'bg-[#120A0E]/90 text-zinc-300 border-white/15 hover:text-white'
-                        : 'bg-white text-zinc-700 border-zinc-300 hover:border-red-500'
-                  }`}
-                >
-                  {cat.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Left 5 Cols Locker Rack | RIGHT 7 Cols 3D Studio Pedestal */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-            {/* LEFT 5 COLUMNS: 13-PIECE INTERACTIVE LOCKER RACK */}
-            <div
-              className={`lg:col-span-5 border flex flex-col justify-between overflow-hidden max-h-[640px] order-2 lg:order-1 ${
-                isDark
-                  ? 'bg-[#0D080B]/95 border-white/15'
-                  : 'bg-white/95 border-zinc-300 shadow-lg'
-              }`}
-            >
-              <div
-                className={`px-5 py-3.5 border-b flex items-center justify-between ${
-                  isDark ? 'bg-[#150C10] border-white/10' : 'bg-zinc-100 border-zinc-200'
-                }`}
-              >
-                <div>
-                  <span
-                    className={`text-xs font-mono-tech font-bold uppercase tracking-wider block ${
-                      isDark ? 'text-white' : 'text-zinc-900'
-                    }`}
-                  >
-                    4BG APPAREL LOCKER ({filteredWardrobe.length} ITEMS)
-                  </span>
-                  <span className="text-[10px] font-mono-tech text-red-500">
-                    KLIK ITEM UNTUK MEMUAT KE PANGGUNG 3D KANAN →
-                  </span>
-                </div>
-                <span className="font-gothic text-2xl text-red-600">4BG</span>
-              </div>
-
-              <div className="flex-1 overflow-y-auto p-3.5 grid grid-cols-2 gap-2.5 content-start">
-                {filteredWardrobe.map((item, idx) => {
-                  const isSelected = item.id === activeGarment.id;
-                  return (
-                    <button
-                      key={item.id}
-                      onClick={() => setSelectedGarmentId(item.id)}
-                      className={`p-3 border text-left flex flex-col justify-between gap-2 cursor-pointer group ${
-                        isSelected
-                          ? 'bg-red-600/15 border-red-500 shadow-[inset_0_0_20px_rgba(220,38,38,0.25)]'
-                          : isDark
-                            ? 'bg-[#120B0F] border-white/10 hover:border-white/30'
-                            : 'bg-zinc-50 border-zinc-200 hover:border-red-400'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between w-full">
-                        <span className="text-[10px] font-mono-tech font-bold text-red-500">
-                          #{String(idx + 1).padStart(2, '0')}
-                        </span>
-                        {item.backImage && (
-                          <span className="px-1.5 py-0.2 bg-red-600/20 border border-red-500/40 text-red-400 text-[8px] font-mono-tech font-bold uppercase">
-                            F+B
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="h-24 w-full flex items-center justify-center my-1">
-                        <img
-                          src={item.frontImage}
-                          alt={item.name}
-                          className="max-h-full max-w-full object-contain group-hover:scale-105 transition-transform"
-                        />
-                      </div>
-
-                      <div>
-                        <div
-                          className={`text-[9px] font-mono-tech uppercase truncate ${
-                            isDark ? 'text-zinc-400' : 'text-zinc-500'
-                          }`}
-                        >
-                          {item.categoryLabel}
-                        </div>
-                        <div
-                          className={`font-display text-lg tracking-wider truncate leading-tight ${
-                            isDark ? 'text-white' : 'text-zinc-900'
-                          }`}
-                        >
-                          {item.name}
-                        </div>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-
-              <div
-                className={`px-4 py-3 border-t text-[10px] font-mono-tech flex items-center justify-between ${
-                  isDark
-                    ? 'bg-[#080507] border-white/10 text-zinc-400'
-                    : 'bg-zinc-100 border-zinc-200 text-zinc-600'
-                }`}
-              >
-                <span>IME RP CUSTOM EUP ASSETS</span>
-                <span className="text-red-500 font-bold">SOUTH SIDE ROXWOOD</span>
-              </div>
-            </div>
-
-            {/* RIGHT 7 COLUMNS: 3D STUDIO PEDESTAL (MAIN PREVIEW ON RIGHT, ZERO COLLISION) */}
-            <div
-              className={`lg:col-span-7 border flex flex-col justify-between overflow-hidden order-1 lg:order-2 ${
-                isDark
-                  ? 'bg-[#0C080A] border-red-500/40 shadow-[0_25px_70px_rgba(0,0,0,0.85)]'
-                  : 'bg-white border-zinc-300 shadow-xl'
-              }`}
-            >
-              {/* 1. Dedicated Top Control Bar */}
-              <div
-                className={`px-5 py-3.5 border-b flex flex-wrap items-center justify-between gap-3 ${
-                  isDark ? 'bg-[#140B0F] border-white/10' : 'bg-zinc-100 border-zinc-200'
-                }`}
-              >
-                <div className="flex items-center gap-2.5">
-                  <span className="px-2.5 py-1 bg-red-600 text-white text-[10px] font-mono-tech font-bold uppercase tracking-widest">
-                    PIECE {String(activeGarmentIndex + 1).padStart(2, '0')} /{' '}
-                    {String(filteredWardrobe.length).padStart(2, '0')}
-                  </span>
-                  <span
-                    className={`text-xs font-mono-tech font-bold uppercase tracking-wider ${
-                      isDark ? 'text-zinc-300' : 'text-zinc-700'
-                    }`}
-                  >
-                    {activeGarment.era} // {activeGarment.categoryLabel}
-                  </span>
-                </div>
-
-                {/* View Mode Switcher */}
-                <div className="flex items-center gap-1.5">
-                  {activeGarment.backImage ? (
-                    <div
-                      className={`flex items-center p-0.5 border ${
-                        isDark ? 'bg-black border-white/15' : 'bg-white border-zinc-300'
-                      }`}
-                    >
-                      <button
-                        onClick={() => setGarmentViewMode('DUAL')}
-                        className={`px-2.5 py-1 text-[10px] font-mono-tech font-bold uppercase flex items-center gap-1 cursor-pointer ${
-                          garmentViewMode === 'DUAL'
-                            ? 'bg-red-600 text-white'
-                            : isDark
-                              ? 'text-zinc-400 hover:text-white'
-                              : 'text-zinc-600 hover:text-zinc-900'
-                        }`}
-                      >
-                        <Columns2 className="w-3 h-3" />
-                        <span>FRONT + BACK</span>
-                      </button>
-                      <button
-                        onClick={() => setGarmentViewMode('FRONT')}
-                        className={`px-2.5 py-1 text-[10px] font-mono-tech font-bold uppercase cursor-pointer ${
-                          garmentViewMode === 'FRONT'
-                            ? 'bg-red-600 text-white'
-                            : isDark
-                              ? 'text-zinc-400 hover:text-white'
-                              : 'text-zinc-600 hover:text-zinc-900'
-                        }`}
-                      >
-                        FRONT ONLY
-                      </button>
-                      <button
-                        onClick={() => setGarmentViewMode('BACK')}
-                        className={`px-2.5 py-1 text-[10px] font-mono-tech font-bold uppercase flex items-center gap-1 cursor-pointer ${
-                          garmentViewMode === 'BACK'
-                            ? 'bg-red-600 text-white'
-                            : isDark
-                              ? 'text-zinc-400 hover:text-white'
-                              : 'text-zinc-600 hover:text-zinc-900'
-                        }`}
-                      >
-                        <RotateCw className="w-3 h-3" />
-                        <span>BACK ONLY</span>
-                      </button>
-                    </div>
-                  ) : (
-                    <span className="px-2.5 py-1 bg-black/40 border border-white/10 text-[10px] font-mono-tech text-zinc-400 uppercase">
-                      3D STUDIO RENDER
-                    </span>
-                  )}
-
-                  <button
-                    onClick={() =>
-                      setLightboxImage({
-                        src:
-                          garmentViewMode === 'BACK' && activeGarment.backImage
-                            ? activeGarment.backImage
-                            : activeGarment.frontImage,
-                        title: activeGarment.name,
-                        subtitle: `${activeGarment.categoryLabel} // ${activeGarment.tier}`,
-                      })
-                    }
-                    className="p-2 bg-red-600 hover:bg-red-500 text-white cursor-pointer"
-                    title="Perbesar Render 3D"
-                  >
-                    <Maximize2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              </div>
-
-              {/* 2. Spacious 3D Interactive Turntable Stage */}
-              <Tilt3DCard
-                intensity={11}
-                className={`relative flex-1 min-h-[400px] sm:min-h-[440px] flex items-center justify-center p-8 sm:p-12 overflow-hidden ${
-                  isDark
-                    ? 'bg-gradient-to-b from-[#1A1016] via-[#0E080C] to-[#080507]'
-                    : 'bg-gradient-to-b from-[#FAF8F5] via-[#EFECE6] to-[#E2DDD5]'
-                }`}
-              >
-                <div
-                  className={`absolute inset-0 pointer-events-none ${
-                    isDark ? 'bg-tactical-grid opacity-45' : 'bg-cam-light-grid opacity-60'
-                  }`}
-                />
-                <div
-                  style={{
-                    background: 'radial-gradient(circle, rgba(220,38,38,0.22) 0%, rgba(220,38,38,0) 70%)',
-                  }}
-                  className="absolute w-80 h-80 rounded-full pointer-events-none"
-                />
-                <div
-                  style={{ transform: 'rotateX(75deg) translateZ(-60px)' }}
-                  className="absolute bottom-6 w-72 sm:w-96 h-32 rounded-full border-2 border-red-500/35 shadow-[0_0_50px_rgba(220,38,38,0.4)] pointer-events-none"
-                />
-                <span
-                  style={{ transform: 'translateZ(-25px)' }}
-                  className={`font-gothic text-[140px] sm:text-[180px] select-none pointer-events-none absolute leading-none ${
-                    isDark ? 'text-white/[0.03]' : 'text-red-950/[0.05]'
-                  }`}
-                >
-                  4BG
-                </span>
-
-                {activeGarment.backImage && garmentViewMode === 'DUAL' ? (
-                  <div
-                    style={{ transform: 'translateZ(42px)' }}
-                    className="relative z-10 grid grid-cols-1 sm:grid-cols-2 gap-6 w-full items-center justify-items-center"
-                  >
-                    <div
-                      onClick={() =>
-                        setLightboxImage({
-                          src: activeGarment.frontImage,
-                          title: `${activeGarment.name} (TAMPAK DEPAN)`,
-                          subtitle: activeGarment.categoryLabel,
-                        })
-                      }
-                      className="flex flex-col items-center group cursor-pointer"
-                    >
-                      <img
-                        src={activeGarment.frontImage}
-                        alt={`${activeGarment.name} Front`}
-                        className="h-56 sm:h-72 w-auto object-contain drop-shadow-[0_28px_40px_rgba(0,0,0,0.8)] group-hover:scale-105 transition-transform duration-300"
-                      />
-                      <span
-                        className={`mt-3 px-3 py-0.5 text-[10px] font-mono-tech font-bold uppercase tracking-widest border ${
-                          isDark
-                            ? 'bg-black/80 border-white/15 text-zinc-300'
-                            : 'bg-white/90 border-zinc-300 text-zinc-800'
-                        }`}
-                      >
-                        TAMPAK DEPAN (FRONT)
-                      </span>
-                    </div>
-
-                    <div
-                      onClick={() =>
-                        setLightboxImage({
-                          src: activeGarment.backImage!,
-                          title: `${activeGarment.name} (TAMPAK BELAKANG)`,
-                          subtitle: activeGarment.categoryLabel,
-                        })
-                      }
-                      className="flex flex-col items-center group cursor-pointer"
-                    >
-                      <img
-                        src={activeGarment.backImage}
-                        alt={`${activeGarment.name} Back`}
-                        className="h-56 sm:h-72 w-auto object-contain drop-shadow-[0_28px_40px_rgba(0,0,0,0.8)] group-hover:scale-105 transition-transform duration-300"
-                      />
-                      <span className="mt-3 px-3 py-0.5 bg-red-600 text-white text-[10px] font-mono-tech font-bold uppercase tracking-widest">
-                        TAMPAK BELAKANG (BACK)
-                      </span>
-                    </div>
-                  </div>
-                ) : (
-                  <div
-                    style={{ transform: 'translateZ(48px)' }}
-                    onClick={() =>
-                      setLightboxImage({
-                        src:
-                          garmentViewMode === 'BACK' && activeGarment.backImage
-                            ? activeGarment.backImage
-                            : activeGarment.frontImage,
-                        title: activeGarment.name,
-                        subtitle: activeGarment.categoryLabel,
-                      })
-                    }
-                    className="relative z-10 flex flex-col items-center cursor-pointer group"
-                  >
-                    <img
-                      src={
-                        garmentViewMode === 'BACK' && activeGarment.backImage
-                          ? activeGarment.backImage
-                          : activeGarment.frontImage
-                      }
-                      alt={activeGarment.name}
-                      className="h-64 sm:h-80 w-auto object-contain drop-shadow-[0_30px_45px_rgba(0,0,0,0.85)] group-hover:scale-105 transition-transform duration-300"
-                    />
-                    <span
-                      className={`mt-4 px-3 py-1 text-[10px] font-mono-tech font-bold uppercase tracking-widest border ${
-                        isDark
-                          ? 'bg-black/80 border-red-500/40 text-red-400'
-                          : 'bg-white border-red-500/40 text-red-600'
-                      }`}
-                    >
-                      GERAKKAN KURSOR UNTUK EFEK 3D TILT • KLIK UNTUK ZOOM HD
-                    </span>
-                  </div>
-                )}
-              </Tilt3DCard>
-
-              {/* 3. Dedicated Bottom Garment Spec Sheet Bar */}
-              <div
-                className={`p-5 sm:p-6 border-t flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
-                  isDark ? 'bg-[#100A0D] border-white/10' : 'bg-zinc-50 border-zinc-200'
-                }`}
-              >
-                <div>
-                  <div className="flex items-center gap-2 text-[10px] font-mono-tech text-red-500 font-bold uppercase tracking-widest">
-                    <span>{activeGarment.categoryLabel}</span>
-                    <span>•</span>
-                    <span>{activeGarment.tier}</span>
-                  </div>
-                  <h3
-                    className={`font-display text-3xl sm:text-4xl tracking-wider uppercase mt-0.5 ${
-                      isDark ? 'text-white' : 'text-zinc-900'
-                    }`}
-                  >
-                    {activeGarment.name}
-                  </h3>
-                </div>
-
-                <div className="flex items-center gap-2 shrink-0">
-                  <button
-                    onClick={() => {
-                      const prevIdx =
-                        (activeGarmentIndex - 1 + filteredWardrobe.length) %
-                        filteredWardrobe.length;
-                      setSelectedGarmentId(filteredWardrobe[prevIdx].id);
-                    }}
-                    className={`px-3.5 py-2.5 border text-xs font-mono-tech font-bold uppercase flex items-center gap-1.5 cursor-pointer ${
-                      isDark
-                        ? 'bg-black hover:bg-red-600 text-white border-white/15'
-                        : 'bg-white hover:bg-red-600 hover:text-white text-zinc-900 border-zinc-300'
-                    }`}
-                  >
-                    <ChevronLeft className="w-4 h-4" />
-                    <span>PREV</span>
-                  </button>
-                  <button
-                    onClick={() => {
-                      const nextIdx = (activeGarmentIndex + 1) % filteredWardrobe.length;
-                      setSelectedGarmentId(filteredWardrobe[nextIdx].id);
-                    }}
-                    className="px-4 py-2.5 bg-red-600 hover:bg-red-500 text-white text-xs font-mono-tech font-bold uppercase flex items-center gap-1.5 cursor-pointer"
-                  >
-                    <span>NEXT PIECE</span>
-                    <ChevronRight className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      <ShowroomCodex isDark={isDark} onOpenLightbox={setLightboxImage} />
 
       {/* =====================================================================
           SECTION 04 — 4BLOODS RECORDS: SPINNING VINYL SLEEVE & STUDIO TRACKLIST
@@ -2280,8 +1837,14 @@ export default function CompanyProfilePage() {
                         {member.name}
                       </span>
                       {member.isLive && (
-                        <span className="px-1.5 py-0.2 bg-red-600 text-white text-[9px] font-mono-tech font-bold">
-                          LIVE
+                        <span className="px-1.5 py-0.5 bg-red-600 text-white text-[9px] font-mono-tech font-bold flex items-center gap-1">
+                          <span>LIVE</span>
+                          {typeof member.viewerCount === 'number' && member.viewerCount > 0 && (
+                            <span className="border-l border-white/30 pl-1 font-normal flex items-center gap-0.5">
+                              <Users className="w-2.5 h-2.5" />
+                              <span>{member.viewerCount.toLocaleString('id-ID')}</span>
+                            </span>
+                          )}
                         </span>
                       )}
                     </div>
