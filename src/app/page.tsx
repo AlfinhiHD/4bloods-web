@@ -5,7 +5,6 @@ import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import StickyAudioPlayer from '@/components/StickyAudioPlayer';
 import Tilt3DCard from '@/components/Tilt3DCard';
-import ThreeLogoHero from '@/components/ThreeLogoHero';
 import {
   LORE_CHAPTERS,
   HIERARCHY_TIERS,
@@ -50,6 +49,7 @@ const DEFAULT_SHOWCASE_FANARTS: Record<string, string> = {
 export default function CompanyProfilePage() {
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const [activeChapterIdx, setActiveChapterIdx] = useState(2); // Default Chapter III (SSR)
+  const [heroLogoOption, setHeroLogoOption] = useState<'ORI' | '3D' | 'V1'>('ORI');
 
   // Section 03: Interactive 3D Showroom State
   const [wardrobeCategory, setWardrobeCategory] = useState<string>('all');
@@ -100,14 +100,34 @@ export default function CompanyProfilePage() {
     } catch {}
 
     fetch('/api/streamers')
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) throw new Error('API route failed');
+        return res.json();
+      })
       .then((data) => {
         if (data?.streamers) {
           setStreamers(data.streamers);
           setLiveCount(data.liveCount || 0);
         }
       })
-      .catch(() => {});
+      .catch(() => {
+        // Client direct fallback to Firebase RTDB if Vercel serverless fails
+        fetch('https://blood-186bd-default-rtdb.firebaseio.com/streamers.json')
+          .then((r) => r.json())
+          .then((fb) => {
+            if (fb && typeof fb === 'object') {
+              const liveCount = Object.values(fb).filter((v: any) => v?.isLive).length;
+              setLiveCount(liveCount);
+              setStreamers((prev) =>
+                prev.map((m) => {
+                  const s = fb[m.channelId];
+                  return s?.isLive ? { ...m, isLive: true, videoId: s.videoId } : m;
+                })
+              );
+            }
+          })
+          .catch(() => {});
+      });
   }, []);
 
   const toggleTheme = () => {
@@ -343,13 +363,8 @@ export default function CompanyProfilePage() {
                   </span>
                 </h1>
 
-                <p
-                  className={`text-base sm:text-lg max-w-xl mx-auto lg:mx-0 leading-relaxed font-normal ${
-                    isDark ? 'text-zinc-300' : 'text-zinc-700'
-                  }`}
-                >
-                  Sindikat penguasa South Side Roxwood. Struktur komando High Council, arsip budaya streetwear,
-                  dan pusat pantauan interaktif 54 Streamer Multi-POV.
+                <p className="font-script text-2xl sm:text-3xl lg:text-4xl text-red-500 drop-shadow-[0_2px_15px_rgba(220,38,38,0.4)] max-w-2xl mx-auto lg:mx-0">
+                  &ldquo;Hidup dalam darah, berjalan bersama keluarga, dan mati demi 4Bloods.&rdquo;
                 </p>
               </div>
 
@@ -433,12 +448,87 @@ export default function CompanyProfilePage() {
               </div>
             </div>
 
-            {/* Right Column: Real-Time Interactive 3D WebGL Logo (Three.js) */}
-            <div className="lg:col-span-5 flex items-center justify-center relative">
-              <ThreeLogoHero
-                isDark={isDark}
-                className="w-full max-w-[480px] sm:max-w-[540px] xl:max-w-[580px] aspect-square"
-              />
+            {/* Right Column: High-Craft 4Bloods Crest Showcase with Interactive Options */}
+            <div className="lg:col-span-5 flex flex-col items-center justify-center relative">
+              <Tilt3DCard
+                intensity={14}
+                glare={false}
+                onClick={() =>
+                  setLightboxImage({
+                    src:
+                      heroLogoOption === 'ORI'
+                        ? '/assets/logo_v2.png'
+                        : heroLogoOption === '3D'
+                          ? '/assets/generated/logo_3d_pure.webp'
+                          : '/assets/logo_v1.png',
+                    title:
+                      heroLogoOption === 'ORI'
+                        ? '4BLOODS GANG — OFFICIAL ORIGINAL CREST (4BG)'
+                        : heroLogoOption === '3D'
+                          ? '4BLOODS GANG — 3D PURE HD INSIGNIA'
+                          : '4BLOODS GANG — VINTAGE HERITAGE V1',
+                    subtitle: 'IME Roleplay // South Side Roxwood (Postal 1051–1052)',
+                  })
+                }
+                className="relative w-80 h-80 sm:w-[420px] sm:h-[420px] lg:w-[460px] lg:h-[460px] xl:w-[500px] xl:h-[500px] flex items-center justify-center cursor-pointer group"
+              >
+                {/* Volumetric Crimson Ambient Lighting Ring */}
+                <div
+                  className={`absolute inset-4 rounded-full border ${
+                    isDark ? 'border-red-500/25' : 'border-red-500/35'
+                  } pointer-events-none`}
+                />
+                <div
+                  style={{
+                    background: isDark
+                      ? 'radial-gradient(circle, rgba(220,38,38,0.28) 0%, rgba(220,38,38,0) 70%)'
+                      : 'radial-gradient(circle, rgba(220,38,38,0.18) 0%, rgba(220,38,38,0) 70%)',
+                  }}
+                  className="absolute inset-2 rounded-full pointer-events-none"
+                />
+
+                <img
+                  src={
+                    heroLogoOption === 'ORI'
+                      ? '/assets/logo_v2.png'
+                      : heroLogoOption === '3D'
+                        ? '/assets/generated/logo_3d_pure.webp'
+                        : '/assets/logo_v1.png'
+                  }
+                  alt="4BLOODS GANG Official Emblem"
+                  style={{ transform: 'translateZ(30px)' }}
+                  className="relative w-72 h-auto max-h-[380px] sm:w-[380px] sm:max-h-[420px] lg:w-[420px] lg:max-h-[460px] object-contain drop-shadow-[0_20px_45px_rgba(220,38,38,0.4)] drop-shadow-[0_10px_25px_rgba(0,0,0,0.85)] group-hover:scale-105 transition-transform duration-300 select-none"
+                />
+              </Tilt3DCard>
+
+              {/* Interactive Logo Mode Switcher (Options for User) */}
+              <div
+                className={`mt-4 flex items-center gap-1.5 p-1 border backdrop-blur-md ${
+                  isDark
+                    ? 'bg-black/60 border-white/10'
+                    : 'bg-white/80 border-zinc-300 shadow-sm'
+                }`}
+              >
+                {[
+                  { id: 'ORI', label: 'ORIGINAL 4BG (RESMI)' },
+                  { id: '3D', label: '3D CREST HD' },
+                  { id: 'V1', label: 'HERITAGE V1' },
+                ].map((opt) => (
+                  <button
+                    key={opt.id}
+                    onClick={() => setHeroLogoOption(opt.id as 'ORI' | '3D' | 'V1')}
+                    className={`px-3 py-1.5 text-[10px] font-mono-tech font-bold uppercase tracking-wider transition-all cursor-pointer ${
+                      heroLogoOption === opt.id
+                        ? 'bg-red-600 text-white shadow-[0_0_15px_rgba(220,38,38,0.5)]'
+                        : isDark
+                          ? 'text-zinc-400 hover:text-white hover:bg-white/5'
+                          : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -2318,7 +2408,7 @@ export default function CompanyProfilePage() {
             <div className="px-4 py-2 bg-white/[0.03] border border-white/10 text-zinc-300 tracking-wider">
               FAN-MADE OFFICIAL CONCEPT BY{' '}
               <span className="text-white">
-                (<strong className="font-extrabold text-red-500">Finn</strong>)egan Davis
+                <strong className="font-extrabold text-red-500">Finn</strong>egan Davis
               </span>
             </div>
           </div>

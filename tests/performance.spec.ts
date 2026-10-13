@@ -19,12 +19,9 @@ test.describe('4Bloods Web Profile & Cam Performance E2E', () => {
     console.log(`[PERF] Home Warm DOMContentLoaded: ${loadTime}ms`);
     expect(loadTime).toBeLessThan(3500);
 
-    // Verify Three.js 3D Hero Emblem is mounted and visible
-    const threeLogo = page.locator('[data-testid="three-logo-hero"]');
-    await expect(threeLogo).toBeVisible({ timeout: 5000 });
-    // Verify canvas or texture element exists within hero
-    const canvasOrImg = threeLogo.locator('canvas, img');
-    await expect(canvasOrImg).toBeVisible({ timeout: 5000 });
+    // Verify 4Bloods Official Hero Emblem is mounted and visible
+    const heroLogo = page.locator('img[alt="4BLOODS GANG Official Emblem"]');
+    await expect(heroLogo).toBeVisible({ timeout: 5000 });
 
     // Smooth scroll down to test 60fps rendering without crash
     await page.evaluate(() => {

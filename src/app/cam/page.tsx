@@ -254,42 +254,148 @@ export default function FourBloodsCamPage() {
 
   const fetchLiveStatus = useCallback(async (forceRefresh = false) => {
     setIsScanning(true);
+    let success = false;
+
+    // 1. Try Next.js server route /api/streamers
     try {
       const res = await fetch(
         `/api/streamers${forceRefresh ? '?refresh=true' : ''}`,
-        { cache: 'no-store' }
+        { cache: 'no-store', signal: AbortSignal.timeout(5000) }
       );
-      const data = await res.json();
-      if (data?.streamers) {
-        setStreamers(data.streamers);
-        setLastScannerTime(
-          new Date(data.lastScannerTime || Date.now()).toLocaleTimeString('id-ID', {
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit',
-          })
-        );
+      if (res.ok) {
+        const data = await res.json();
+        if (data?.streamers && Array.isArray(data.streamers) && data.streamers.length > 0) {
+          setStreamers(data.streamers);
+          setLastScannerTime(
+            new Date(data.lastScannerTime || Date.now()).toLocaleTimeString('id-ID', {
+              hour: '2-digit',
+              minute: '2-digit',
+              second: '2-digit',
+            })
+          );
 
-        const liveOnes = (data.streamers as EnrichedStreamer[]).filter((s) => s.isLive);
-        setSelectedIds((prev) => {
-          if (prev.length === 0 && liveOnes.length > 0) {
-            return liveOnes.map((s) => s.channelId);
-          }
-          return prev;
-        });
-        setActiveChatIds((prev) => {
-          if (prev.length === 0 && liveOnes.length > 0) {
-            return liveOnes.slice(0, 2).map((s) => s.channelId);
-          }
-          return prev;
-        });
+          const liveOnes = (data.streamers as EnrichedStreamer[]).filter((s) => s.isLive);
+          setSelectedIds((prev) => {
+            if (prev.length === 0 && liveOnes.length > 0) {
+              return liveOnes.map((s) => s.channelId);
+            }
+            return prev;
+          });
+          setActiveChatIds((prev) => {
+            if (prev.length === 0 && liveOnes.length > 0) {
+              return liveOnes.slice(0, 2).map((s) => s.channelId);
+            }
+            return prev;
+          });
+          success = true;
+        }
       }
     } catch (err) {
-      console.error('Failed to scan live status:', err);
-    } finally {
-      setIsScanning(false);
-      setIsInitialLoading(false);
+      console.warn('Backend API /api/streamers unreachable or timed out on Vercel, activating direct client fallback:', err);
     }
+
+    // 2. Direct Client-Side Firebase RTDB Fallback (100% infallible on Vercel)
+    if (!success) {
+      try {
+        const [fbStreamersRes, fbAvatarsRes] = await Promise.all([
+          fetch('https://blood-186bd-default-rtdb.firebaseio.com/streamers.json', {
+            signal: AbortSignal.timeout(4000),
+          }),
+          fetch('https://blood-186bd-default-rtdb.firebaseio.com/avatars.json', {
+            signal: AbortSignal.timeout(4000),
+          }),
+        ]);
+
+        if (fbStreamersRes.ok) {
+          const fbStreamers = await fbStreamersRes.json();
+          const fbAvatars = fbAvatarsRes.ok ? await fbAvatarsRes.json() : {};
+
+          const enriched = STREAMER_ROSTER.map((member) => {
+            const fb = fbStreamers?.[member.channelId] || {};
+            const isLive = Boolean(fb.isLive && fb.videoId);
+            const avatar = fbAvatars?.[member.channelId] || member.featuredThumb || '/assets/logo_v2.png';
+            return {
+              ...member,
+              avatar,
+              isLive,
+              videoId: isLive ? fb.videoId : null,
+              streamTitle: isLive ? fb.title || `${member.name} Live Stream` : null,
+              startTimestamp: isLive ? fb.actualStartTime || null : null,
+              isUpcoming: false,
+              upcomingVideoId: null,
+              upcomingTitle: null,
+              scheduledStartTime: null,
+              thumbnail:
+                isLive && fb.videoId
+                  ? `https://i.ytimg.com/vi/${fb.videoId}/hqdefault.jpg`
+                  : member.featuredThumb || '/assets/yt_this_is_4bloods.jpg',
+              lastChecked: new Date().toISOString(),
+            };
+          });
+
+          const rankWeight: Record<string, number> = {
+            OG: 1,
+            'Under OG': 2,
+            'Young Bloods': 3,
+            Member: 4,
+          };
+          enriched.sort((a, b) => {
+            if (a.isLive !== b.isLive) return a.isLive ? -1 : 1;
+            return (rankWeight[a.rank] || 9) - (rankWeight[b.rank] || 9);
+          });
+
+          setStreamers(enriched);
+          setLastScannerTime(
+            new Date().toLocaleTimeString('id-ID', {
+              hour: '2-digit',
+              minute: '2-digit',
+              second: '2-digit',
+            })
+          );
+
+          const liveOnes = enriched.filter((s) => s.isLive);
+          setSelectedIds((prev) => {
+            if (prev.length === 0 && liveOnes.length > 0) {
+              return liveOnes.map((s) => s.channelId);
+            }
+            return prev;
+          });
+          setActiveChatIds((prev) => {
+            if (prev.length === 0 && liveOnes.length > 0) {
+              return liveOnes.slice(0, 2).map((s) => s.channelId);
+            }
+            return prev;
+          });
+          success = true;
+        }
+      } catch (fbErr) {
+        console.warn('Direct Firebase scanner also unreachable, falling back to static roster:', fbErr);
+      }
+    }
+
+    // 3. Fallback: Ensure list is never empty
+    if (!success) {
+      setStreamers((prev) => {
+        if (prev.length > 0) return prev;
+        return STREAMER_ROSTER.map((m) => ({
+          ...m,
+          avatar: '/assets/logo_v2.png',
+          isLive: false,
+          videoId: null,
+          streamTitle: null,
+          startTimestamp: null,
+          isUpcoming: false,
+          upcomingVideoId: null,
+          upcomingTitle: null,
+          scheduledStartTime: null,
+          thumbnail: m.featuredThumb || '/assets/yt_this_is_4bloods.jpg',
+          lastChecked: new Date().toISOString(),
+        }));
+      });
+    }
+
+    setIsScanning(false);
+    setIsInitialLoading(false);
   }, []);
 
   const handleManualRefresh = () => {

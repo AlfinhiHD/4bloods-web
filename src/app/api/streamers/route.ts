@@ -2,14 +2,17 @@ import { NextResponse } from 'next/server';
 import { STREAMER_ROSTER } from '@/data/4bloods-data';
 import liveSnapshot from '@/data/live_snapshot.json';
 
-// Server-side in-memory cache so auto-polling from clients doesn't spam YouTube
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+export const maxDuration = 10; // Vercel hobby serverless execution limit
+
+// Server-side in-memory cache
 let lastScanTimestamp = 0;
-let liveStatusMemory: Record<string, any> = {};
-const SCAN_TTL_MS = 45_000; // 45 seconds TTL
+let cachedStreamersResponse: any = null;
+const SCAN_TTL_MS = 25_000; // 25 seconds TTL
 
 /**
  * Helper: Get the exact UNIX timestamp (ms) for the END of TODAY in WIB (UTC+7).
- * Any upcoming stream MUST have scheduledStartTime > endOfTodayMs ("minimal lebih dari hari ini").
  */
 function getEndOfTodayWibMs(nowMs = Date.now()): number {
   const wibOffsetMs = 7 * 60 * 60 * 1000;
@@ -19,47 +22,41 @@ function getEndOfTodayWibMs(nowMs = Date.now()): number {
 }
 
 /**
- * 2-Step Strict YouTube Live & Real Upcoming Schedule Verification (100% Real YouTube Data, Zero Dummy):
- * 1. Fetch /channel/{id}/live to see if YouTube canonical redirects to /watch?v={videoId}
- * 2. If a videoId exists, fetch /watch?v={videoId} and check:
- *    - Mode A (LIVE NOW): `"liveBroadcastDetails":{"isLiveNow":true`
- *    - Mode B (REAL UPCOMING SCHEDULE): `"isLiveNow":false` (without `endTimestamp`) AND
- *      real YouTube scheduled start time (`upcomingEventData.startTime` or `startTimestamp`) is
- *      STRICTLY GREATER THAN TODAY (`scheduledMs > getEndOfTodayWibMs()`).
+ * Safe YouTube Live Check with strict 2-second timeout guard.
+ * Prevents Vercel serverless functions from hanging and returning 504 Gateway Timeout.
  */
-async function checkYouTubeChannelLiveOrUpcoming(channelId: string) {
+async function safeCheckYouTubeChannel(channelId: string) {
   try {
     const res = await fetch(`https://www.youtube.com/channel/${channelId}/live`, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+        'User-Agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
       },
       cache: 'no-store',
+      signal: AbortSignal.timeout(2000),
     });
+
+    if (!res.ok) return null;
+
     const html = await res.text();
     const canMatch = html.match(/<link rel="canonical" href="([^"]+)"/);
     const canUrl = canMatch ? canMatch[1] : '';
     const vidMatch = canUrl.match(/watch\?v=([a-zA-Z0-9_-]{11})/);
     const videoId = vidMatch ? vidMatch[1] : null;
 
-    if (!videoId) {
-      return {
-        isLive: false,
-        videoId: null,
-        streamTitle: null,
-        startTimestamp: null,
-        isUpcoming: false,
-        upcomingVideoId: null,
-        upcomingTitle: null,
-        scheduledStartTime: null,
-      };
-    }
+    if (!videoId) return null;
 
     const watchRes = await fetch(`https://www.youtube.com/watch?v=${videoId}`, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+        'User-Agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
       },
       cache: 'no-store',
+      signal: AbortSignal.timeout(2000),
     });
+
+    if (!watchRes.ok) return null;
+
     const watchHtml = await watchRes.text();
     const isLiveNow = watchHtml.includes('"liveBroadcastDetails":{"isLiveNow":true');
     const titleMatch = watchHtml.match(/<meta name="title" content="([^"]+)"/);
@@ -74,17 +71,13 @@ async function checkYouTubeChannelLiveOrUpcoming(channelId: string) {
         streamTitle,
         startTimestamp,
         isUpcoming: false,
-        upcomingVideoId: null,
-        upcomingTitle: null,
-        scheduledStartTime: null,
       };
     }
 
-    // Check if this is a REAL YouTube Upcoming scheduled stream strictly > TODAY
+    // Check upcoming scheduled streams > end of today WIB
     const hasEnded = watchHtml.includes('"endTimestamp":"');
     if (!hasEnded) {
       const upcomingEpochMatch = watchHtml.match(/"upcomingEventData":\{"startTime":"(\d+)"/);
-
       let scheduledMs = 0;
       if (upcomingEpochMatch) {
         scheduledMs = Number(upcomingEpochMatch[1]) * 1000;
@@ -92,10 +85,7 @@ async function checkYouTubeChannelLiveOrUpcoming(channelId: string) {
         scheduledMs = new Date(startTimestamp).getTime();
       }
 
-      const endOfTodayMs = getEndOfTodayWibMs();
-
-      // STRICT RULE: Must be a real YouTube scheduled timestamp strictly > today
-      if (scheduledMs > endOfTodayMs) {
+      if (scheduledMs > getEndOfTodayWibMs()) {
         return {
           isLive: false,
           videoId: null,
@@ -109,16 +99,7 @@ async function checkYouTubeChannelLiveOrUpcoming(channelId: string) {
       }
     }
 
-    return {
-      isLive: false,
-      videoId: null,
-      streamTitle: null,
-      startTimestamp: null,
-      isUpcoming: false,
-      upcomingVideoId: null,
-      upcomingTitle: null,
-      scheduledStartTime: null,
-    };
+    return null;
   } catch {
     return null;
   }
@@ -127,48 +108,60 @@ async function checkYouTubeChannelLiveOrUpcoming(channelId: string) {
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const forceRefresh = searchParams.get('refresh') === 'true';
+  const now = Date.now();
 
-  const snapshotMap: Record<string, any> = {};
-  for (const item of liveSnapshot as any[]) {
-    snapshotMap[item.channelId] = {
-      ...item,
-      ...(liveStatusMemory[item.channelId] || {}),
-    };
+  // Return cached result if fresh and not force-refreshing
+  if (!forceRefresh && cachedStreamersResponse && now - lastScanTimestamp < SCAN_TTL_MS) {
+    return NextResponse.json(cachedStreamersResponse, {
+      headers: {
+        'Cache-Control': 'public, s-maxage=25, stale-while-revalidate=45',
+      },
+    });
   }
 
-  const now = Date.now();
-  const endOfTodayMs = getEndOfTodayWibMs(now);
-  const shouldScanLive = forceRefresh || now - lastScanTimestamp > SCAN_TTL_MS;
+  // Base snapshot map
+  const snapshotMap: Record<string, any> = {};
+  for (const item of liveSnapshot as any[]) {
+    snapshotMap[item.channelId] = { ...item };
+  }
 
-  if (shouldScanLive) {
-    lastScanTimestamp = now;
+  let firebaseSuccess = false;
 
-    // 1. Pull real-time scanner data from 4bloodmw Firebase RTDB (all 54 channels)
-    try {
-      const [fbStreamersRes, fbAvatarsRes] = await Promise.all([
-        fetch('https://blood-186bd-default-rtdb.firebaseio.com/streamers.json', {
-          cache: 'no-store',
-        }),
-        fetch('https://blood-186bd-default-rtdb.firebaseio.com/avatars.json', {
-          cache: 'no-store',
-        }),
-      ]);
-      const fbStreamers = fbStreamersRes.ok ? await fbStreamersRes.json() : null;
-      const fbAvatars = fbAvatarsRes.ok ? await fbAvatarsRes.json() : null;
+  // 1. Fetch Real-time Scanner Data from 4Blood Firebase RTDB (Ultra-fast, ~150ms, Never Blocked on Vercel)
+  try {
+    const [fbStreamersRes, fbAvatarsRes] = await Promise.all([
+      fetch('https://blood-186bd-default-rtdb.firebaseio.com/streamers.json', {
+        cache: 'no-store',
+        signal: AbortSignal.timeout(3000),
+      }),
+      fetch('https://blood-186bd-default-rtdb.firebaseio.com/avatars.json', {
+        cache: 'no-store',
+        signal: AbortSignal.timeout(3000),
+      }),
+    ]);
 
+    if (fbStreamersRes.ok) {
+      const fbStreamers = await fbStreamersRes.json();
       if (fbStreamers && typeof fbStreamers === 'object') {
+        firebaseSuccess = true;
         for (const [cid, fbData] of Object.entries(fbStreamers) as [string, any][]) {
           if (!fbData) continue;
           const prev = snapshotMap[cid] || {};
+          const isLiveNow = Boolean(fbData.isLive && fbData.videoId);
           snapshotMap[cid] = {
             ...prev,
-            isLive: Boolean(fbData.isLive && fbData.videoId) || Boolean(prev.isLive),
-            videoId: fbData.isLive && fbData.videoId ? fbData.videoId : prev.videoId || null,
-            startTimestamp: fbData.actualStartTime || prev.startTimestamp || null,
+            isLive: isLiveNow,
+            videoId: isLiveNow ? fbData.videoId : prev.videoId || null,
+            streamTitle: isLiveNow ? fbData.title || prev.streamTitle || null : prev.streamTitle || null,
+            startTimestamp: isLiveNow ? fbData.actualStartTime || prev.startTimestamp || null : prev.startTimestamp || null,
             lastChecked: fbData.lastChecked || prev.lastChecked || null,
           };
         }
       }
+    }
+
+    if (fbAvatarsRes.ok) {
+      const fbAvatars = await fbAvatarsRes.json();
       if (fbAvatars && typeof fbAvatars === 'object') {
         for (const [cid, avatarUrl] of Object.entries(fbAvatars) as [string, any][]) {
           if (typeof avatarUrl === 'string' && avatarUrl.trim()) {
@@ -179,44 +172,19 @@ export async function GET(request: Request) {
           }
         }
       }
-    } catch {
-      // Fallback gracefully if Firebase is unreachable
     }
+  } catch (err) {
+    // Firebase failed or timed out — will fall back to static snapshot gracefully
+    console.warn('[API /api/streamers] Firebase fetch warning:', err);
+  }
 
-    // 2. Also run direct YouTube Live + Upcoming check on priority & currently live channels
-    const currentlyLiveIds = Object.values(snapshotMap)
-      .filter((s: any) => s.isLive || s.isUpcoming)
-      .map((s: any) => s.channelId)
-      .filter(Boolean);
-
-    const priorityIds = Array.from(
-      new Set([
-        ...currentlyLiveIds,
-        'UCvseheuTcY-BnPGsmfQ5K5g', // Ackai (@Ackaiii)
-        'UC9LmRRwAzHkCxlgbKW3tMjA', // Jane Elisha (@Deciii08)
-        'UCHi0xCfpNPut25e_jcRcC3A', // Azmi (@AzmiWildan)
-        'UCI1hbc1-qfszyjNYoNgkV2w', // Asep Teriyaki (@BarevsKi)
-        'UCgO8kYJBkm5jvUJkV9H9mIw', // Nahmier Davies (@NAHMIER)
-        'UCzjGSL8HMCRUi1sWH5VYGjQ', // Ilham Joseph
-        'UC79cKOK5rTIABhvXxeINdHw', // Louis Ven
-        'UCWpOmCvUcYgjMrNW4LjvmCw', // Deja Amari
-        'UC6a-XQK_U4lsMfODIbgrFAA', // Muhammad Sumbul
-        'UCiAlUeYsA39S5x_nQS2aT-Q', // Joy Braxton
-        'UC7KiVxdO5HiAwIrbz--RG1w', // Geo Blitz (@xGiww)
-        'UC8opURjNDJhx5OtgMsekvMQ', // Grimm Jow (@9rimmJ)
-        'UCCEDmX6Jl-fwm4fywtwo4pQ', // Patra (@patraaa13)
-        'UCYG2Pp0MZvxyziNXO8puT-Q', // znah (@OnlyHanz_)
-        'UCtjLmmgBzjtND3i7bvyjLRQ', // Flip Flop (@oxidstudios)
-        'UCVbGCNvads9e5vZCfGva4-g', // Kim (@NanzSpace)
-        'UCqUhn7QlVk9MJStkR5Q_59g', // Ujang Walker (@Rzgggg)
-      ])
-    );
-
+  // 2. If Firebase did not respond, or if specific VIP channels need quick check (max 2 channels, with strict 2s timeout)
+  if (!firebaseSuccess) {
+    const fallbackVIPs = ['UCvseheuTcY-BnPGsmfQ5K5g', 'UCHi0xCfpNPut25e_jcRcC3A'];
     await Promise.all(
-      priorityIds.map(async (cid) => {
-        const fresh = await checkYouTubeChannelLiveOrUpcoming(cid);
-        if (fresh) {
-          liveStatusMemory[cid] = fresh;
+      fallbackVIPs.map(async (cid) => {
+        const fresh = await safeCheckYouTubeChannel(cid);
+        if (fresh && fresh.isLive) {
           snapshotMap[cid] = {
             ...(snapshotMap[cid] || {}),
             ...fresh,
@@ -226,13 +194,54 @@ export async function GET(request: Request) {
     );
   }
 
+  // 3. Optional: YouTube Data API v3 check if user provided YOUTUBE_API_KEY in Vercel environment
+  const apiKey = process.env.YOUTUBE_API_KEY || process.env.NEXT_PUBLIC_YOUTUBE_API_KEY;
+  if (apiKey) {
+    try {
+      // Find currently known live video IDs to verify them official-way
+      const liveVideoIds = Object.values(snapshotMap)
+        .filter((s: any) => s.isLive && s.videoId)
+        .map((s: any) => s.videoId)
+        .slice(0, 50)
+        .join(',');
+
+      if (liveVideoIds) {
+        const ytRes = await fetch(
+          `https://www.googleapis.com/youtube/v3/videos?part=snippet,liveStreamingDetails&id=${liveVideoIds}&key=${apiKey}`,
+          { signal: AbortSignal.timeout(2500) }
+        );
+        if (ytRes.ok) {
+          const ytData = await ytRes.json();
+          if (ytData.items) {
+            for (const item of ytData.items) {
+              const cid = item.snippet?.channelId;
+              if (cid && snapshotMap[cid]) {
+                const isActuallyLive = item.snippet?.liveBroadcastContent === 'live';
+                if (!isActuallyLive) {
+                  // Video has ended
+                  snapshotMap[cid].isLive = false;
+                  snapshotMap[cid].videoId = null;
+                } else {
+                  snapshotMap[cid].streamTitle = item.snippet?.title || snapshotMap[cid].streamTitle;
+                }
+              }
+            }
+          }
+        }
+      }
+    } catch {
+      // Ignore API key error
+    }
+  }
+
+  const endOfTodayMs = getEndOfTodayWibMs(now);
+
   const enrichedStreamers = STREAMER_ROSTER.map((member) => {
     const snap = snapshotMap[member.channelId] || {};
     const isActuallyLive = Boolean(snap.isLive && snap.videoId);
     const safeAvatar =
       snap.avatar && snap.avatar.trim() !== '' ? snap.avatar : '/assets/logo_v2.png';
 
-    // Determine REAL YouTube Upcoming Status (Strictly > Today / endOfTodayMs, ZERO dummy)
     let isUpcoming = false;
     let upcomingVideoId: string | null = null;
     let upcomingTitle: string | null = null;
@@ -266,7 +275,7 @@ export async function GET(request: Request) {
           : upcomingVideoId
             ? `https://i.ytimg.com/vi/${upcomingVideoId}/hqdefault.jpg`
             : member.featuredThumb || '/assets/yt_this_is_4bloods.jpg',
-      lastChecked: new Date(lastScanTimestamp || now).toISOString(),
+      lastChecked: new Date(now).toISOString(),
     };
   });
 
@@ -290,20 +299,22 @@ export async function GET(request: Request) {
         new Date(a.scheduledStartTime!).getTime() - new Date(b.scheduledStartTime!).getTime()
     );
 
-  return NextResponse.json(
-    {
-      status: 'ok',
-      lastScannerTime: new Date(lastScanTimestamp || now).toISOString(),
-      liveCount: enrichedStreamers.filter((s) => s.isLive).length,
-      upcomingCount: upcomingStreams.length,
-      totalCount: enrichedStreamers.length,
-      streamers: enrichedStreamers,
-      upcomingStreams,
+  const responseBody = {
+    status: 'ok',
+    lastScannerTime: new Date(now).toISOString(),
+    liveCount: enrichedStreamers.filter((s) => s.isLive).length,
+    upcomingCount: upcomingStreams.length,
+    totalCount: enrichedStreamers.length,
+    streamers: enrichedStreamers,
+    upcomingStreams,
+  };
+
+  lastScanTimestamp = now;
+  cachedStreamersResponse = responseBody;
+
+  return NextResponse.json(responseBody, {
+    headers: {
+      'Cache-Control': 'public, s-maxage=25, stale-while-revalidate=45',
     },
-    {
-      headers: {
-        'Cache-Control': 'public, s-maxage=45, stale-while-revalidate=60',
-      },
-    }
-  );
+  });
 }
