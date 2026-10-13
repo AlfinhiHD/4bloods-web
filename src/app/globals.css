@@ -142,8 +142,23 @@ section:not(:first-of-type) {
   animation-play-state: paused;
 }
 
+/* 3D Asset Float */
+@keyframes float-3d {
+  0%, 100% {
+    transform: translateY(0) rotate(-2deg);
+  }
+  50% {
+    transform: translateY(-8px) rotate(2deg);
+  }
+}
+
+.animate-float-3d {
+  animation: float-3d 5s ease-in-out infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .animate-marquee {
+  .animate-marquee,
+  .animate-float-3d {
     animation: none;
   }
 }

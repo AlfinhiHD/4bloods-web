@@ -177,12 +177,16 @@ export default function ShowroomCodex({ isDark, onOpenLightbox }: ShowroomCodexP
         ===================================================================== */}
         <div className="flex flex-col lg:flex-row lg:items-end justify-between mb-8 pb-6 border-b border-red-600/20 gap-6">
           <div>
-            <div className="flex items-center gap-2 text-xs font-mono-tech font-bold text-red-500 tracking-[0.25em] uppercase mb-2">
-              <Box className="w-3.5 h-3.5 text-red-500" />
-              <span>SECTION // 03 — APPAREL CODEX</span>
+            <div className="inline-flex items-center gap-2 text-xs font-mono-tech font-bold text-red-500 tracking-[0.25em] uppercase mb-1">
+              <Box className="w-3.5 h-3.5" />
+              <span>03 // 4BLOODS OFFICIAL IN-GAME EUP &amp; APPAREL CODEX</span>
             </div>
-            <h2 className="font-sans font-black text-3xl sm:text-5xl lg:text-6xl uppercase tracking-tight leading-none text-balance">
-              CUSTOM DRIP ARCHIVE & <span className="text-red-600">WARDROBE</span>
+            <h2
+              className={`font-display text-5xl sm:text-7xl uppercase tracking-wider leading-none ${
+                isDark ? 'text-white' : 'text-zinc-900'
+              }`}
+            >
+              CUSTOM DRIP &amp; <span className="text-red-600">WARDROBE</span>
             </h2>
           </div>
 
