@@ -1,17 +1,11 @@
 import fs from 'fs';
 import path from 'path';
 
-const ROSTER_PATH = path.resolve(process.cwd(), 'src/data/4bloods-data.ts');
+const ROSTER_PATH = path.resolve(process.cwd(), 'src/data/roster.json');
 const SNAPSHOT_PATH = path.resolve(process.cwd(), 'src/data/live_snapshot.json');
 const FIREBASE_URL = 'https://blood-186bd-default-rtdb.firebaseio.com/streamers.json';
 
-const rosterContent = fs.readFileSync(ROSTER_PATH, 'utf8');
-const regex = /{\s*name:\s*'([^']+)',\s*channelId:\s*'([^']+)'/g;
-const streamers = [];
-let match;
-while ((match = regex.exec(rosterContent)) !== null) {
-  streamers.push({ name: match[1], channelId: match[2] });
-}
+const streamers = JSON.parse(fs.readFileSync(ROSTER_PATH, 'utf8'));
 
 console.log(`[4Bloods Scanner] Loaded ${streamers.length} streamers from roster.`);
 

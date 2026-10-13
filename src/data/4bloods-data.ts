@@ -9,6 +9,8 @@ export interface StreamerMember {
   featuredTitle?: string;
   featuredThumb?: string;
   bio?: string;
+  subscribers?: number;
+  subscribersText?: string;
 }
 
 export interface LoreChapter {

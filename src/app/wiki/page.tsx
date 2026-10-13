@@ -22,6 +22,11 @@ import {
   Scroll,
   Flame,
   Users,
+  Target,
+  Clock,
+  Quote,
+  Sparkles,
+  CheckCircle2,
 } from 'lucide-react';
 
 import originData from '@/data/wiki/origin.json';
@@ -302,24 +307,150 @@ export default function WikiPage() {
       {/* Tab 01: The Burger Boy Genesis */}
       {activeTab === 'origin' && (
         <section className="max-w-[1520px] mx-auto px-4 sm:px-8 py-14 space-y-12">
-          <div className="border border-red-500/30 p-8 sm:p-12 relative overflow-hidden bg-gradient-to-br from-red-950/20 via-transparent to-black/40">
-            <div className="max-w-4xl space-y-6">
-              <div className="text-xs font-mono-tech text-red-500 font-bold uppercase tracking-[0.25em]">
-                BABAK AWAL // 23 JUNI 2025
+          {/* Main Cinematic Genesis Dossier */}
+          <div className="border border-red-500/40 relative overflow-hidden bg-[#0A0407] shadow-[0_20px_60px_rgba(0,0,0,0.85)] group">
+            {/* Atmospheric Background Backdrop */}
+            <div className="absolute inset-0 pointer-events-none">
+              <img
+                src="/assets/hood_west.jpg"
+                alt="West Side Genesis Era"
+                className="w-full h-full object-cover opacity-20 brightness-75 contrast-125 filter mix-blend-luminosity scale-105 group-hover:scale-100 transition-transform duration-1000 ease-out"
+              />
+              <div className="absolute inset-0 bg-gradient-to-r from-[#0A0407] via-[#0A0407]/90 to-[#0A0407]/80" />
+              <div className="absolute inset-0 bg-gradient-to-t from-[#0A0407] via-transparent to-[#0A0407]/90" />
+              <div
+                style={{
+                  background:
+                    'radial-gradient(circle at 85% 30%, rgba(220,38,38,0.25) 0%, rgba(10,4,7,0.95) 70%)',
+                }}
+                className="absolute inset-0"
+              />
+              <div className="absolute inset-0 bg-tactical-grid opacity-25" />
+              <div className="absolute inset-0 bg-film-grain opacity-40" />
+
+              {/* Glowing 3D Crest Watermark */}
+              <div className="absolute -right-12 -bottom-16 w-96 h-96 opacity-10 group-hover:opacity-20 transition-opacity duration-700 pointer-events-none">
+                <img
+                  src="/assets/generated/crest_v1_3d.webp"
+                  alt="3D Crest Watermark"
+                  className="w-full h-full object-contain filter drop-shadow-[0_0_50px_rgba(220,38,38,0.5)] animate-pulse"
+                />
               </div>
-              <h2 className="font-display text-4xl sm:text-6xl text-white tracking-wider uppercase">
-                {originData.title}
-              </h2>
-              <p className="font-script text-2xl sm:text-3xl text-red-400">
-                &ldquo;{originData.oath}&rdquo;
-              </p>
-              <p className="text-sm sm:text-base font-mono-tech leading-relaxed text-zinc-300">
-                {originData.synopsis}
-              </p>
-              <div className="space-y-4 pt-4 text-xs sm:text-sm font-mono-tech leading-relaxed text-zinc-400">
-                {originData.paragraphs.map((p, idx) => (
-                  <p key={idx}>{p}</p>
-                ))}
+            </div>
+
+            {/* Top Tactical Status Bar */}
+            <div className="relative z-10 px-6 sm:px-10 py-4 border-b border-white/10 bg-black/40 backdrop-blur-md flex flex-wrap items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <span className="flex h-2.5 w-2.5 relative">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-600" />
+                </span>
+                <span className="text-[11px] font-mono-tech font-bold uppercase tracking-[0.25em] text-red-500">
+                  DOSSIER ARCHIVE // CLASSIFIED ORIGIN #001
+                </span>
+              </div>
+              <div className="flex items-center gap-4 text-[10px] font-mono-tech text-zinc-400 uppercase">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white/5 border border-white/10">
+                  <Clock className="w-3 h-3 text-red-400" />
+                  EST. 23 JUNI 2025
+                </span>
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-white/5 border border-white/10">
+                  <MapPin className="w-3 h-3 text-red-400" />
+                  WEST SIDE LOS SANTOS
+                </span>
+                <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 bg-red-600/20 text-red-400 border border-red-500/30 font-bold">
+                  <Shield className="w-3 h-3" />
+                  SUMPAH DARAH ABADI
+                </span>
+              </div>
+            </div>
+
+            {/* Dossier Content Body */}
+            <div className="relative z-10 p-6 sm:p-10 lg:p-14 space-y-8 max-w-5xl">
+              <div className="space-y-3">
+                <div className="inline-flex items-center gap-2 px-3 py-1 bg-red-600/15 border border-red-500/30 text-red-400 text-xs font-mono-tech font-bold tracking-[0.25em] uppercase">
+                  <Flame className="w-3.5 h-3.5 text-red-500" />
+                  <span>BABAK AWAL // 23 JUNI 2025</span>
+                </div>
+                <h2 className="font-display text-4xl sm:text-6xl lg:text-7xl text-white tracking-wider uppercase leading-[0.95]">
+                  {originData.title}
+                </h2>
+                <p className="text-sm sm:text-base font-mono-tech text-zinc-400 max-w-3xl">
+                  {originData.subtitle}
+                </p>
+              </div>
+
+              {/* Illuminated Blood Oath Shrine Card */}
+              <div className="relative p-6 sm:p-8 border-y-2 sm:border sm:rounded-xs border-red-500/70 bg-gradient-to-r from-red-950/70 via-black/85 to-red-950/50 shadow-[0_0_50px_rgba(220,38,38,0.22)] overflow-hidden">
+                <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-red-500 via-amber-400 to-transparent" />
+                <div className="absolute -left-2 -bottom-4 text-red-600/10 pointer-events-none">
+                  <Quote className="w-32 h-32" />
+                </div>
+                <div className="relative z-10 space-y-3">
+                  <div className="flex items-center gap-2 text-[10px] font-mono-tech text-red-400 font-bold tracking-widest uppercase">
+                    <Sparkles className="w-3.5 h-3.5 text-amber-400 animate-spin" style={{ animationDuration: '6s' }} />
+                    <span>SACRED BLOOD OATH // DOKTRIN PERDANA</span>
+                  </div>
+                  <blockquote className="font-script text-2xl sm:text-4xl text-red-400 tracking-wide leading-tight drop-shadow-[0_2px_15px_rgba(239,68,68,0.4)]">
+                    &ldquo;{originData.oath}&rdquo;
+                  </blockquote>
+                  <p className="text-xs font-mono-tech text-zinc-400 pt-1 border-t border-white/10 flex items-center justify-between">
+                    <span>— Sumpah Darah 4 Pendiri di Sudut Sepi Los Santos (Target 30 Miliar Pertama)</span>
+                    <span className="hidden sm:inline-block text-red-500 font-bold uppercase tracking-widest text-[10px]">
+                      BLOOD IN, BLOOD OUT
+                    </span>
+                  </p>
+                </div>
+              </div>
+
+              {/* Synopsis & Lore Story */}
+              <div className="space-y-4 text-sm sm:text-base font-mono-tech leading-relaxed text-zinc-300 bg-black/40 p-6 sm:p-8 border border-white/10">
+                <p className="text-white font-medium border-l-2 border-red-500 pl-4 py-0.5">
+                  {originData.synopsis}
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 text-xs sm:text-sm text-zinc-400 border-t border-white/10">
+                  {originData.paragraphs.map((p, idx) => (
+                    <div key={idx} className="flex gap-3 items-start">
+                      <span className="font-mono-tech text-red-500 font-bold text-xs pt-0.5">
+                        [0{idx + 1}]
+                      </span>
+                      <p className="leading-relaxed">{p}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* 3 Genesis Milestones Pipeline */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4">
+                <div className="p-4 border border-white/10 bg-black/50 space-y-2 hover:border-red-500/50 transition-colors">
+                  <div className="text-[10px] font-mono-tech text-red-500 font-bold tracking-widest uppercase">
+                    TAHAP 01 // UP-N-ATOM
+                  </div>
+                  <h4 className="font-display text-lg text-white tracking-wide">BURUH PENGANTAR BURGER</h4>
+                  <p className="text-xs font-mono-tech text-zinc-400 leading-relaxed">
+                    Menghadapi kerasnya kota Los Santos, upah minim, dan ancaman pemecatan dari atasan Up-n-Atom.
+                  </p>
+                </div>
+
+                <div className="p-4 border border-red-500/30 bg-gradient-to-br from-red-950/40 to-black/60 space-y-2 hover:border-red-500 transition-colors">
+                  <div className="text-[10px] font-mono-tech text-amber-400 font-bold tracking-widest uppercase">
+                    TAHAP 02 // SUMPAH 30 MILIAR
+                  </div>
+                  <h4 className="font-display text-lg text-white tracking-wide">IKATAN SATU DARAH</h4>
+                  <p className="text-xs font-mono-tech text-zinc-400 leading-relaxed">
+                    Menolak terpisah, 4 sekawan mengikat janji suci dan mencanangkan target kas Rp 30 Miliar untuk kebebasan keluarga.
+                  </p>
+                </div>
+
+                <div className="p-4 border border-white/10 bg-black/50 space-y-2 hover:border-red-500/50 transition-colors">
+                  <div className="text-[10px] font-mono-tech text-red-500 font-bold tracking-widest uppercase">
+                    TAHAP 03 // BENDERA MERAH
+                  </div>
+                  <h4 className="font-display text-lg text-white tracking-wide">BENDERA WEST SIDE DIKIBARKAN</h4>
+                  <p className="text-xs font-mono-tech text-zinc-400 leading-relaxed">
+                    Merah resmi dipilih sebagai simbol hidup, pengorbanan, dan doktrin abadi “Blood In, Blood Out”.
+                  </p>
+                </div>
               </div>
             </div>
           </div>
