@@ -1262,8 +1262,8 @@ export default function FourBloodsCamPage() {
                         </div>
 
                         <div className="min-w-0 flex-1">
-                          {/* Row 1: Streamer Name + Live Viewer Badge */}
-                          <div className="flex items-center justify-between gap-1.5">
+                          {/* Row 1: Streamer Name */}
+                          <div className="flex items-center">
                             <span
                               className={`text-xs font-bold truncate ${
                                 isSelected
@@ -1275,17 +1275,6 @@ export default function FourBloodsCamPage() {
                             >
                               {member.name}
                             </span>
-                            {member.isLive &&
-                              typeof member.viewerCount === 'number' &&
-                              member.viewerCount > 0 && (
-                                <span
-                                  className="px-1.5 py-0.5 bg-red-600/20 border border-red-500/40 text-red-400 font-mono-tech text-[10px] font-bold rounded-xs shrink-0 flex items-center gap-1 shadow-xs"
-                                  title={`${member.viewerCount.toLocaleString('id-ID')} penonton sedang menonton`}
-                                >
-                                  <Users className="w-2.5 h-2.5 text-red-500" />
-                                  <span>{member.viewerCount.toLocaleString('id-ID')}</span>
-                                </span>
-                              )}
                           </div>
 
                           {/* Row 2: Rank Badge + Live Uptime (Guaranteed 1 single clean row) */}
@@ -1320,7 +1309,18 @@ export default function FourBloodsCamPage() {
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-1 shrink-0">
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        {member.isLive &&
+                          typeof member.viewerCount === 'number' &&
+                          member.viewerCount > 0 && (
+                            <span
+                              className="px-1.5 py-0.5 bg-red-600/20 border border-red-500/40 text-red-400 font-mono-tech text-[10px] font-bold rounded-xs shrink-0 flex items-center gap-1 shadow-xs"
+                              title={`${member.viewerCount.toLocaleString('id-ID')} penonton sedang menonton`}
+                            >
+                              <Users className="w-2.5 h-2.5 text-red-500" />
+                              <span>{member.viewerCount.toLocaleString('id-ID')}</span>
+                            </span>
+                          )}
                         <button
                           onClick={(e) => toggleFavorite(member.channelId, e)}
                           className={`p-1 transition-colors cursor-pointer ${
@@ -1887,30 +1887,6 @@ export default function FourBloodsCamPage() {
                               allowFullScreen
                             />
 
-                            {/* Broadcast Tactical HUD Viewer Badge Overlay (Crisp, High-Visibility, Esports-Style) */}
-                            {member.isLive &&
-                              typeof member.viewerCount === 'number' &&
-                              member.viewerCount > 0 && (
-                                <div className="absolute top-2.5 left-2.5 z-20 pointer-events-none flex items-center gap-2 px-2.5 py-1 bg-black/85 backdrop-blur-md border border-red-500/40 rounded-xs shadow-lg">
-                                  <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-                                  <span className="text-[10px] font-mono-tech font-bold text-white tracking-wider">
-                                    LIVE
-                                  </span>
-                                  <span className="w-px h-3 bg-white/20" />
-                                  <div className="flex items-center gap-1.5 text-[11px] font-mono-tech font-bold text-red-400">
-                                    <Users className="w-3.5 h-3.5 text-red-500" />
-                                    <span>{member.viewerCount.toLocaleString('id-ID')} Penonton</span>
-                                  </div>
-                                  {uptime && (
-                                    <>
-                                      <span className="w-px h-3 bg-white/20" />
-                                      <span className="text-[10px] font-mono-tech text-emerald-400 font-semibold">
-                                        {uptime}
-                                      </span>
-                                    </>
-                                  )}
-                                </div>
-                              )}
                             {member.isUpcoming && upcomingInfo && (
                               <div className="absolute bottom-2 left-2 right-2 bg-black/85 border border-amber-500/50 px-3 py-1.5 flex items-center justify-between gap-2 pointer-events-none z-10">
                                 <div className="flex items-center gap-2 text-amber-400 text-[10px] font-mono-tech font-bold uppercase">
