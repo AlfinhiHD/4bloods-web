@@ -223,6 +223,7 @@ export default function FourBloodsCamPage() {
   const stageContainerRef = useRef<HTMLDivElement | null>(null);
   const cardElementRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const cardBadgeRefs = useRef<Record<string, HTMLSpanElement | null>>({});
+  const iframeRefs = useRef<Record<string, HTMLIFrameElement | null>>({});
 
   useEffect(() => {
     setEmbedDomain(window.location.hostname);
@@ -345,7 +346,17 @@ export default function FourBloodsCamPage() {
         } catch {}
       }
 
-      // Default: Jangan checklist semua! Kosongkan jika tidak ada favorit yang live.
+      // Auto-select active live streams so stage is never empty when members are broadcasting
+      const liveOnes = loadedStreamers.filter((s) => s.isLive);
+      if (liveOnes.length > 0) {
+        const liveIds = liveOnes.map((s) => s.channelId);
+        setSelectedIds(liveIds);
+        setUnmutedId(liveIds[0]);
+        setActiveChatIds(liveIds);
+        return;
+      }
+
+      // Default: Kosongkan jika belum ada yang live
       setSelectedIds([]);
       setActiveChatIds([]);
     },
@@ -573,17 +584,74 @@ export default function FourBloodsCamPage() {
     return activePovMembers;
   }, [activeChatIds, activePovMembers]);
 
+  const sendIframeCommand = useCallback(
+    (channelId: string, func: string, args: any[] = []) => {
+      const iframe = iframeRefs.current[channelId];
+      if (!iframe || !iframe.contentWindow) return;
+      try {
+        iframe.contentWindow.postMessage(
+          JSON.stringify({
+            event: 'command',
+            func,
+            args,
+          }),
+          '*'
+        );
+      } catch {}
+    },
+    []
+  );
+
+  const setSoloAudio = useCallback(
+    (channelId: string | null) => {
+      setUnmutedId(channelId);
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('4bg-pause-music'));
+      }
+      if (!channelId) {
+        activePovMembers.forEach((m) => {
+          sendIframeCommand(m.channelId, 'mute');
+        });
+        return;
+      }
+      activePovMembers.forEach((m) => {
+        if (m.channelId === channelId) {
+          sendIframeCommand(m.channelId, 'unMute');
+          sendIframeCommand(m.channelId, 'setVolume', [100]);
+          sendIframeCommand(m.channelId, 'playVideo');
+        } else {
+          sendIframeCommand(m.channelId, 'mute');
+        }
+      });
+    },
+    [activePovMembers, sendIframeCommand]
+  );
+
+  // Keep audio in sync across active streams without reloading iframes
+  useEffect(() => {
+    activePovMembers.forEach((m) => {
+      if (m.channelId === unmutedId) {
+        sendIframeCommand(m.channelId, 'unMute');
+        sendIframeCommand(m.channelId, 'setVolume', [100]);
+      } else {
+        sendIframeCommand(m.channelId, 'mute');
+      }
+    });
+  }, [unmutedId, activePovMembers, sendIframeCommand]);
+
   const toggleStreamer = (channelId: string) => {
     setSelectedIds((prev) => {
       if (prev.includes(channelId)) {
         const next = prev.filter((item) => item !== channelId);
-        if (unmutedId === channelId) setUnmutedId(null);
+        if (unmutedId === channelId) {
+          setSoloAudio(next[0] || null);
+        }
         setActiveChatIds((cPrev) => cPrev.filter((cId) => cId !== channelId));
         return next;
       } else {
         const next = [...prev, channelId];
-        if (next.length === 1) {
-          setUnmutedId(channelId);
+        if (next.length === 1 || !unmutedId) {
+          setSoloAudio(channelId);
         }
         setActiveChatIds((cPrev) => (cPrev.includes(channelId) ? cPrev : [...cPrev, channelId]));
         return next;
@@ -623,7 +691,7 @@ export default function FourBloodsCamPage() {
     const liveIds = liveStreamers.map((s) => s.channelId);
     if (liveIds.length > 0) {
       setSelectedIds(liveIds);
-      setUnmutedId(liveIds[0]);
+      setSoloAudio(liveIds[0]);
       setActiveChatIds(liveIds);
     }
   };
@@ -1066,7 +1134,7 @@ export default function FourBloodsCamPage() {
           {selectedIds.length > 0 && (
             <button
               onClick={() =>
-                setUnmutedId(unmutedId ? null : selectedIds[0] || null)
+                setSoloAudio(unmutedId ? null : selectedIds[0] || null)
               }
               className={`p-2 sm:px-2.5 sm:py-1.5 text-[11px] font-mono-tech font-bold uppercase border transition-colors flex items-center gap-1.5 cursor-pointer rounded-sm ${
                 unmutedId
@@ -1085,7 +1153,7 @@ export default function FourBloodsCamPage() {
               ) : (
                 <>
                   <VolumeX className="w-3.5 h-3.5" />
-                  <span className="hidden lg:inline">Mute All</span>
+                  <span className="hidden lg:inline">Nyalakan Audio</span>
                 </>
               )}
             </button>
@@ -1842,11 +1910,11 @@ export default function FourBloodsCamPage() {
 
                           <button
                             onClick={() =>
-                              setUnmutedId(isAudioActive ? null : member.channelId)
+                              setSoloAudio(isAudioActive ? null : member.channelId)
                             }
                             className={`px-2 py-0.5 text-[9px] font-mono-tech font-bold uppercase rounded-sm flex items-center gap-1 transition-colors cursor-pointer ${
                               isAudioActive
-                                ? 'bg-emerald-600 text-white'
+                                ? 'bg-emerald-600 text-white shadow-[0_0_10px_rgba(16,185,129,0.4)]'
                                 : isDark
                                   ? 'bg-zinc-800 text-zinc-400 hover:text-white'
                                   : 'bg-zinc-200 text-zinc-700 hover:text-black'
@@ -1854,12 +1922,12 @@ export default function FourBloodsCamPage() {
                             title="Solo Audio untuk POV ini"
                           >
                             {isAudioActive ? (
-                              <Volume2 className="w-3 h-3" />
+                              <Volume2 className="w-3 h-3 text-white" />
                             ) : (
-                              <VolumeX className="w-3 h-3" />
+                              <VolumeX className="w-3 h-3 text-zinc-400" />
                             )}
                             <span className="hidden md:inline">
-                              {isAudioActive ? 'AUDIO' : 'MUTE'}
+                              {isAudioActive ? 'AUDIO ON' : 'SUARA'}
                             </span>
                           </button>
 
@@ -1951,10 +2019,25 @@ export default function FourBloodsCamPage() {
                             }`}
                           >
                             <iframe
-                              src={`https://www.youtube.com/embed/${activeEmbedVideoId}?autoplay=1&mute=${
-                                isAudioActive ? 0 : 1
-                              }&playsinline=1&rel=0&modestbranding=1&enablejsapi=1`}
+                              ref={(el) => {
+                                iframeRefs.current[member.channelId] = el;
+                              }}
+                              src={`https://www.youtube.com/embed/${activeEmbedVideoId}?autoplay=1&mute=1&playsinline=1&rel=0&modestbranding=1&enablejsapi=1${
+                                embedDomain
+                                  ? `&origin=${encodeURIComponent(
+                                      typeof window !== 'undefined' ? window.location.origin : ''
+                                    )}`
+                                  : ''
+                              }`}
                               title={`${member.name} Stream`}
+                              onLoad={() => {
+                                if (unmutedId === member.channelId) {
+                                  sendIframeCommand(member.channelId, 'unMute');
+                                  sendIframeCommand(member.channelId, 'setVolume', [100]);
+                                } else {
+                                  sendIframeCommand(member.channelId, 'mute');
+                                }
+                              }}
                               className={`w-full h-full border-0 absolute inset-0 ${
                                 resizingChannelId || isResizingChat || Boolean(draggedChannelId)
                                   ? 'pointer-events-none'
@@ -1963,6 +2046,21 @@ export default function FourBloodsCamPage() {
                               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                               allowFullScreen
                             />
+
+                            {/* Quick Unmute Floating Button if stream is live but currently muted */}
+                            {member.isLive && !isAudioActive && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSoloAudio(member.channelId);
+                                }}
+                                className="absolute bottom-2.5 left-2.5 z-10 px-3 py-1.5 bg-black/85 hover:bg-emerald-600 text-white border border-white/20 hover:border-emerald-500 text-[10px] font-mono-tech font-bold uppercase rounded flex items-center gap-2 transition-all cursor-pointer shadow-lg backdrop-blur-xs group"
+                                title="Klik untuk menyalakan audio stream ini"
+                              >
+                                <VolumeX className="w-3.5 h-3.5 text-emerald-400 group-hover:text-white" />
+                                <span>Nyalakan Suara</span>
+                              </button>
+                            )}
 
                             {member.isUpcoming && upcomingInfo && (
                               <div className="absolute bottom-2 left-2 right-2 bg-black/85 border border-amber-500/50 px-3 py-1.5 flex items-center justify-between gap-2 pointer-events-none z-10">

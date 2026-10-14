@@ -129,6 +129,17 @@ export default function StickyAudioPlayer({ isDark: propIsDark }: PullOutAudioDr
     }
   }, [currentTrackIdx]);
 
+  useEffect(() => {
+    const handlePauseMusic = () => {
+      if (playerReady && playerRef.current && typeof playerRef.current.pauseVideo === 'function') {
+        playerRef.current.pauseVideo();
+        setIsPlaying(false);
+      }
+    };
+    window.addEventListener('4bg-pause-music', handlePauseMusic);
+    return () => window.removeEventListener('4bg-pause-music', handlePauseMusic);
+  }, [playerReady]);
+
   const togglePlay = () => {
     if (!playerReady || !playerRef.current) {
       shouldPlayOnReadyRef.current = !shouldPlayOnReadyRef.current;

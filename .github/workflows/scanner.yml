@@ -1,0 +1,32 @@
+name: 4Bloods Live Streamer Continuous Scanner
+
+on:
+  schedule:
+    # Run every 5 minutes (standard cron interval)
+    - cron: '*/5 * * * *'
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - development
+
+jobs:
+  scan-and-sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Streamer Scanner & Sync to Firebase RTDB
+        run: node scripts/scan-streamers.mjs

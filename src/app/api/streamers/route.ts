@@ -200,6 +200,15 @@ export async function GET(request: Request) {
     console.warn('[API /api/streamers] Firebase fetch warning:', err);
   }
 
+  // Helper to sync state changes back to Firebase RTDB
+  const syncToFirebase = (cid: string, payload: Record<string, any>) => {
+    fetch(`https://blood-186bd-default-rtdb.firebaseio.com/streamers/${cid}.json`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    }).catch(() => {});
+  };
+
   // 2. ACTIVE STREAM VERIFIER: Strict YouTube check to ensure ended streams never get stuck
   const activeLiveEntries = Object.entries(snapshotMap).filter(
     ([_, s]: [string, any]) => s.isLive && s.videoId
@@ -224,6 +233,14 @@ export async function GET(request: Request) {
             snapshotMap[cid].videoId = null;
             snapshotMap[cid].streamTitle = null;
             snapshotMap[cid].viewerCount = null;
+            syncToFirebase(cid, {
+              channelId: cid,
+              isLive: false,
+              videoId: null,
+              title: null,
+              viewerCount: null,
+              lastChecked: new Date().toISOString(),
+            });
             return;
           }
 
@@ -257,6 +274,14 @@ export async function GET(request: Request) {
               snapshotMap[cid].videoId = null;
               snapshotMap[cid].streamTitle = null;
               snapshotMap[cid].viewerCount = null;
+              syncToFirebase(cid, {
+                channelId: cid,
+                isLive: false,
+                videoId: null,
+                title: null,
+                viewerCount: null,
+                lastChecked: new Date().toISOString(),
+              });
             } else if (isLiveNow) {
               // Extract real concurrent live viewer count
               const viewerMatch =
@@ -283,69 +308,65 @@ export async function GET(request: Request) {
             snapshotMap[cid].videoId = null;
             snapshotMap[cid].streamTitle = null;
             snapshotMap[cid].viewerCount = null;
+            syncToFirebase(cid, {
+              channelId: cid,
+              isLive: false,
+              videoId: null,
+              title: null,
+              viewerCount: null,
+              lastChecked: new Date().toISOString(),
+            });
           }
         }
       })
     );
   }
 
-  // 3. PROACTIVE LIVE CHECK: Check priority / unconfirmed channels directly on YouTube so newly started streams are detected immediately even if Firebase is delayed
-  const candidateCheckIds = [
-    'UCI1hbc1-qfszyjNYoNgkV2w', // Asep Teriyaki (@BarevsKi)
-    'UCVbGCNvads9e5vZCfGva4-g', // Kim (@NanzSpace)
-    'UCgO8kYJBkm5jvUJkV9H9mIw', // Nahmier Davies (@NAHMIER)
-    'UCzjGSL8HMCRUi1sWH5VYGjQ', // Ilham Joseph
-    'UC79cKOK5rTIABhvXxeINdHw', // Louis Ven
-    'UCWpOmCvUcYgjMrNW4LjvmCw', // Deja Amari
-    'UC6a-XQK_U4lsMfODIbgrFAA', // Muhammad Sumbul
-    'UCiAlUeYsA39S5x_nQS2aT-Q', // Joy Braxton
-    'UC9LmRRwAzHkCxlgbKW3tMjA', // Jane Elisha
-    'UCHi0xCfpNPut25e_jcRcC3A', // Azmi Wildan
-    'UCCEDmX6Jl-fwm4fywtwo4pQ', // Patra
-    'UCYG2Pp0MZvxyziNXO8puT-Q', // znah
-    'UC7KiVxdO5HiAwIrbz--RG1w', // Geo Blitz
-    'UC8opURjNDJhx5OtgMsekvMQ', // Grimm Jow
-    'UCuTN4Rl32nqN6WoIRaElEpQ', // Robbe Loxse
-    'UCi2Oz3Upz9HIPWQWfZKKyDg', // Ruby Joseph
-    'UCvseheuTcY-BnPGsmfQ5K5g', // Ackai
-    'UCtjLmmgBzjtND3i7bvyjLRQ', // Flip Flop
-    'UCqUhn7QlVk9MJStkR5Q_59g', // Ujang Walker
-  ];
+  // 3. PROACTIVE LIVE CHECK: Check ALL roster channels directly on YouTube so newly started streams or restreams are detected immediately
+  const allCandidateIds = STREAMER_ROSTER.map((m) => m.channelId);
+  const unconfirmedCheckIds = allCandidateIds.filter((cid) => !snapshotMap[cid]?.isLive);
 
-  const unconfirmedCheckIds = candidateCheckIds.filter((cid) => !snapshotMap[cid]?.isLive);
-  const toScan = forceRefresh ? unconfirmedCheckIds.slice(0, 10) : unconfirmedCheckIds.slice(0, 6);
+  // Scan in 2 controlled parallel batches to prevent subrequest throttling while covering all channels
+  const batchSize = Math.ceil(unconfirmedCheckIds.length / 2);
+  const batch1 = unconfirmedCheckIds.slice(0, batchSize);
+  const batch2 = unconfirmedCheckIds.slice(batchSize);
 
-  if (toScan.length > 0) {
-    await Promise.all(
-      toScan.map(async (cid) => {
-        const liveInfo = await safeCheckYouTubeChannel(cid);
-        if (liveInfo?.isLive && liveInfo.videoId) {
-          snapshotMap[cid] = {
-            ...(snapshotMap[cid] || {}),
-            isLive: true,
-            videoId: liveInfo.videoId,
-            streamTitle: liveInfo.streamTitle || snapshotMap[cid]?.streamTitle,
-            startTimestamp: liveInfo.startTimestamp || snapshotMap[cid]?.startTimestamp,
-            lastChecked: new Date().toISOString(),
-          };
+  const scanChannelItem = async (cid: string) => {
+    const liveInfo = await safeCheckYouTubeChannel(cid);
+    if (liveInfo?.isLive && liveInfo.videoId) {
+      snapshotMap[cid] = {
+        ...(snapshotMap[cid] || {}),
+        isLive: true,
+        videoId: liveInfo.videoId,
+        streamTitle: liveInfo.streamTitle || snapshotMap[cid]?.streamTitle,
+        startTimestamp: liveInfo.startTimestamp || snapshotMap[cid]?.startTimestamp,
+        lastChecked: new Date().toISOString(),
+      };
 
-          // Self-healing: Asynchronously sync back to Firebase RTDB so client fallbacks receive it
-          fetch(`https://blood-186bd-default-rtdb.firebaseio.com/streamers/${cid}.json`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              channelId: cid,
-              isLive: true,
-              videoId: liveInfo.videoId,
-              title: liveInfo.streamTitle,
-              actualStartTime: liveInfo.startTimestamp,
-              lastChecked: new Date().toISOString(),
-            }),
-          }).catch(() => {});
-        }
-      })
-    );
-  }
+      // Self-healing: Asynchronously sync back to Firebase RTDB so client fallbacks receive it
+      syncToFirebase(cid, {
+        channelId: cid,
+        isLive: true,
+        videoId: liveInfo.videoId,
+        title: liveInfo.streamTitle,
+        actualStartTime: liveInfo.startTimestamp,
+        lastChecked: new Date().toISOString(),
+      });
+    } else if (liveInfo?.isUpcoming && liveInfo.upcomingVideoId) {
+      snapshotMap[cid] = {
+        ...(snapshotMap[cid] || {}),
+        isUpcoming: true,
+        upcomingVideoId: liveInfo.upcomingVideoId,
+        upcomingTitle: liveInfo.upcomingTitle,
+        scheduledStartTime: liveInfo.scheduledStartTime,
+      };
+    }
+  };
+
+  await Promise.all([
+    Promise.all(batch1.map(scanChannelItem)),
+    Promise.all(batch2.map(scanChannelItem)),
+  ]);
 
   // 4. Optional: YouTube Data API v3 check if user provided YOUTUBE_API_KEY in Vercel environment
   const apiKey = process.env.YOUTUBE_API_KEY || process.env.NEXT_PUBLIC_YOUTUBE_API_KEY;
