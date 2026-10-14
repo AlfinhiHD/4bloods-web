@@ -376,7 +376,7 @@ export default function FourBloodsCamPage() {
       if (res.ok) {
         const data = await res.json();
         if (data?.streamers && Array.isArray(data.streamers) && data.streamers.length > 0) {
-          setStreamers(data.streamers);
+          const liveFound = data.streamers.filter((s: any) => s.isLive).length;
           setLastScannerTime(
             new Date(data.lastScannerTime || Date.now()).toLocaleTimeString('id-ID', {
               hour: '2-digit',
@@ -384,8 +384,11 @@ export default function FourBloodsCamPage() {
               second: '2-digit',
             })
           );
-          applyInitialStreamerSelection(data.streamers);
-          success = true;
+          if (liveFound > 0) {
+            setStreamers(data.streamers);
+            applyInitialStreamerSelection(data.streamers);
+            success = true;
+          }
         }
       }
     } catch (err) {

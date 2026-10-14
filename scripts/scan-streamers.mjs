@@ -9,14 +9,18 @@ const streamers = JSON.parse(fs.readFileSync(ROSTER_PATH, 'utf8'));
 
 console.log(`[4Bloods Scanner] Loaded ${streamers.length} streamers from roster.`);
 
+const YT_HEADERS = {
+  'User-Agent':
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+  Cookie: 'SOCS=CAESEwgDEgk2MTc3ODU0MjQaAmVuIAEaBgiA_LyaBg; CONSENT=PENDING+999',
+  'Accept-Language': 'en-US,en;q=0.9',
+};
+
 async function checkChannel(streamer) {
   const { channelId, name } = streamer;
   try {
     const res = await fetch(`https://www.youtube.com/channel/${channelId}/live`, {
-      headers: {
-        'User-Agent':
-          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-      },
+      headers: YT_HEADERS,
       redirect: 'follow',
       signal: AbortSignal.timeout(4500),
     });
@@ -32,10 +36,7 @@ async function checkChannel(streamer) {
     if (!videoId) return { ...streamer, isLive: false, videoId: null };
 
     const watchRes = await fetch(`https://www.youtube.com/watch?v=${videoId}`, {
-      headers: {
-        'User-Agent':
-          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-      },
+      headers: YT_HEADERS,
       signal: AbortSignal.timeout(4500),
     });
 

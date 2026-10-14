@@ -104,9 +104,12 @@ export default function CompanyProfilePage() {
         return res.json();
       })
       .then((data) => {
-        if (data?.streamers) {
+        const count = data?.liveCount || data?.streamers?.filter((s: any) => s.isLive)?.length || 0;
+        if (count > 0 && data?.streamers) {
           setStreamers(data.streamers);
-          setLiveCount(data.liveCount || 0);
+          setLiveCount(count);
+        } else {
+          throw new Error('API returned 0 live, fallback to direct Firebase');
         }
       })
       .catch(() => {

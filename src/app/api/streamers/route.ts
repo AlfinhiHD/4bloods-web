@@ -21,6 +21,13 @@ function getEndOfTodayWibMs(nowMs = Date.now()): number {
   return wibDate.getTime() - wibOffsetMs;
 }
 
+const YT_FETCH_HEADERS = {
+  'User-Agent':
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+  Cookie: 'SOCS=CAESEwgDEgk2MTc3ODU0MjQaAmVuIAEaBgiA_LyaBg; CONSENT=PENDING+999',
+  'Accept-Language': 'en-US,en;q=0.9',
+};
+
 /**
  * Safe YouTube Live Check with strict 2-second timeout guard.
  * Prevents Vercel serverless functions from hanging and returning 504 Gateway Timeout.
@@ -28,10 +35,7 @@ function getEndOfTodayWibMs(nowMs = Date.now()): number {
 async function safeCheckYouTubeChannel(channelId: string) {
   try {
     const res = await fetch(`https://www.youtube.com/channel/${channelId}/live`, {
-      headers: {
-        'User-Agent':
-          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-      },
+      headers: YT_FETCH_HEADERS,
       cache: 'no-store',
       signal: AbortSignal.timeout(3500),
     });
@@ -47,10 +51,7 @@ async function safeCheckYouTubeChannel(channelId: string) {
     if (!videoId) return null;
 
     const watchRes = await fetch(`https://www.youtube.com/watch?v=${videoId}`, {
-      headers: {
-        'User-Agent':
-          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-      },
+      headers: YT_FETCH_HEADERS,
       cache: 'no-store',
       signal: AbortSignal.timeout(3500),
     });
@@ -200,8 +201,8 @@ export async function GET(request: Request) {
     console.warn('[API /api/streamers] Firebase fetch warning:', err);
   }
 
-  // Helper to sync state changes back to Firebase RTDB
-  const syncToFirebase = (cid: string, payload: Record<string, any>) => {
+  // Helper to sync confirmed live state to Firebase RTDB (ONLY WRITES TRUE LIVE, NEVER PURGES)
+  const syncLiveToFirebase = (cid: string, payload: Record<string, any>) => {
     fetch(`https://blood-186bd-default-rtdb.firebaseio.com/streamers/${cid}.json`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
@@ -209,7 +210,7 @@ export async function GET(request: Request) {
     }).catch(() => {});
   };
 
-  // 2. ACTIVE STREAM VERIFIER: Strict YouTube check to ensure ended streams never get stuck
+  // 2. ACTIVE STREAM VIEWER COUNT: Safe read-only check for live viewer counts (never clears Firebase)
   const activeLiveEntries = Object.entries(snapshotMap).filter(
     ([_, s]: [string, any]) => s.isLive && s.videoId
   );
@@ -219,104 +220,53 @@ export async function GET(request: Request) {
       activeLiveEntries.map(async ([cid, snap]) => {
         try {
           const checkRes = await fetch(`https://www.youtube.com/watch?v=${snap.videoId}`, {
-            headers: {
-              'User-Agent':
-                'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
-            },
+            headers: YT_FETCH_HEADERS,
             cache: 'no-store',
             signal: AbortSignal.timeout(3500),
           });
 
-          if (!checkRes.ok) {
-            // Video 404/410/private on YouTube -> definitely offline
-            snapshotMap[cid].isLive = false;
-            snapshotMap[cid].videoId = null;
-            snapshotMap[cid].streamTitle = null;
-            snapshotMap[cid].viewerCount = null;
-            syncToFirebase(cid, {
-              channelId: cid,
-              isLive: false,
-              videoId: null,
-              title: null,
-              viewerCount: null,
-              lastChecked: new Date().toISOString(),
-            });
-            return;
-          }
+          if (!checkRes.ok) return;
 
           const html = await checkRes.text();
           const isBotChallenge =
-            html.length < 15000 &&
-            (html.includes('consent.youtube.com') ||
-              html.includes('google.com/sorry') ||
-              html.includes('unusual traffic') ||
-              !html.includes('<title>'));
+            html.includes('consent.youtube.com') ||
+            html.includes('google.com/sorry') ||
+            html.includes('unusual traffic') ||
+            !html.includes('<title>');
+
+          if (isBotChallenge) return; // Keep Firebase data as live on bot challenge
 
           const hasExplicitlyEnded =
             html.includes('"endTimestamp":"') ||
-            html.includes('"isLiveNow":false') ||
-            html.includes('"status":"LIVE_STREAM_OFFLINE"') ||
-            html.includes('LIVE_STREAM_OFFLINE') ||
             html.includes('This live stream has ended') ||
-            html.includes('Live stream offline') ||
             html.includes('Siaran langsung telah berakhir') ||
             html.includes('Stream telah berakhir');
 
-          const isLiveNow =
-            !hasExplicitlyEnded &&
-            (html.includes('"isLiveNow":true') ||
-              html.includes('"liveBroadcastDetails":{"isLiveNow":true'));
-
-          if (!isBotChallenge) {
-            if (hasExplicitlyEnded || !isLiveNow) {
-              // Stream has finished or is offline on YouTube! Auto-clear stuck live status
-              snapshotMap[cid].isLive = false;
-              snapshotMap[cid].videoId = null;
-              snapshotMap[cid].streamTitle = null;
-              snapshotMap[cid].viewerCount = null;
-              syncToFirebase(cid, {
-                channelId: cid,
-                isLive: false,
-                videoId: null,
-                title: null,
-                viewerCount: null,
-                lastChecked: new Date().toISOString(),
-              });
-            } else if (isLiveNow) {
-              // Extract real concurrent live viewer count
-              const viewerMatch =
-                html.match(/"originalViewCount":"(\d+)"/) ||
-                html.match(/"viewCount":\{"runs":\[\{"text":"([\d,.]+)"\}/) ||
-                html.match(/"viewCount":\{"videoViewCountRenderer":\{"viewCount":\{"runs":\[\{"text":"([\d,.]+)"\}/) ||
-                html.match(/"text":"([\d,.]+)\s*(?:watching now|menonton|viewers|serentak)"/i) ||
-                html.match(/([0-9,.]+)\s*(?:watching now|menonton sekarang)/i);
-
-              if (viewerMatch) {
-                const rawNum = viewerMatch[1].replace(/[,.]/g, '');
-                const parsed = parseInt(rawNum, 10);
-                if (!isNaN(parsed) && parsed > 0) {
-                  snapshotMap[cid].viewerCount = parsed;
-                }
-              }
-            }
-          }
-        } catch {
-          // If Firebase data is older than 15 mins and YouTube check timed out, clear stuck status
-          const lastCheckMs = snap.lastChecked ? new Date(snap.lastChecked).getTime() : 0;
-          if (lastCheckMs && now - lastCheckMs > 15 * 60 * 1000) {
+          if (hasExplicitlyEnded) {
             snapshotMap[cid].isLive = false;
             snapshotMap[cid].videoId = null;
             snapshotMap[cid].streamTitle = null;
             snapshotMap[cid].viewerCount = null;
-            syncToFirebase(cid, {
-              channelId: cid,
-              isLive: false,
-              videoId: null,
-              title: null,
-              viewerCount: null,
-              lastChecked: new Date().toISOString(),
-            });
+            return;
           }
+
+          // Extract real concurrent live viewer count
+          const viewerMatch =
+            html.match(/"originalViewCount":"(\d+)"/) ||
+            html.match(/"viewCount":\{"runs":\[\{"text":"([\d,.]+)"\}/) ||
+            html.match(/"viewCount":\{"videoViewCountRenderer":\{"viewCount":\{"runs":\[\{"text":"([\d,.]+)"\}/) ||
+            html.match(/"text":"([\d,.]+)\s*(?:watching now|menonton|viewers|serentak)"/i) ||
+            html.match(/([0-9,.]+)\s*(?:watching now|menonton sekarang)/i);
+
+          if (viewerMatch) {
+            const rawNum = viewerMatch[1].replace(/[,.]/g, '');
+            const parsed = parseInt(rawNum, 10);
+            if (!isNaN(parsed) && parsed > 0) {
+              snapshotMap[cid].viewerCount = parsed;
+            }
+          }
+        } catch {
+          // Keep Firebase data on timeout or network error
         }
       })
     );
@@ -344,7 +294,7 @@ export async function GET(request: Request) {
       };
 
       // Self-healing: Asynchronously sync back to Firebase RTDB so client fallbacks receive it
-      syncToFirebase(cid, {
+      syncLiveToFirebase(cid, {
         channelId: cid,
         isLive: true,
         videoId: liveInfo.videoId,
