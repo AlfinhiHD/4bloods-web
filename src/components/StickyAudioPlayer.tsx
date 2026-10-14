@@ -86,8 +86,15 @@ export default function StickyAudioPlayer({ isDark: propIsDark }: PullOutAudioDr
         events: {
           onReady: (event: any) => {
             setPlayerReady(true);
-            event.target.setVolume(80);
+            try {
+              event.target.unMute();
+              event.target.setVolume(80);
+              setIsMuted(false);
+            } catch {}
             if (shouldPlayOnReadyRef.current) {
+              try {
+                event.target.unMute();
+              } catch {}
               event.target.playVideo();
               setIsPlaying(true);
             }
@@ -95,6 +102,14 @@ export default function StickyAudioPlayer({ isDark: propIsDark }: PullOutAudioDr
           onStateChange: (event: any) => {
             if (event.data === 1) {
               setIsPlaying(true);
+              try {
+                if (!isMuted && typeof event.target.unMute === 'function') {
+                  event.target.unMute();
+                  if (typeof event.target.getVolume === 'function' && event.target.getVolume() === 0) {
+                    event.target.setVolume(80);
+                  }
+                }
+              } catch {}
             } else if (event.data === 2) {
               setIsPlaying(false);
             } else if (event.data === 0) {
@@ -125,6 +140,12 @@ export default function StickyAudioPlayer({ isDark: propIsDark }: PullOutAudioDr
   useEffect(() => {
     if (playerReady && playerRef.current && typeof playerRef.current.loadVideoById === 'function') {
       playerRef.current.loadVideoById(currentTrack.videoId);
+      try {
+        if (!isMuted && typeof playerRef.current.unMute === 'function') {
+          playerRef.current.unMute();
+          playerRef.current.setVolume(80);
+        }
+      } catch {}
       setIsPlaying(true);
     }
   }, [currentTrackIdx]);
@@ -150,6 +171,15 @@ export default function StickyAudioPlayer({ isDark: propIsDark }: PullOutAudioDr
       playerRef.current.pauseVideo();
       setIsPlaying(false);
     } else {
+      try {
+        if (typeof playerRef.current.unMute === 'function') {
+          playerRef.current.unMute();
+          setIsMuted(false);
+        }
+        if (typeof playerRef.current.setVolume === 'function') {
+          playerRef.current.setVolume(80);
+        }
+      } catch {}
       playerRef.current.playVideo();
       setIsPlaying(true);
     }
@@ -167,13 +197,21 @@ export default function StickyAudioPlayer({ isDark: propIsDark }: PullOutAudioDr
 
   const toggleMute = () => {
     if (!playerReady || !playerRef.current) return;
-    if (isMuted) {
-      playerRef.current.unMute();
-      setIsMuted(false);
-    } else {
-      playerRef.current.mute();
-      setIsMuted(true);
-    }
+    try {
+      const currentlyMuted =
+        typeof playerRef.current.isMuted === 'function'
+          ? playerRef.current.isMuted()
+          : isMuted;
+
+      if (currentlyMuted) {
+        playerRef.current.unMute();
+        playerRef.current.setVolume(80);
+        setIsMuted(false);
+      } else {
+        playerRef.current.mute();
+        setIsMuted(true);
+      }
+    } catch {}
   };
 
   const handleDismiss = () => {

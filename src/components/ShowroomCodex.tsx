@@ -98,15 +98,48 @@ export default function ShowroomCodex({ isDark, onOpenLightbox }: ShowroomCodexP
     setIsDragging(false);
   };
 
-  const handleSlidebarClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!carouselRef.current) return;
-    const rect = e.currentTarget.getBoundingClientRect();
-    const clickRatio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+  // Draggable slidebar ref & pointer drag handlers
+  const slidebarRef = useRef<HTMLDivElement>(null);
+  const [isSlidebarDragging, setIsSlidebarDragging] = useState(false);
+
+  const thumbWidthPct = useMemo(() => {
+    return Math.max(12, 100 / (filteredItems.length || 1));
+  }, [filteredItems.length]);
+
+  const updateScrollFromPointer = (clientX: number, smooth = false) => {
+    if (!carouselRef.current || !slidebarRef.current) return;
+    const rect = slidebarRef.current.getBoundingClientRect();
+    if (rect.width <= 0) return;
+    const clickRatio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
     const maxScroll = carouselRef.current.scrollWidth - carouselRef.current.clientWidth;
-    carouselRef.current.scrollTo({
-      left: clickRatio * maxScroll,
-      behavior: 'smooth',
-    });
+    if (smooth) {
+      carouselRef.current.scrollTo({
+        left: clickRatio * maxScroll,
+        behavior: 'smooth',
+      });
+    } else {
+      carouselRef.current.scrollLeft = clickRatio * maxScroll;
+    }
+  };
+
+  const handleSlidebarPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!carouselRef.current) return;
+    setIsSlidebarDragging(true);
+    e.currentTarget.setPointerCapture(e.pointerId);
+    updateScrollFromPointer(e.clientX, false);
+  };
+
+  const handleSlidebarPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isSlidebarDragging) return;
+    e.preventDefault();
+    updateScrollFromPointer(e.clientX, false);
+  };
+
+  const handleSlidebarPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    setIsSlidebarDragging(false);
+    try {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    } catch {}
   };
 
   // Badge rendering helper
@@ -432,21 +465,29 @@ export default function ShowroomCodex({ isDark, onOpenLightbox }: ShowroomCodexP
         {/* =====================================================================
             INTERACTIVE SLIDEBAR / CAROUSEL PROGRESS SCRUBBER
         ===================================================================== */}
-        <div className="mt-6 space-y-3">
+        <div className="mt-6 space-y-3 select-none">
           <div
-            onClick={handleSlidebarClick}
-            className={`w-full h-3.5 rounded-full relative cursor-pointer overflow-hidden p-0.5 border transition-all ${
-              isDark
-                ? 'bg-black/70 border-white/15 hover:border-red-500/60'
-                : 'bg-zinc-200 border-zinc-300 hover:border-red-400'
+            ref={slidebarRef}
+            onPointerDown={handleSlidebarPointerDown}
+            onPointerMove={handleSlidebarPointerMove}
+            onPointerUp={handleSlidebarPointerUp}
+            onPointerCancel={handleSlidebarPointerUp}
+            className={`w-full h-4 sm:h-5 rounded-full relative cursor-pointer overflow-hidden p-0.5 border transition-all touch-none select-none ${
+              isSlidebarDragging
+                ? 'border-red-500 shadow-[0_0_20px_rgba(220,38,38,0.45)]'
+                : isDark
+                  ? 'bg-black/70 border-white/15 hover:border-red-500/60'
+                  : 'bg-zinc-200 border-zinc-300 hover:border-red-400'
             }`}
-            title="Klik atau geser pada slidebar untuk scroll katalog"
+            title="Klik atau geser (drag) slidebar untuk scroll katalog"
           >
             <div
-              className="h-full rounded-full bg-gradient-to-r from-red-600 via-red-500 to-amber-500 transition-[transform] duration-75 shadow-[0_0_15px_rgba(220,38,38,0.7)]"
+              className={`h-full rounded-full bg-gradient-to-r from-red-600 via-red-500 to-amber-500 shadow-[0_0_15px_rgba(220,38,38,0.7)] ${
+                isSlidebarDragging ? 'cursor-grabbing' : 'transition-transform duration-75 cursor-grab'
+              }`}
               style={{
-                width: `${Math.max(12, 100 / filteredItems.length)}%`,
-                transform: `translateX(${scrollProgress * ((filteredItems.length - 1) / filteredItems.length) * (100 / Math.max(12, 100 / filteredItems.length)) * 100}%)`,
+                width: `${thumbWidthPct}%`,
+                transform: `translateX(${scrollProgress * ((100 - thumbWidthPct) / thumbWidthPct) * 100}%)`,
               }}
             />
           </div>
