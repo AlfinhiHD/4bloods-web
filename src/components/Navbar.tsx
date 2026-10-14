@@ -56,16 +56,16 @@ export default function Navbar({
     >
       <div className="max-w-[1520px] mx-auto px-4 sm:px-8 flex items-center justify-between gap-6">
         {/* Left: Official 4BG Brand Identity */}
-        <Link href="/" className="flex items-center gap-3 group cursor-pointer shrink-0">
+        <Link href="/" className="flex items-center gap-2.5 sm:gap-3 group cursor-pointer shrink-0 min-w-0">
           <img
             src="/assets/logo_v2.png"
             alt="4BLOODS GANG"
-            className="w-10 h-10 object-contain drop-shadow-[0_0_10px_rgba(220,38,38,0.4)] group-hover:scale-105 transition-transform duration-200"
+            className="w-9 h-9 sm:w-10 sm:h-10 object-contain drop-shadow-[0_0_10px_rgba(220,38,38,0.4)] group-hover:scale-105 transition-transform duration-200 shrink-0"
           />
-          <div>
+          <div className="min-w-0">
             <div className="flex items-center gap-2">
               <span
-                className={`font-display text-xl sm:text-2xl tracking-wider uppercase group-hover:text-red-500 transition-colors leading-none ${
+                className={`font-display text-lg sm:text-2xl tracking-wider uppercase group-hover:text-red-500 transition-colors leading-none truncate ${
                   isDark ? 'text-white' : 'text-zinc-900'
                 }`}
               >
@@ -73,11 +73,11 @@ export default function Navbar({
               </span>
             </div>
             <p
-              className={`text-[9px] font-mono-tech tracking-[0.2em] uppercase mt-1 ${
+              className={`text-[8px] sm:text-[9px] font-mono-tech tracking-[0.15em] sm:tracking-[0.2em] uppercase mt-1 truncate ${
                 isDark ? 'text-zinc-400' : 'text-zinc-500'
               }`}
             >
-              IME ROLEPLAY // SOUTH SIDE ROXWOOD
+              IME ROLEPLAY // ROXWOOD
             </p>
           </div>
         </Link>

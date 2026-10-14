@@ -3,24 +3,64 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 
+const CREST_SRC = '/assets/generated/crest_v1_3d.webp';
+
 interface ThreeLogoHeroProps {
   isDark?: boolean;
   className?: string;
+  /** Fired on click/tap only (not after a drag-spin). */
+  onClick?: () => void;
 }
 
-export default function ThreeLogoHero({ isDark = true, className = '' }: ThreeLogoHeroProps) {
+/**
+ * Builds the crest as a real 3D slab: diamond-shaped extrusion with beveled edges.
+ * Shape lives in 0..1 so ExtrudeGeometry's cap UVs map the square crest texture 1:1.
+ */
+function buildCrestGeometry() {
+  const m = 0.012; // inset so transparent image corners never hit the cap
+  const shape = new THREE.Shape();
+  shape.moveTo(0.5, 1 - m);
+  shape.lineTo(1 - m, 0.5);
+  shape.lineTo(0.5, m);
+  shape.lineTo(m, 0.5);
+  shape.closePath();
+
+  const depth = 0.04;
+  const geo = new THREE.ExtrudeGeometry(shape, {
+    depth,
+    bevelEnabled: true,
+    bevelThickness: 0.012,
+    bevelSize: 0.01,
+    bevelSegments: 3,
+    curveSegments: 1,
+  });
+
+  // Group 0 = both caps. Mirror U on the back cap so the crest reads correctly from behind.
+  const caps = geo.groups[0];
+  const pos = geo.attributes.position;
+  const uv = geo.attributes.uv;
+  for (let i = caps.start; i < caps.start + caps.count; i++) {
+    if (pos.getZ(i) < depth / 2) uv.setX(i, 1 - uv.getX(i));
+  }
+  uv.needsUpdate = true;
+
+  geo.center();
+  return geo;
+}
+
+export default function ThreeLogoHero({ isDark = true, className = '', onClick }: ThreeLogoHeroProps) {
   const mountRef = useRef<HTMLDivElement>(null);
+  const onClickRef = useRef(onClick);
+  onClickRef.current = onClick;
   const [webglSupported, setWebglSupported] = useState(true);
 
   useEffect(() => {
     const container = mountRef.current;
     if (!container) return;
 
-    // Check WebGL support
     try {
       const canvas = document.createElement('canvas');
-      const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-      if (!gl) {
+      if (!(canvas.getContext('webgl2') || canvas.getContext('webgl'))) {
         setWebglSupported(false);
         return;
       }
@@ -32,128 +72,89 @@ export default function ThreeLogoHero({ isDark = true, className = '' }: ThreeLo
     let animationFrameId: number;
     let isVisible = true;
 
-    // Scene setup
     const scene = new THREE.Scene();
-
-    const width = container.clientWidth || 480;
-    const height = container.clientHeight || 480;
+    const width = container.clientWidth || 420;
+    const height = container.clientHeight || 420;
 
     const camera = new THREE.PerspectiveCamera(42, width / height, 0.1, 100);
     camera.position.z = 5.2;
 
-    const renderer = new THREE.WebGLRenderer({
-      alpha: true,
-      antialias: true,
-      powerPreference: 'high-performance',
-    });
+    const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true, powerPreference: 'high-performance' });
     renderer.setSize(width, height);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     container.appendChild(renderer.domElement);
 
-    // Root 3D Pivot Group
-    const emblemGroup = new THREE.Group();
-    scene.add(emblemGroup);
+    // Lights
+    scene.add(new THREE.AmbientLight(0xffffff, isDark ? 0.9 : 1.2));
 
-    // Studio Lights
-    const ambientLight = new THREE.AmbientLight(isDark ? 0x2a0810 : 0xf4f1eb, isDark ? 1.4 : 2.2);
-    scene.add(ambientLight);
+    const keyLight = new THREE.DirectionalLight(0xffffff, isDark ? 1.8 : 2.2);
+    keyLight.position.set(2, 3, 5);
+    scene.add(keyLight);
 
-    const dirLight = new THREE.DirectionalLight(0xffffff, isDark ? 2.2 : 2.8);
-    dirLight.position.set(3, 4, 4);
-    scene.add(dirLight);
+    const rimLeft = new THREE.PointLight(0xdc2626, isDark ? 6 : 4, 12);
+    rimLeft.position.set(-3.5, 1.5, -1);
+    scene.add(rimLeft);
 
-    // Blood-red Rim Light
-    const rimLightLeft = new THREE.PointLight(0xdc2626, isDark ? 5.5 : 3.5, 12);
-    rimLightLeft.position.set(-3.5, 1.5, -0.5);
-    scene.add(rimLightLeft);
+    const rimRight = new THREE.PointLight(0xb91c1c, isDark ? 5 : 3, 12);
+    rimRight.position.set(3.5, -1.5, -1);
+    scene.add(rimRight);
 
-    const rimLightRight = new THREE.PointLight(0xb91c1c, isDark ? 4.5 : 2.5, 12);
-    rimLightRight.position.set(3.5, -1.5, -0.5);
-    scene.add(rimLightRight);
+    // Crest model
+    const crestGroup = new THREE.Group();
+    scene.add(crestGroup);
 
-    // Dynamic Cursor Specular Glint Light
-    const cursorLight = new THREE.PointLight(0xffffff, isDark ? 3.8 : 2.5, 8);
-    cursorLight.position.set(0, 0, 2.5);
-    scene.add(cursorLight);
+    const geometry = buildCrestGeometry();
+    const sideMaterial = new THREE.MeshStandardMaterial({ color: 0x7f1d1d, roughness: 0.45, metalness: 0.35 });
+    const faceMaterial = new THREE.MeshStandardMaterial({ roughness: 0.6, metalness: 0 });
+    const crestMesh = new THREE.Mesh(geometry, [faceMaterial, sideMaterial]);
+    crestMesh.scale.setScalar(3);
+    crestGroup.add(crestMesh);
 
-    // Load Pure 3D Logo Texture
-    const textureLoader = new THREE.TextureLoader();
-    textureLoader.load(
-      '/assets/generated/logo_3d_pure.webp',
-      (texture) => {
-        texture.colorSpace = THREE.SRGBColorSpace;
-        texture.minFilter = THREE.LinearMipmapLinearFilter;
-        texture.magFilter = THREE.LinearFilter;
-        texture.generateMipmaps = true;
-
-        const imgAspect = texture.image.width / texture.image.height;
-        const planeHeight = 2.4;
-        const planeWidth = planeHeight * imgAspect;
-
-        // Front Face Material (Metallic sheen & clearcoat gloss)
-        const frontMaterial = new THREE.MeshStandardMaterial({
-          map: texture,
-          transparent: true,
-          alphaTest: 0.015,
-          roughness: 0.22,
-          metalness: 0.78,
-          side: THREE.DoubleSide,
-        });
-
-        const frontGeo = new THREE.PlaneGeometry(planeWidth, planeHeight, 32, 32);
-        const frontMesh = new THREE.Mesh(frontGeo, frontMaterial);
-        frontMesh.position.z = 0.05;
-        emblemGroup.add(frontMesh);
-
-        // Multi-Layer Depth Slabs (Creates authentic physical thickness)
-        const depthLayers = 4;
-        const slabMaterial = new THREE.MeshBasicMaterial({
-          map: texture,
-          transparent: true,
-          alphaTest: 0.02,
-          color: isDark ? 0x1f0408 : 0x450a0a,
-        });
-
-        for (let i = 1; i <= depthLayers; i++) {
-          const slabMesh = new THREE.Mesh(frontGeo, slabMaterial);
-          slabMesh.position.z = 0.05 - i * 0.035;
-          emblemGroup.add(slabMesh);
-        }
+    const texture = new THREE.TextureLoader().load(
+      CREST_SRC,
+      (tex) => {
+        tex.colorSpace = THREE.SRGBColorSpace;
+        tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+        faceMaterial.map = tex;
+        faceMaterial.needsUpdate = true;
       },
       undefined,
-      () => {
-        // Fallback if texture fails
-        setWebglSupported(false);
-      }
+      () => setWebglSupported(false)
     );
 
-    // Floating 3D Halo Ring (Luxury Syndicate Trophy Aesthetic)
-    const ringGeo = new THREE.TorusGeometry(1.65, 0.018, 16, 90);
-    const ringMat = new THREE.MeshStandardMaterial({
-      color: 0xdc2626,
-      emissive: 0x991b1b,
-      emissiveIntensity: isDark ? 0.45 : 0.25,
-      metalness: 0.9,
-      roughness: 0.15,
+    // Soft contact shadow under the floating crest
+    const shadowCanvas = document.createElement('canvas');
+    shadowCanvas.width = shadowCanvas.height = 128;
+    const sctx = shadowCanvas.getContext('2d')!;
+    const grad = sctx.createRadialGradient(64, 64, 0, 64, 64, 64);
+    grad.addColorStop(0, 'rgba(0,0,0,1)');
+    grad.addColorStop(1, 'rgba(0,0,0,0)');
+    sctx.fillStyle = grad;
+    sctx.fillRect(0, 0, 128, 128);
+    const shadowTex = new THREE.CanvasTexture(shadowCanvas);
+    const shadowGeo = new THREE.PlaneGeometry(2.4, 0.35);
+    const shadowMat = new THREE.MeshBasicMaterial({
+      map: shadowTex,
+      transparent: true,
+      depthWrite: false,
+      opacity: isDark ? 0.7 : 0.3,
     });
-    const ringMesh = new THREE.Mesh(ringGeo, ringMat);
-    ringMesh.rotation.x = Math.PI / 3.2;
-    scene.add(ringMesh);
+    const shadowMesh = new THREE.Mesh(shadowGeo, shadowMat);
+    shadowMesh.position.set(0, -1.85, -0.5);
+    scene.add(shadowMesh);
 
-    // Subtle 3D Floating Ember Particles
+    // Ember particles
     const particleCount = 45;
     const particleGeo = new THREE.BufferGeometry();
     const particlePositions = new Float32Array(particleCount * 3);
     const particleSpeeds = new Float32Array(particleCount);
-
     for (let i = 0; i < particleCount; i++) {
       particlePositions[i * 3] = (Math.random() - 0.5) * 5;
       particlePositions[i * 3 + 1] = (Math.random() - 0.5) * 4;
       particlePositions[i * 3 + 2] = (Math.random() - 0.5) * 3;
       particleSpeeds[i] = 0.003 + Math.random() * 0.006;
     }
-
     particleGeo.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
     const particleMat = new THREE.PointsMaterial({
       color: isDark ? 0xef4444 : 0xb91c1c,
@@ -162,126 +163,119 @@ export default function ThreeLogoHero({ isDark = true, className = '' }: ThreeLo
       opacity: isDark ? 0.75 : 0.5,
       blending: THREE.AdditiveBlending,
     });
-    const particleSystem = new THREE.Points(particleGeo, particleMat);
-    scene.add(particleSystem);
+    scene.add(new THREE.Points(particleGeo, particleMat));
 
-    // Interaction State
-    let mouseX = 0;
-    let mouseY = 0;
-    let targetRotationX = 0;
-    let targetRotationY = 0;
+    // Spin state: auto-spin + drag with inertia
+    const autoSpeed = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 0.6; // rad/s
+    let spinVelocity = autoSpeed;
+    let tiltTarget = 0;
+    let dragging = false;
+    let lastX = 0;
+    let lastY = 0;
+    let dragDistance = 0;
 
-    const handlePointerMove = (e: MouseEvent | TouchEvent) => {
-      const rect = container.getBoundingClientRect();
-      const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
-      const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
-
-      const normX = ((clientX - rect.left) / rect.width) * 2 - 1;
-      const normY = -(((clientY - rect.top) / rect.height) * 2 - 1);
-
-      mouseX = normX;
-      mouseY = normY;
-
-      targetRotationY = normX * 0.45; // Max horizontal tilt ~25 deg
-      targetRotationX = -normY * 0.35; // Max vertical tilt ~20 deg
-
-      // Move specular glint light
-      cursorLight.position.x = normX * 2.5;
-      cursorLight.position.y = normY * 2.0;
+    const onPointerDown = (e: PointerEvent) => {
+      dragging = true;
+      dragDistance = 0;
+      lastX = e.clientX;
+      lastY = e.clientY;
+      container.setPointerCapture(e.pointerId);
+    };
+    const onPointerMove = (e: PointerEvent) => {
+      if (!dragging) return;
+      const dx = e.clientX - lastX;
+      const dy = e.clientY - lastY;
+      dragDistance += Math.abs(dx) + Math.abs(dy);
+      lastX = e.clientX;
+      lastY = e.clientY;
+      crestGroup.rotation.y += dx * 0.012;
+      spinVelocity = dx * 0.6; // fling
+      tiltTarget = THREE.MathUtils.clamp(tiltTarget + dy * 0.006, -0.5, 0.5);
+    };
+    const onPointerUp = (e: PointerEvent) => {
+      if (!dragging) return;
+      dragging = false;
+      tiltTarget = 0;
+      if (container.hasPointerCapture(e.pointerId)) container.releasePointerCapture(e.pointerId);
+      if (dragDistance < 6) onClickRef.current?.();
     };
 
-    const handlePointerLeave = () => {
-      targetRotationX = 0;
-      targetRotationY = 0;
-      cursorLight.position.set(0, 0, 2.5);
-    };
+    container.addEventListener('pointerdown', onPointerDown);
+    container.addEventListener('pointermove', onPointerMove);
+    container.addEventListener('pointerup', onPointerUp);
+    container.addEventListener('pointercancel', onPointerUp);
 
-    container.addEventListener('mousemove', handlePointerMove);
-    container.addEventListener('mouseleave', handlePointerLeave);
-    container.addEventListener('touchmove', handlePointerMove, { passive: true });
-
-    // Handle Window Resize
     const handleResize = () => {
-      if (!container) return;
-      const newW = container.clientWidth;
-      const newH = container.clientHeight;
-      if (newW > 0 && newH > 0) {
-        camera.aspect = newW / newH;
+      const w = container.clientWidth;
+      const h = container.clientHeight;
+      if (w > 0 && h > 0) {
+        camera.aspect = w / h;
         camera.updateProjectionMatrix();
-        renderer.setSize(newW, newH);
+        renderer.setSize(w, h);
       }
     };
     window.addEventListener('resize', handleResize);
 
-    // Visibility Observer (Pause render loop when scrolled out of view = 0% GPU)
-    const observer = new IntersectionObserver(
-      (entries) => {
-        isVisible = entries[0].isIntersecting;
-      },
-      { threshold: 0.05 }
-    );
+    // Pause render loop when out of view
+    const observer = new IntersectionObserver((entries) => {
+      isVisible = entries[0].isIntersecting;
+    }, { threshold: 0.05 });
     observer.observe(container);
 
-    // Animation Render Loop
-    let clock = new THREE.Clock();
+    const clock = new THREE.Clock();
     const render = () => {
       animationFrameId = requestAnimationFrame(render);
+      const delta = Math.min(clock.getDelta(), 0.05);
       if (!isVisible) return;
+      const time = clock.elapsedTime;
 
-      const delta = clock.getDelta();
-      const time = clock.getElapsedTime();
+      if (!dragging) {
+        spinVelocity += (autoSpeed - spinVelocity) * 0.04; // ease back to auto-spin
+        crestGroup.rotation.y += spinVelocity * delta;
+      }
+      crestGroup.rotation.x += (tiltTarget - crestGroup.rotation.x) * 0.1;
+      const float = Math.sin(time * 1.6);
+      crestGroup.position.y = float * 0.08;
 
-      // Smooth Inertia Damping
-      emblemGroup.rotation.y += (targetRotationY - emblemGroup.rotation.y) * 0.08;
-      emblemGroup.rotation.x += (targetRotationX - emblemGroup.rotation.x) * 0.08;
+      // Shadow tightens & darkens as crest dips, spreads & fades as it rises
+      shadowMesh.scale.setScalar(1 - float * 0.08);
+      shadowMat.opacity = (isDark ? 0.7 : 0.3) * (1 - float * 0.15);
 
-      // Gentle Organic Breathing Float
-      emblemGroup.position.y = Math.sin(time * 1.6) * 0.09;
-      emblemGroup.rotation.z = Math.sin(time * 0.8) * 0.02;
-
-      // Ring Orbit
-      ringMesh.rotation.z = time * 0.25;
-      ringMesh.rotation.y = Math.sin(time * 0.5) * 0.15;
-
-      // Drift Particles Upward
-      const positions = particleGeo.attributes.position.array as Float32Array;
       for (let i = 0; i < particleCount; i++) {
-        positions[i * 3 + 1] += particleSpeeds[i];
-        if (positions[i * 3 + 1] > 2.5) {
-          positions[i * 3 + 1] = -2.5;
-        }
+        particlePositions[i * 3 + 1] += particleSpeeds[i];
+        if (particlePositions[i * 3 + 1] > 2.5) particlePositions[i * 3 + 1] = -2.5;
       }
       particleGeo.attributes.position.needsUpdate = true;
 
       renderer.render(scene, camera);
     };
-
     render();
 
-    // Cleanup on Unmount
     return () => {
       cancelAnimationFrame(animationFrameId);
       observer.disconnect();
       window.removeEventListener('resize', handleResize);
-      container.removeEventListener('mousemove', handlePointerMove);
-      container.removeEventListener('mouseleave', handlePointerLeave);
-      container.removeEventListener('touchmove', handlePointerMove);
+      container.removeEventListener('pointerdown', onPointerDown);
+      container.removeEventListener('pointermove', onPointerMove);
+      container.removeEventListener('pointerup', onPointerUp);
+      container.removeEventListener('pointercancel', onPointerUp);
 
-      scene.clear();
+      [geometry, shadowGeo, particleGeo].forEach((g) => g.dispose());
+      [faceMaterial, sideMaterial, shadowMat, particleMat].forEach((mat) => mat.dispose());
+      texture.dispose();
+      shadowTex.dispose();
       renderer.dispose();
-      if (renderer.domElement && renderer.domElement.parentNode) {
-        renderer.domElement.parentNode.removeChild(renderer.domElement);
-      }
+      renderer.domElement.remove();
     };
   }, [isDark]);
 
   if (!webglSupported) {
     return (
-      <div className={`relative flex items-center justify-center ${className}`}>
+      <div className={`relative flex items-center justify-center ${className}`} onClick={onClick}>
         <img
-          src="/assets/generated/logo_3d_pure.webp"
+          src={CREST_SRC}
           alt="4BLOODS GANG Official 3D Crest"
-          className="w-full max-w-[440px] h-auto object-contain drop-shadow-[0_20px_40px_rgba(220,38,38,0.35)]"
+          className="w-full h-auto object-contain drop-shadow-[0_20px_40px_rgba(220,38,38,0.35)]"
         />
       </div>
     );
@@ -291,13 +285,15 @@ export default function ThreeLogoHero({ isDark = true, className = '' }: ThreeLo
     <div
       ref={mountRef}
       data-testid="three-logo-hero"
-      className={`relative w-full h-[380px] sm:h-[450px] lg:h-[500px] xl:h-[540px] flex items-center justify-center cursor-grab active:cursor-grabbing select-none ${className}`}
+      role="img"
+      aria-label="4BLOODS GANG Official 3D Crest — drag to spin"
+      className={`relative flex items-center justify-center cursor-grab active:cursor-grabbing select-none touch-pan-y ${className}`}
     >
-      {/* Subtle Crimson Vignette / Radial Glow Behind 3D Canvas */}
+      {/* Crimson radial glow behind canvas */}
       <div
         style={{
           background: isDark
-            ? 'radial-gradient(circle, rgba(220,38,38,0.22) 0%, rgba(220,38,38,0) 65%)'
+            ? 'radial-gradient(circle, rgba(220,38,38,0.25) 0%, rgba(220,38,38,0) 65%)'
             : 'radial-gradient(circle, rgba(220,38,38,0.15) 0%, rgba(220,38,38,0) 65%)',
         }}
         className="absolute inset-4 rounded-full pointer-events-none -z-10"

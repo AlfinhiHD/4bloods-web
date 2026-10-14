@@ -51,6 +51,8 @@ export const metadata: Metadata = {
   },
 };
 
+import StickyAudioPlayer from '@/components/StickyAudioPlayer';
+
 export default function RootLayout({
   children,
 }: {
@@ -64,6 +66,7 @@ export default function RootLayout({
     >
       <body className="min-h-screen bg-[#070506] text-[#F4F4F6] antialiased selection:bg-red-600 selection:text-white">
         {children}
+        <StickyAudioPlayer />
       </body>
     </html>
   );

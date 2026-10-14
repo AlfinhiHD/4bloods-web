@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
-import StickyAudioPlayer from '@/components/StickyAudioPlayer';
 import Tilt3DCard from '@/components/Tilt3DCard';
 import {
   BookOpen,
@@ -115,10 +114,9 @@ export default function WikiPage() {
       }`}
     >
       <Navbar theme={theme} onToggleTheme={toggleTheme} />
-      <StickyAudioPlayer isDark={isDark} />
 
       {/* Floating Theme Switcher */}
-      <div className="fixed bottom-6 left-6 z-50 select-none">
+      <div className="fixed bottom-4 left-4 sm:bottom-6 sm:left-6 z-40 select-none">
         <button
           onClick={toggleTheme}
           className={`group p-1.5 border shadow-[0_15px_40px_rgba(0,0,0,0.65)] flex items-center gap-2 cursor-pointer backdrop-blur-xl ${
@@ -129,13 +127,13 @@ export default function WikiPage() {
           title={isDark ? 'Ganti ke Light Mode' : 'Ganti ke Dark Mode'}
         >
           <span
-            className={`w-8 h-8 flex items-center justify-center transition-transform duration-500 ${
+            className={`w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center transition-transform duration-500 ${
               isDark ? 'bg-red-600 text-white rotate-0' : 'bg-amber-400 text-black rotate-180'
             }`}
           >
-            {isDark ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
+            {isDark ? <Moon className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> : <Sun className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
           </span>
-          <div className="pr-2.5 text-left">
+          <div className="hidden sm:block pr-2.5 text-left">
             <div className="text-[8px] font-mono-tech text-red-500 font-bold uppercase tracking-widest leading-none">
               TEMA WIKI
             </div>
@@ -380,22 +378,22 @@ export default function WikiPage() {
                 </p>
               </div>
 
-              {/* Illuminated Blood Oath Shrine Card */}
-              <div className="relative p-6 sm:p-8 border-y-2 sm:border sm:rounded-xs border-red-500/70 bg-gradient-to-r from-red-950/70 via-black/85 to-red-950/50 shadow-[0_0_50px_rgba(220,38,38,0.22)] overflow-hidden">
-                <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-red-500 via-amber-400 to-transparent" />
+              {/* Authentic Blood Oath Gang Covenant */}
+              <div className="relative p-6 sm:p-8 border-y-2 sm:border sm:rounded-xs border-red-600/50 bg-gradient-to-r from-red-950/60 via-black/90 to-red-950/40 shadow-[0_0_40px_rgba(220,38,38,0.25)] overflow-hidden">
+                <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-red-600 via-rose-500 to-transparent" />
                 <div className="absolute -left-2 -bottom-4 text-red-600/10 pointer-events-none">
                   <Quote className="w-32 h-32" />
                 </div>
                 <div className="relative z-10 space-y-3">
-                  <div className="flex items-center gap-2 text-[10px] font-mono-tech text-red-400 font-bold tracking-widest uppercase">
-                    <Sparkles className="w-3.5 h-3.5 text-amber-400 animate-spin" style={{ animationDuration: '6s' }} />
-                    <span>SACRED BLOOD OATH // DOKTRIN PERDANA</span>
+                  <div className="flex items-center gap-2 text-[10px] font-mono-tech text-red-500 font-bold tracking-widest uppercase">
+                    <Shield className="w-3.5 h-3.5 text-red-500" />
+                    <span>DOKTRIN UTAMA // SUMPAH DARAH PERDANA</span>
                   </div>
-                  <blockquote className="font-script text-2xl sm:text-4xl text-red-400 tracking-wide leading-tight drop-shadow-[0_2px_15px_rgba(239,68,68,0.4)]">
+                  <blockquote className="font-display text-2xl sm:text-3xl lg:text-4xl text-white tracking-wider uppercase leading-snug drop-shadow-[0_2px_20px_rgba(220,38,38,0.35)]">
                     &ldquo;{originData.oath}&rdquo;
                   </blockquote>
-                  <p className="text-xs font-mono-tech text-zinc-400 pt-1 border-t border-white/10 flex items-center justify-between">
-                    <span>— Sumpah Darah 4 Pendiri di Sudut Sepi Los Santos (Target 30 Miliar Pertama)</span>
+                  <p className="text-xs font-mono-tech text-zinc-400 pt-2 border-t border-white/10 flex items-center justify-between">
+                    <span>— Janji Suci 4 Pendiri di Sudut Sepi Los Santos (Target 30 Miliar Pertama)</span>
                     <span className="hidden sm:inline-block text-red-500 font-bold uppercase tracking-widest text-[10px]">
                       BLOOD IN, BLOOD OUT
                     </span>

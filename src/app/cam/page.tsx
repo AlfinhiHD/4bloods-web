@@ -182,6 +182,7 @@ export default function FourBloodsCamPage() {
   // Drag & drop reorder state (by stable channel ID)
   const [draggedChannelId, setDraggedChannelId] = useState<string | null>(null);
   const [dragOverChannelId, setDragOverChannelId] = useState<string | null>(null);
+  const draggedChannelRef = useRef<string | null>(null);
 
   // Audio Solo
   const [unmutedId, setUnmutedId] = useState<string | null>(null);
@@ -197,6 +198,10 @@ export default function FourBloodsCamPage() {
   // Sidebar & Fullscreen state
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [fullscreenCardId, setFullscreenCardId] = useState<string | null>(null);
+
+  // Responsive Ergonomics
+  const [isMobile, setIsMobile] = useState<boolean>(false);
+  const [isTablet, setIsTablet] = useState<boolean>(false);
 
   // Loading & Sync
   const [isInitialLoading, setIsInitialLoading] = useState(true);
@@ -223,6 +228,21 @@ export default function FourBloodsCamPage() {
     setEmbedDomain(window.location.hostname);
     setNowMs(Date.now());
 
+    const checkScreen = () => {
+      const w = window.innerWidth;
+      setIsMobile(w < 768);
+      setIsTablet(w < 1024);
+    };
+    checkScreen();
+
+    // On mobile / tablet screens, start with sidebar and chat collapsed so streams get full screen
+    if (window.innerWidth < 1024) {
+      setSidebarOpen(false);
+      setShowChat(false);
+    }
+
+    window.addEventListener('resize', checkScreen);
+
     try {
       const savedFavs = localStorage.getItem('4bg_fav_streamers');
       if (savedFavs) setFavoriteIds(JSON.parse(savedFavs));
@@ -244,7 +264,10 @@ export default function FourBloodsCamPage() {
     const clockInterval = setInterval(() => {
       setNowMs(Date.now());
     }, 30_000);
-    return () => clearInterval(clockInterval);
+    return () => {
+      clearInterval(clockInterval);
+      window.removeEventListener('resize', checkScreen);
+    };
   }, []);
 
   useEffect(() => {
@@ -407,6 +430,8 @@ export default function FourBloodsCamPage() {
           };
           enriched.sort((a, b) => {
             if (a.isLive !== b.isLive) return a.isLive ? -1 : 1;
+            const subDiff = (b.subscribers || 0) - (a.subscribers || 0);
+            if (subDiff !== 0) return subDiff;
             return (rankWeight[a.rank] || 9) - (rankWeight[b.rank] || 9);
           });
 
@@ -508,6 +533,11 @@ export default function FourBloodsCamPage() {
       if (filterMode === 'OG')
         return matchesSearch && (member.rank === 'OG' || member.rank === 'Under OG');
       return matchesSearch;
+    }).sort((a, b) => {
+      if (Boolean(a.isLive) !== Boolean(b.isLive)) return a.isLive ? -1 : 1;
+      const subDiff = (b.subscribers || 0) - (a.subscribers || 0);
+      if (subDiff !== 0) return subDiff;
+      return a.name.localeCompare(b.name);
     });
   }, [streamers, searchQuery, filterMode, favoriteIds]);
 
@@ -603,6 +633,17 @@ export default function FourBloodsCamPage() {
     const count = activePovMembers.length;
     if (count <= 0) return { cols: 1, rows: 1 };
 
+    // Mobile Portrait Ergonomics (w < 768px):
+    if (isMobile) {
+      if (gridColsPreset === '1') return { cols: 1, rows: Math.min(count, 4) };
+      if (gridColsPreset === '2') return { cols: 2, rows: Math.max(1, Math.ceil(count / 2)) };
+      // Auto mode on mobile:
+      if (count === 1) return { cols: 1, rows: 1 };
+      if (count === 2) return { cols: 1, rows: 2 }; // Stack 2 streams vertically for 16:9 full width!
+      if (count <= 4) return { cols: 2, rows: 2 };
+      return { cols: 2, rows: Math.max(1, Math.ceil(count / 2)) };
+    }
+
     if (gridColsPreset === '1') {
       return { cols: 1, rows: Math.min(count, 3) };
     }
@@ -616,7 +657,7 @@ export default function FourBloodsCamPage() {
       return { cols: 4, rows: Math.max(1, Math.ceil(count / 4)) };
     }
 
-    // AUTO PRESET: Fits 100% of viewport height without scrolling
+    // AUTO PRESET (DESKTOP): Fits 100% of viewport height without scrolling
     if (count === 1) return { cols: 1, rows: 1 };
     if (count === 2) return { cols: 2, rows: 1 }; // 2 streams side-by-side: full stage height!
     if (count <= 4) return { cols: 2, rows: 2 }; // 3-4 streams: 2x2 grid
@@ -624,11 +665,12 @@ export default function FourBloodsCamPage() {
     if (count <= 9) return { cols: 3, rows: 3 }; // 7-9 streams: 3x3 grid
     if (count <= 12) return { cols: 4, rows: 3 }; // 10-12 streams: 4x3 grid
     return { cols: 4, rows: Math.max(1, Math.ceil(count / 4)) }; // 13+ streams: 4x4 grid
-  }, [activePovMembers.length, gridColsPreset]);
+  }, [activePovMembers.length, gridColsPreset, isMobile]);
 
   // FALLBACK WIDTH PERCENTAGE FOR FREE-SCROLL MODE
   const getAutoWidthPct = useCallback(
     (count: number): number => {
+      if (isMobile) return 100;
       if (gridColsPreset === '1') return 100;
       if (gridColsPreset === '2') return 49.3;
       if (gridColsPreset === '3') return 32.6;
@@ -641,7 +683,7 @@ export default function FourBloodsCamPage() {
       if (count <= 9) return 32.6; // 3x3
       return 24.3; // 4x4 (10+ streams)
     },
-    [gridColsPreset]
+    [gridColsPreset, isMobile]
   );
 
   const toggleFitHeightView = () => {
@@ -715,15 +757,17 @@ export default function FourBloodsCamPage() {
 
   // Drag & drop reorder swap handler
   const handleDropOnCard = useCallback(
-    (targetChannelId: string) => {
-      if (!draggedChannelId || draggedChannelId === targetChannelId) {
+    (fromChannelId: string, targetChannelId: string) => {
+      const sourceId = fromChannelId || draggedChannelRef.current || draggedChannelId;
+      if (!sourceId || sourceId === targetChannelId) {
         setDraggedChannelId(null);
         setDragOverChannelId(null);
+        draggedChannelRef.current = null;
         return;
       }
       setSelectedIds((prev) => {
         const next = [...prev];
-        const fromIdx = next.indexOf(draggedChannelId);
+        const fromIdx = next.indexOf(sourceId);
         const toIdx = next.indexOf(targetChannelId);
         if (fromIdx === -1 || toIdx === -1) return prev;
         const [moved] = next.splice(fromIdx, 1);
@@ -732,6 +776,7 @@ export default function FourBloodsCamPage() {
       });
       setDraggedChannelId(null);
       setDragOverChannelId(null);
+      draggedChannelRef.current = null;
     },
     [draggedChannelId]
   );
@@ -838,7 +883,7 @@ export default function FourBloodsCamPage() {
 
   return (
     <div
-      className={`h-screen h-[100dvh] w-screen w-[100dvw] overflow-hidden flex flex-col select-none transition-colors duration-200 ${
+      className={`h-screen h-[100dvh] w-full max-w-full overflow-hidden flex flex-col select-none transition-colors duration-200 ${
         isDark ? 'bg-[#070506] text-[#F4F4F6]' : 'bg-[#F4F1EA] text-[#120D0E]'
       }`}
     >
@@ -884,12 +929,12 @@ export default function FourBloodsCamPage() {
 
       {/* TOP COMMAND BAR */}
       <header
-        className={`h-14 border-b px-3 sm:px-5 flex items-center justify-between gap-2 shrink-0 z-30 ${
+        className={`h-14 border-b px-2.5 sm:px-4 md:px-5 flex items-center justify-between gap-1.5 sm:gap-2 shrink-0 z-30 ${
           isDark ? 'bg-[#0C080A] border-white/10' : 'bg-white border-zinc-300 shadow-xs'
         }`}
       >
         {/* Left: Sidebar Toggle + 4B Logo + Simple Title + Live Counter */}
-        <div className="flex items-center gap-2.5 min-w-0">
+        <div className="flex items-center gap-1.5 sm:gap-2.5 min-w-0">
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
             className={`p-2 border transition-all cursor-pointer shrink-0 rounded-sm ${
@@ -904,30 +949,31 @@ export default function FourBloodsCamPage() {
             <Users className="w-4 h-4" />
           </button>
 
-          <Link href="/" className="flex items-center gap-2.5 group shrink-0">
+          <Link href="/" className="flex items-center gap-2 group shrink-0">
             <img
               src="/assets/logo_v2.png"
               alt="4BLOODS GANG"
-              className="w-8 h-8 object-contain drop-shadow-[0_0_8px_rgba(220,38,38,0.5)]"
+              className="w-7 h-7 sm:w-8 sm:h-8 object-contain drop-shadow-[0_0_8px_rgba(220,38,38,0.5)]"
             />
             <div className="flex flex-col">
               <span
-                className={`font-display text-lg tracking-wider uppercase leading-none ${
+                className={`font-display text-base sm:text-lg tracking-wider uppercase leading-none ${
                   isDark ? 'text-white' : 'text-zinc-900'
                 }`}
               >
-                4BLOODS GANG
+                4BLOODS<span className="hidden sm:inline"> GANG</span>
               </span>
-              <span className="text-[9px] font-mono-tech text-red-500 font-bold tracking-[0.18em] uppercase mt-0.5">
-                MULTIVIEW HUB
+              <span className="hidden xs:inline text-[8px] sm:text-[9px] font-mono-tech text-red-500 font-bold tracking-[0.18em] uppercase mt-0.5">
+                MULTIVIEW
               </span>
             </div>
           </Link>
 
-          <div className="flex items-center gap-1.5 px-2.5 py-1 bg-emerald-500/10 border border-emerald-500/30 rounded text-emerald-400 text-[11px] font-mono-tech font-bold shrink-0">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
+          <div className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1 bg-emerald-500/10 border border-emerald-500/30 rounded text-emerald-400 text-[10px] sm:text-[11px] font-mono-tech font-bold shrink-0">
+            <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-emerald-400 animate-ping" />
             <span>
-              <strong>{liveStreamers.length}</strong> / {streamers.length} LIVE
+              <strong>{liveStreamers.length}</strong>
+              <span className="hidden sm:inline"> / {streamers.length}</span> LIVE
             </span>
             {totalLiveViewers > 0 && (
               <span className="hidden lg:inline text-zinc-300 font-normal pl-1.5 border-l border-emerald-500/30">
@@ -1016,29 +1062,30 @@ export default function FourBloodsCamPage() {
         </div>
 
         {/* Right: Audio Toggle, Panduan, Refresh, Chat Toggle, Theme, Profile */}
-        <div className="flex items-center gap-1.5 shrink-0">
+        <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
           {selectedIds.length > 0 && (
             <button
               onClick={() =>
                 setUnmutedId(unmutedId ? null : selectedIds[0] || null)
               }
-              className={`px-2.5 py-1.5 text-[11px] font-mono-tech font-bold uppercase border transition-colors flex items-center gap-1.5 cursor-pointer rounded-sm ${
+              className={`p-2 sm:px-2.5 sm:py-1.5 text-[11px] font-mono-tech font-bold uppercase border transition-colors flex items-center gap-1.5 cursor-pointer rounded-sm ${
                 unmutedId
                   ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-400'
                   : isDark
                     ? 'bg-zinc-900 border-white/10 text-zinc-400 hover:text-white'
                     : 'bg-zinc-100 border-zinc-300 text-zinc-700 hover:text-zinc-950'
               }`}
+              title={unmutedId ? 'Mute Semua Audio' : 'Nyalakan Audio'}
             >
               {unmutedId ? (
                 <>
                   <Volume2 className="w-3.5 h-3.5" />
-                  <span className="hidden md:inline">Audio On</span>
+                  <span className="hidden lg:inline">Audio On</span>
                 </>
               ) : (
                 <>
                   <VolumeX className="w-3.5 h-3.5" />
-                  <span className="hidden md:inline">Mute All</span>
+                  <span className="hidden lg:inline">Mute All</span>
                 </>
               )}
             </button>
@@ -1046,27 +1093,29 @@ export default function FourBloodsCamPage() {
 
           <button
             onClick={() => setShowGuideModal(true)}
-            className={`px-2.5 py-1.5 text-[11px] font-mono-tech font-bold uppercase border transition-colors flex items-center gap-1.5 cursor-pointer rounded-sm ${
+            className={`p-2 sm:px-2.5 sm:py-1.5 text-[11px] font-mono-tech font-bold uppercase border transition-colors flex items-center gap-1.5 cursor-pointer rounded-sm ${
               isDark
                 ? 'bg-zinc-900 border-white/15 text-zinc-200 hover:border-red-500 hover:text-white'
                 : 'bg-zinc-100 border-zinc-300 text-zinc-800 hover:border-red-500 hover:text-red-600'
             }`}
+            title="Panduan Multiview"
           >
             <HelpCircle className="w-3.5 h-3.5 text-red-500" />
-            <span>PANDUAN</span>
+            <span className="hidden sm:inline">PANDUAN</span>
           </button>
 
           <button
             onClick={handleManualRefresh}
             disabled={isScanning || refreshCooldown > 0}
-            className={`px-3 py-1.5 text-[11px] font-mono-tech font-bold uppercase rounded-sm transition-colors flex items-center gap-1.5 cursor-pointer ${
+            className={`p-2 sm:px-3 sm:py-1.5 text-[11px] font-mono-tech font-bold uppercase rounded-sm transition-colors flex items-center gap-1.5 cursor-pointer ${
               isScanning || refreshCooldown > 0
                 ? 'bg-red-600/50 text-white/80 cursor-not-allowed'
                 : 'bg-red-600 hover:bg-red-500 text-white shadow-[0_0_12px_rgba(220,38,38,0.35)]'
             }`}
+            title="Refresh Scan YouTube"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isScanning ? 'animate-spin' : ''}`} />
-            <span>
+            <span className="hidden xs:inline">
               {isScanning
                 ? 'SCAN...'
                 : refreshCooldown > 0
@@ -1077,33 +1126,34 @@ export default function FourBloodsCamPage() {
 
           <button
             onClick={() => setShowChat(!showChat)}
-            className={`px-2.5 py-1.5 text-[11px] font-mono-tech font-bold uppercase border transition-colors flex items-center gap-1.5 cursor-pointer rounded-sm ${
+            className={`p-2 sm:px-2.5 sm:py-1.5 text-[11px] font-mono-tech font-bold uppercase border transition-colors flex items-center gap-1.5 cursor-pointer rounded-sm ${
               showChat
                 ? 'bg-red-600/15 border-red-500/50 text-red-500'
                 : isDark
                   ? 'bg-zinc-900 border-white/10 text-zinc-400 hover:text-white'
                   : 'bg-zinc-100 border-zinc-300 text-zinc-700 hover:text-zinc-950'
             }`}
+            title={showChat ? 'Sembunyikan Chat' : 'Buka Chat'}
           >
             <MessageSquare className="w-3.5 h-3.5" />
-            <span className="hidden md:inline">CHAT</span>
+            <span className="hidden sm:inline">CHAT</span>
           </button>
 
           <button
             onClick={toggleTheme}
-            className={`p-1.5 border transition-colors cursor-pointer rounded-sm ${
+            className={`p-2 sm:p-1.5 border transition-colors cursor-pointer rounded-sm ${
               isDark
                 ? 'bg-zinc-900 border-white/10 text-amber-400 hover:border-amber-400/40'
                 : 'bg-zinc-100 border-zinc-300 text-zinc-800 hover:border-zinc-400'
             }`}
             title={isDark ? 'Ganti ke Light Mode' : 'Ganti ke Dark Mode'}
           >
-            {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            {isDark ? <Sun className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> : <Moon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
           </button>
 
           <Link
             href="/"
-            className={`hidden sm:flex px-2.5 py-1.5 border text-[11px] font-mono-tech font-bold uppercase transition-colors items-center gap-1 cursor-pointer rounded-sm ${
+            className={`hidden md:flex px-2.5 py-1.5 border text-[11px] font-mono-tech font-bold uppercase transition-colors items-center gap-1 cursor-pointer rounded-sm ${
               isDark
                 ? 'bg-zinc-900 border-white/10 text-zinc-300 hover:text-white'
                 : 'bg-zinc-100 border-zinc-300 text-zinc-800 hover:bg-zinc-200'
@@ -1117,10 +1167,18 @@ export default function FourBloodsCamPage() {
 
       {/* WORKSPACE */}
       <div className="flex-1 min-h-0 w-full flex flex-row overflow-hidden relative">
+        {/* Mobile Backdrop for Left Sidebar */}
+        {sidebarOpen && (
+          <div
+            onClick={() => setSidebarOpen(false)}
+            className="fixed inset-0 bg-black/70 backdrop-blur-xs z-30 md:hidden animate-fade-in"
+          />
+        )}
+
         {/* LEFT ROSTER SIDEBAR */}
         {sidebarOpen && (
           <aside
-            className={`w-80 sm:w-96 h-full border-r flex flex-col shrink-0 z-20 ${
+            className={`fixed inset-y-0 left-0 z-40 w-[88vw] max-w-[340px] md:relative md:inset-auto md:w-80 lg:w-96 h-full border-r flex flex-col shrink-0 shadow-2xl md:shadow-none transition-transform duration-200 ${
               isDark ? 'bg-[#0A0708] border-white/10' : 'bg-white border-zinc-300'
             }`}
           >
@@ -1137,14 +1195,23 @@ export default function FourBloodsCamPage() {
                 >
                   MEMBERS ({filteredRoster.length})
                 </span>
-                {liveStreamers.length > 0 && (
+                <div className="flex items-center gap-1.5">
+                  {liveStreamers.length > 0 && (
+                    <button
+                      onClick={watchAllLive}
+                      className="px-2 py-0.5 bg-red-600 hover:bg-red-500 text-white text-[9px] font-mono-tech font-bold uppercase rounded-sm cursor-pointer transition-colors"
+                    >
+                      + ALL LIVE ({liveStreamers.length})
+                    </button>
+                  )}
                   <button
-                    onClick={watchAllLive}
-                    className="px-2 py-0.5 bg-red-600 hover:bg-red-500 text-white text-[9px] font-mono-tech font-bold uppercase rounded-sm cursor-pointer transition-colors"
+                    onClick={() => setSidebarOpen(false)}
+                    className="p-1 text-zinc-400 hover:text-white md:hidden cursor-pointer rounded"
+                    title="Tutup Menu Roster"
                   >
-                    + ALL LIVE ({liveStreamers.length})
+                    <X className="w-4 h-4" />
                   </button>
-                )}
+                </div>
               </div>
 
               <div className="relative">
@@ -1501,14 +1568,45 @@ export default function FourBloodsCamPage() {
                       ref={(el) => {
                         cardElementRefs.current[member.channelId] = el;
                       }}
+                      onDragOver={(e) => {
+                        const dragged = draggedChannelRef.current || draggedChannelId;
+                        if (!dragged || dragged === member.channelId) return;
+                        e.preventDefault();
+                        e.dataTransfer.dropEffect = 'move';
+                        if (dragOverChannelId !== member.channelId) {
+                          setDragOverChannelId(member.channelId);
+                        }
+                      }}
+                      onDragLeave={(e) => {
+                        if (e.currentTarget.contains(e.relatedTarget as Node)) return;
+                        if (dragOverChannelId === member.channelId) {
+                          setDragOverChannelId(null);
+                        }
+                      }}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        const dragged =
+                          e.dataTransfer.getData('text/plain') ||
+                          draggedChannelRef.current ||
+                          draggedChannelId;
+                        if (dragged && dragged !== member.channelId) {
+                          handleDropOnCard(dragged, member.channelId);
+                        } else {
+                          setDraggedChannelId(null);
+                          setDragOverChannelId(null);
+                          draggedChannelRef.current = null;
+                        }
+                      }}
                       style={
                         isCardFullscreen
                           ? undefined
                           : fitHeightView
                             ? { width: '100%', height: '100%', contain: 'layout style' }
                             : {
-                                width: `calc(${cardWidths[member.channelId] || widthPct}% - 8px)`,
-                                minWidth: '240px',
+                                width: isMobile
+                                  ? '100%'
+                                  : `calc(${cardWidths[member.channelId] || widthPct}% - 8px)`,
+                                minWidth: isMobile ? '100%' : '240px',
                                 maxWidth: '100%',
                                 contain: 'layout style',
                               }
@@ -1533,52 +1631,25 @@ export default function FourBloodsCamPage() {
                               : 'border-zinc-300 bg-white shadow-xs'
                       }`}
                     >
-                      {/* FULL-CARD DRAG & DROP SHIELD (Prevents YouTube Iframes from Eating Mouse Events) */}
-                      {draggedChannelId && (
-                        <div
-                          onDragOver={(e) => {
-                            e.preventDefault();
-                            e.dataTransfer.dropEffect = 'move';
-                            if (dragOverChannelId !== member.channelId) {
-                              setDragOverChannelId(member.channelId);
-                            }
-                          }}
-                          onDragLeave={(e) => {
-                            e.preventDefault();
-                            if (dragOverChannelId === member.channelId) {
-                              setDragOverChannelId(null);
-                            }
-                          }}
-                          onDrop={(e) => {
-                            e.preventDefault();
-                            handleDropOnCard(member.channelId);
-                          }}
-                          className={`absolute inset-0 z-40 transition-all cursor-move ${
-                            isDropTarget
-                              ? 'bg-red-600/30 border-2 border-red-500 shadow-[0_0_25px_rgba(220,38,38,0.8)]'
-                              : 'bg-transparent'
-                          }`}
-                        >
-                          {isDropTarget && (
-                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                              <div className="px-4 py-2 bg-red-600 text-white font-mono-tech text-xs font-bold uppercase tracking-wider shadow-2xl flex items-center gap-2 animate-bounce">
-                                <GripVertical className="w-4 h-4" />
-                                <span>TUKAR POSISI KE SINI</span>
-                              </div>
-                            </div>
-                          )}
+                      {/* VISUAL DROP TARGET HIGHLIGHT (Non-blocking pointer-events-none) */}
+                      {isDropTarget && (
+                        <div className="absolute inset-0 z-40 pointer-events-none bg-red-600/25 border-2 border-red-500 flex items-center justify-center">
+                          <div className="px-4 py-2 bg-red-600 text-white font-mono-tech text-xs font-bold uppercase tracking-wider shadow-2xl flex items-center gap-2 animate-bounce">
+                            <GripVertical className="w-4 h-4" />
+                            <span>TUKAR POSISI KE SINI</span>
+                          </div>
                         </div>
                       )}
 
-                      {/* LEFT EDGE RESIZE HANDLE */}
-                      {!isCardFullscreen && (
+                      {/* LEFT EDGE RESIZE HANDLE (Desktop only) */}
+                      {!isCardFullscreen && !isTablet && (
                         <div
                           onPointerDown={(e) =>
                             handleEdgePointerDown(e, member.channelId, 'left')
                           }
                           onDoubleClick={() => resetSingleCardSize(member.channelId)}
                           title="Tarik ke kiri/kanan untuk atur lebar (Klik 2x untuk reset)"
-                          className="absolute left-0 top-8 bottom-0 w-4 sm:w-5 z-30 cursor-ew-resize flex items-center justify-start group/lhandle"
+                          className="hidden md:flex absolute left-0 top-8 bottom-0 w-4 sm:w-5 z-30 cursor-ew-resize items-center justify-start group/lhandle"
                         >
                           <div
                             className={`w-1.5 h-16 rounded-r transition-all ${
@@ -1590,15 +1661,15 @@ export default function FourBloodsCamPage() {
                         </div>
                       )}
 
-                      {/* RIGHT EDGE RESIZE HANDLE */}
-                      {!isCardFullscreen && (
+                      {/* RIGHT EDGE RESIZE HANDLE (Desktop only) */}
+                      {!isCardFullscreen && !isTablet && (
                         <div
                           onPointerDown={(e) =>
                             handleEdgePointerDown(e, member.channelId, 'right')
                           }
                           onDoubleClick={() => resetSingleCardSize(member.channelId)}
                           title="Tarik ke kiri/kanan untuk atur lebar (Klik 2x untuk reset)"
-                          className="absolute right-0 top-8 bottom-0 w-4 sm:w-5 z-30 cursor-ew-resize flex items-center justify-end group/rhandle"
+                          className="hidden md:flex absolute right-0 top-8 bottom-0 w-4 sm:w-5 z-30 cursor-ew-resize items-center justify-end group/rhandle"
                         >
                           <div
                             className={`w-1.5 h-16 rounded-l transition-all ${
@@ -1623,15 +1694,19 @@ export default function FourBloodsCamPage() {
                           draggable={!resizingChannelId}
                           onDragStart={(e) => {
                             e.stopPropagation();
-                            setDraggedChannelId(member.channelId);
+                            draggedChannelRef.current = member.channelId;
                             e.dataTransfer.effectAllowed = 'move';
                             e.dataTransfer.setData('text/plain', member.channelId);
+                            setTimeout(() => {
+                              setDraggedChannelId(member.channelId);
+                            }, 10);
                           }}
                           onDragEnd={() => {
+                            draggedChannelRef.current = null;
                             setDraggedChannelId(null);
                             setDragOverChannelId(null);
                           }}
-                          className="flex items-center gap-1.5 min-w-0 cursor-grab active:cursor-grabbing p-1 -m-1 rounded hover:bg-white/10 transition-colors"
+                          className="flex items-center gap-1.5 min-w-0 cursor-grab active:cursor-grabbing p-1 -m-1 rounded hover:bg-white/10 transition-colors select-none"
                           title="Tarik grip ini untuk menata urutan posisi POV"
                         >
                           <GripVertical className="w-4 h-4 text-red-500 shrink-0" />
@@ -1689,14 +1764,14 @@ export default function FourBloodsCamPage() {
 
                         {/* Card Controls */}
                         <div className="flex items-center gap-1 shrink-0">
-                          {/* Quick Reorder Swap Arrows */}
+                          {/* Quick Reorder Swap Arrows (Mobile, Tablet & Desktop) */}
                           {activePovMembers.length > 1 && (
                             <div className="flex items-center gap-0.5 border border-white/10 p-0.5 rounded-sm bg-black/40">
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   moveStreamerPosition(idx, -1);
-                                }}
+                                  }}
                                 disabled={idx === 0}
                                 className={`p-0.5 rounded-xs transition-colors ${
                                   idx === 0
@@ -1727,41 +1802,43 @@ export default function FourBloodsCamPage() {
                               </button>
                             </div>
                           )}
-                          {/* Quick Width Cycle Button (Auto Fit -> 50% -> 100%) */}
-                          <button
-                            ref={(el) => {
-                              cardBadgeRefs.current[member.channelId] = el;
-                            }}
-                            onClick={() => {
-                              const cur = cardWidths[member.channelId];
-                              if (!cur || fitHeightView) {
-                                setFitHeightView(false);
-                                setCardWidths((prev) => ({
-                                  ...prev,
-                                  [member.channelId]: 50,
-                                }));
-                              } else if (cur < 75) {
-                                setCardWidths((prev) => ({
-                                  ...prev,
-                                  [member.channelId]: 100,
-                                }));
-                              } else {
-                                resetSingleCardSize(member.channelId);
-                              }
-                            }}
-                            title="Klik untuk ganti ukuran (50% / 100% / Auto Fit)"
-                            className={`px-1.5 py-0.5 text-[9px] font-mono-tech rounded-sm cursor-pointer select-none transition-colors ${
-                              isBeingResized
-                                ? 'bg-red-600 text-white font-bold'
-                                : isDark
-                                  ? 'bg-zinc-800 text-zinc-300 hover:text-white hover:bg-zinc-700'
-                                  : 'bg-zinc-200 text-zinc-700 hover:text-black hover:bg-zinc-300'
-                            }`}
-                          >
-                            {fitHeightView && !cardWidths[member.channelId]
-                              ? 'FIT'
-                              : `${Math.round(cardWidths[member.channelId] || widthPct)}%`}
-                          </button>
+                          {/* Quick Width Cycle Button (Auto Fit -> 50% -> 100%) - Desktop/Tablet only */}
+                          {!isMobile && (
+                            <button
+                              ref={(el) => {
+                                cardBadgeRefs.current[member.channelId] = el;
+                              }}
+                              onClick={() => {
+                                const cur = cardWidths[member.channelId];
+                                if (!cur || fitHeightView) {
+                                  setFitHeightView(false);
+                                  setCardWidths((prev) => ({
+                                    ...prev,
+                                    [member.channelId]: 50,
+                                  }));
+                                } else if (cur < 75) {
+                                  setCardWidths((prev) => ({
+                                    ...prev,
+                                    [member.channelId]: 100,
+                                  }));
+                                } else {
+                                  resetSingleCardSize(member.channelId);
+                                }
+                              }}
+                              title="Klik untuk ganti ukuran (50% / 100% / Auto Fit)"
+                              className={`px-1.5 py-0.5 text-[9px] font-mono-tech rounded-sm cursor-pointer select-none transition-colors ${
+                                isBeingResized
+                                  ? 'bg-red-600 text-white font-bold'
+                                  : isDark
+                                    ? 'bg-zinc-800 text-zinc-300 hover:text-white hover:bg-zinc-700'
+                                    : 'bg-zinc-200 text-zinc-700 hover:text-black hover:bg-zinc-300'
+                              }`}
+                            >
+                              {fitHeightView && !cardWidths[member.channelId]
+                                ? 'FIT'
+                                : `${Math.round(cardWidths[member.channelId] || widthPct)}%`}
+                            </button>
+                          )}
 
                           <button
                             onClick={() =>
@@ -1879,7 +1956,7 @@ export default function FourBloodsCamPage() {
                               }&playsinline=1&rel=0&modestbranding=1&enablejsapi=1`}
                               title={`${member.name} Stream`}
                               className={`w-full h-full border-0 absolute inset-0 ${
-                                resizingChannelId || isResizingChat
+                                resizingChannelId || isResizingChat || Boolean(draggedChannelId)
                                   ? 'pointer-events-none'
                                   : ''
                               }`}
@@ -1943,30 +2020,41 @@ export default function FourBloodsCamPage() {
 
         {/* RIGHT DOCK: RESIZABLE & AUTO-SPLIT LIVE CHAT */}
         {showChat && (
-          <aside
-            style={{ width: `${chatWidthPx}px` }}
-            className={`h-full border-l flex flex-col shrink-0 z-20 relative ${
-              isDark
-                ? 'bg-[#0A0708] border-white/10'
-                : 'bg-[#FAF8F5] border-zinc-300 shadow-xl'
-            }`}
-          >
-            {/* Left border drag handle to resize chat dock */}
+          <>
+            {/* Mobile / Tablet Backdrop */}
             <div
-              onPointerDown={handleChatResizeStart}
-              title="Tarik ke kiri/kanan untuk memperlebar area chat"
-              className="absolute -left-1.5 top-0 bottom-0 w-3 cursor-ew-resize z-30 group/chathandle flex items-center justify-center"
+              onClick={() => setShowChat(false)}
+              className="fixed inset-0 bg-black/70 backdrop-blur-xs z-30 lg:hidden"
+            />
+            <aside
+              style={{
+                width: isMobile ? '100vw' : isTablet ? '360px' : `${chatWidthPx}px`,
+                maxWidth: '100vw',
+              }}
+              className={`fixed inset-y-0 right-0 z-40 lg:relative lg:inset-auto h-full border-l flex flex-col shrink-0 shadow-2xl lg:shadow-none transition-transform duration-200 ${
+                isDark
+                  ? 'bg-[#0A0708] border-white/10'
+                  : 'bg-[#FAF8F5] border-zinc-300 shadow-xl'
+              }`}
             >
-              <div
-                className={`w-1.5 h-12 rounded-full transition-all ${
-                  isResizingChat
-                    ? 'bg-red-500 h-24 shadow-[0_0_10px_rgba(220,38,38,0.9)]'
-                    : isDark
-                      ? 'bg-white/20 group-hover/chathandle:bg-red-500/70 group-hover/chathandle:h-20'
-                      : 'bg-zinc-400 group-hover/chathandle:bg-red-500 group-hover/chathandle:h-20 shadow-xs'
-                }`}
-              />
-            </div>
+              {/* Left border drag handle to resize chat dock (Desktop only) */}
+              {!isTablet && (
+                <div
+                  onPointerDown={handleChatResizeStart}
+                  title="Tarik ke kiri/kanan untuk memperlebar area chat"
+                  className="absolute -left-1.5 top-0 bottom-0 w-3 cursor-ew-resize z-30 group/chathandle flex items-center justify-center"
+                >
+                  <div
+                    className={`w-1.5 h-12 rounded-full transition-all ${
+                      isResizingChat
+                        ? 'bg-red-500 h-24 shadow-[0_0_10px_rgba(220,38,38,0.9)]'
+                        : isDark
+                          ? 'bg-white/20 group-hover/chathandle:bg-red-500/70 group-hover/chathandle:h-20'
+                          : 'bg-zinc-400 group-hover/chathandle:bg-red-500 group-hover/chathandle:h-20 shadow-xs'
+                    }`}
+                  />
+                </div>
+              )}
 
             {/* Chat Top Controls */}
             <div
@@ -2298,7 +2386,8 @@ export default function FourBloodsCamPage() {
               )}
             </div>
           </aside>
-        )}
+        </>
+      )}
       </div>
 
       {/* PANDUAN MODAL */}

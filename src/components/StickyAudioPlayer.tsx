@@ -13,6 +13,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Music,
+  X,
+  EyeOff,
 } from 'lucide-react';
 
 declare global {
@@ -26,15 +28,44 @@ interface PullOutAudioDrawerProps {
   isDark?: boolean;
 }
 
-export default function StickyAudioPlayer({ isDark = true }: PullOutAudioDrawerProps) {
+export default function StickyAudioPlayer({ isDark: propIsDark }: PullOutAudioDrawerProps) {
   const [currentTrackIdx, setCurrentTrackIdx] = useState(0); // Default: THIS IS 4BLOODS
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [isDismissed, setIsDismissed] = useState(false);
   const [playerReady, setPlayerReady] = useState(false);
+  const [internalDark, setInternalDark] = useState(true);
 
   const playerRef = useRef<any>(null);
+  const shouldPlayOnReadyRef = useRef<boolean>(false);
   const currentTrack = OFFICIAL_MEDIA_TRACKS[currentTrackIdx] || OFFICIAL_MEDIA_TRACKS[0];
+
+  useEffect(() => {
+    try {
+      const savedDismissed = localStorage.getItem('4bg_sticky_player_dismissed');
+      if (savedDismissed === 'true') {
+        setIsDismissed(true);
+      }
+    } catch {}
+
+    const updateTheme = () => {
+      const isDocDark =
+        document.documentElement.classList.contains('dark') ||
+        !document.documentElement.classList.contains('light');
+      setInternalDark(isDocDark);
+    };
+    updateTheme();
+
+    const observer = new MutationObserver(updateTheme);
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class'],
+    });
+    return () => observer.disconnect();
+  }, []);
+
+  const isDark = propIsDark !== undefined ? propIsDark : internalDark;
 
   useEffect(() => {
     const initPlayer = () => {
@@ -56,6 +87,10 @@ export default function StickyAudioPlayer({ isDark = true }: PullOutAudioDrawerP
           onReady: (event: any) => {
             setPlayerReady(true);
             event.target.setVolume(80);
+            if (shouldPlayOnReadyRef.current) {
+              event.target.playVideo();
+              setIsPlaying(true);
+            }
           },
           onStateChange: (event: any) => {
             if (event.data === 1) {
@@ -95,7 +130,11 @@ export default function StickyAudioPlayer({ isDark = true }: PullOutAudioDrawerP
   }, [currentTrackIdx]);
 
   const togglePlay = () => {
-    if (!playerReady || !playerRef.current) return;
+    if (!playerReady || !playerRef.current) {
+      shouldPlayOnReadyRef.current = !shouldPlayOnReadyRef.current;
+      setIsPlaying(shouldPlayOnReadyRef.current);
+      return;
+    }
     if (isPlaying) {
       playerRef.current.pauseVideo();
       setIsPlaying(false);
@@ -126,6 +165,22 @@ export default function StickyAudioPlayer({ isDark = true }: PullOutAudioDrawerP
     }
   };
 
+  const handleDismiss = () => {
+    setDrawerOpen(false);
+    setIsDismissed(true);
+    try {
+      localStorage.setItem('4bg_sticky_player_dismissed', 'true');
+    } catch {}
+  };
+
+  const handleRestore = () => {
+    setIsDismissed(false);
+    setDrawerOpen(true);
+    try {
+      localStorage.setItem('4bg_sticky_player_dismissed', 'false');
+    } catch {}
+  };
+
   return (
     <>
       {/* Hidden 1x1 YouTube Audio Engine */}
@@ -133,81 +188,153 @@ export default function StickyAudioPlayer({ isDark = true }: PullOutAudioDrawerP
         <div id="yt-sticky-audio-mount" />
       </div>
 
+      {/* Discreet Floating Restore Button when Sticky Player is Dismissed */}
+      {isDismissed && (
+        <button
+          onClick={handleRestore}
+          className={`fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-40 p-2 sm:px-3 sm:py-2 border shadow-[0_10px_30px_rgba(0,0,0,0.65)] flex items-center gap-2 cursor-pointer backdrop-blur-xl transition-all duration-300 hover:scale-105 select-none ${
+            isPlaying
+              ? 'bg-red-600 border-red-500 text-white shadow-[0_0_20px_rgba(220,38,38,0.4)]'
+              : isDark
+                ? 'bg-[#120A0E]/95 border-red-500/40 text-white hover:border-red-500'
+                : 'bg-white/95 border-zinc-300 text-zinc-900 hover:border-red-500'
+          }`}
+          title="Buka Musik 4Bloods Player"
+        >
+          <Disc
+            className={`w-4 h-4 ${isPlaying ? 'animate-spin' : 'text-red-500'}`}
+            style={{ animationDuration: '4s' }}
+          />
+          <span className="text-[10px] sm:text-xs font-mono-tech font-bold uppercase tracking-wider">
+            {isPlaying ? '4BG ON AIR' : '4BG MUSIK'}
+          </span>
+          {isPlaying && (
+            <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />
+          )}
+        </button>
+      )}
+
+      {/* Mobile Drawer Backdrop */}
+      {!isDismissed && drawerOpen && (
+        <div
+          onClick={() => setDrawerOpen(false)}
+          className="fixed inset-0 bg-black/60 backdrop-blur-xs z-40 md:hidden"
+        />
+      )}
+
       {/* =====================================================================
           RIGHT-EDGE PULL-OUT SONG LIST DRAWER (Dedicated 100% to Music)
       ===================================================================== */}
-      <div
-        className={`fixed top-1/2 -translate-y-1/2 right-0 z-50 flex items-center transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] select-none ${
-          drawerOpen ? 'translate-x-0' : 'translate-x-[320px] sm:translate-x-[350px]'
-        }`}
-      >
-        {/* Left Pull-Out Handle Tabs (Always visible on the right edge of screen) */}
-        <div className="flex flex-col gap-1.5 -mr-px">
-          {/* Pull-Out Song List / Audio Tab */}
-          <button
-            onClick={() => setDrawerOpen(!drawerOpen)}
-            className={`w-11 py-4 border border-r-0 flex flex-col items-center justify-center gap-2.5 shadow-2xl cursor-pointer transition-colors ${
-              drawerOpen
-                ? 'bg-red-600 text-white border-red-500'
-                : isDark
-                  ? 'bg-[#110A0D]/95 hover:bg-red-600 text-white border-red-500/40'
-                  : 'bg-white/95 hover:bg-red-600 hover:text-white text-zinc-900 border-zinc-300'
-            }`}
-            title={drawerOpen ? 'Tutup Panel Lagu' : 'Tarik Keluar: 4Bloods Audio & Song List'}
-          >
-            {drawerOpen ? (
-              <ChevronRight className="w-4 h-4" />
-            ) : (
-              <ChevronLeft className="w-4 h-4 text-red-500" />
-            )}
-            <Disc
-              className={`w-5 h-5 ${isPlaying ? 'animate-spin text-red-400' : ''}`}
-              style={{ animationDuration: '6s' }}
-            />
-            <span
-              style={{ writingMode: 'vertical-rl' }}
-              className="text-[10px] font-mono-tech font-bold tracking-[0.2em] uppercase rotate-180"
-            >
-              {isPlaying ? 'ON AIR • SONG LIST' : '4BG SONG LIST'}
-            </span>
-          </button>
-
-          {/* Quick Play/Pause Mini Button on Edge */}
-          <button
-            onClick={togglePlay}
-            className="w-11 h-11 bg-red-600 hover:bg-red-500 text-white border border-r-0 border-red-500 flex items-center justify-center shadow-xl cursor-pointer"
-            title={isPlaying ? 'Pause Lagu' : 'Putar Lagu: ' + currentTrack.title}
-          >
-            {isPlaying ? (
-              <Pause className="w-4 h-4 fill-white" />
-            ) : (
-              <Play className="w-4 h-4 fill-white ml-0.5" />
-            )}
-          </button>
-        </div>
-
-        {/* Pull-Out Drawer Body (320px / 350px wide) */}
+      {!isDismissed && (
         <div
-          className={`w-[320px] sm:w-[350px] border-l border-y shadow-[0_25px_70px_rgba(0,0,0,0.85)] overflow-hidden ${
-            isDark
-              ? 'bg-[#0C0709]/98 border-red-500/40 text-white'
-              : 'bg-white/98 border-zinc-300 text-zinc-900'
+          className={`fixed top-1/2 -translate-y-1/2 right-0 z-50 flex items-center transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] select-none ${
+            drawerOpen ? 'translate-x-0' : 'translate-x-[290px] sm:translate-x-[350px]'
           }`}
         >
-          {/* Drawer Header */}
+          {/* Left Pull-Out Handle Tabs (Always visible on the right edge of screen) */}
+          <div className="flex flex-col gap-1.5 -mr-px shrink-0">
+            {/* Dismiss / Close Sticky Tab */}
+            <button
+              onClick={handleDismiss}
+              className={`w-11 h-7 border border-r-0 flex items-center justify-center cursor-pointer transition-colors ${
+                isDark
+                  ? 'bg-[#140A0D]/95 hover:bg-red-600 text-zinc-400 hover:text-white border-red-500/40'
+                  : 'bg-white/95 hover:bg-red-600 hover:text-white text-zinc-600 border-zinc-300'
+              }`}
+              title="Tutup / Sembunyikan Sticky Widget"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+
+            {/* Pull-Out Song List / Audio Tab */}
+            <button
+              onClick={() => setDrawerOpen(!drawerOpen)}
+              className={`w-11 py-4 border border-r-0 flex flex-col items-center justify-center gap-2.5 shadow-2xl cursor-pointer transition-colors ${
+                drawerOpen
+                  ? 'bg-red-600 text-white border-red-500'
+                  : isDark
+                    ? 'bg-[#110A0D]/98 hover:bg-red-600 text-white border-red-500/40'
+                    : 'bg-white/98 hover:bg-red-600 hover:text-white text-zinc-900 border-zinc-300'
+              }`}
+              title={drawerOpen ? 'Tutup Panel Lagu' : 'Tarik Keluar: 4Bloods Audio & Song List'}
+            >
+              {drawerOpen ? (
+                <ChevronRight className="w-4 h-4" />
+              ) : (
+                <ChevronLeft className="w-4 h-4 text-red-500" />
+              )}
+              <Disc
+                className={`w-5 h-5 ${isPlaying ? 'animate-spin text-red-400' : ''}`}
+                style={{ animationDuration: '6s' }}
+              />
+              <span
+                style={{ writingMode: 'vertical-rl' }}
+                className="text-[10px] font-mono-tech font-bold tracking-[0.2em] uppercase rotate-180"
+              >
+                {isPlaying ? 'ON AIR • SONG LIST' : '4BG SONG LIST'}
+              </span>
+            </button>
+
+            {/* Quick Play/Pause Mini Button on Edge */}
+            <button
+              onClick={togglePlay}
+              className="w-11 h-11 bg-red-600 hover:bg-red-500 text-white border border-r-0 border-red-500 flex items-center justify-center shadow-xl cursor-pointer"
+              title={isPlaying ? 'Pause Lagu' : 'Putar Lagu: ' + currentTrack.title}
+            >
+              {isPlaying ? (
+                <Pause className="w-4 h-4 fill-white" />
+              ) : (
+                <Play className="w-4 h-4 fill-white ml-0.5" />
+              )}
+            </button>
+          </div>
+
+          {/* Pull-Out Drawer Body */}
           <div
-            className={`px-4 py-3 border-b flex items-center justify-between ${
-              isDark ? 'bg-[#140B0F] border-white/10' : 'bg-zinc-100 border-zinc-200'
+            className={`w-[290px] sm:w-[350px] max-w-[calc(100vw-48px)] border-l border-y shadow-[0_25px_70px_rgba(0,0,0,0.85)] overflow-hidden ${
+              isDark
+                ? 'bg-[#0C0709]/98 border-red-500/40 text-white'
+                : 'bg-white/98 border-zinc-300 text-zinc-900'
             }`}
           >
-            <div className="flex items-center gap-2">
-              <Music className="w-4 h-4 text-red-500" />
-              <span className="text-xs font-mono-tech font-bold uppercase tracking-wider">
-                4BLOODS SOUNDTRACK
-              </span>
+            {/* Drawer Header */}
+            <div
+              className={`px-4 py-3 border-b flex items-center justify-between ${
+                isDark ? 'bg-[#140B0F] border-white/10' : 'bg-zinc-100 border-zinc-200'
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <Music className="w-4 h-4 text-red-500" />
+                <span className="text-xs font-mono-tech font-bold uppercase tracking-wider">
+                  4BLOODS SOUNDTRACK
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="font-gothic text-lg text-red-500 mr-1">4BG</span>
+                <button
+                  onClick={() => setDrawerOpen(false)}
+                  className={`p-1 rounded-xs transition-colors cursor-pointer ${
+                    isDark
+                      ? 'text-zinc-400 hover:text-white hover:bg-white/10'
+                      : 'text-zinc-600 hover:text-black hover:bg-zinc-200'
+                  }`}
+                  title="Tutup Panel Lagu"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={handleDismiss}
+                  className={`p-1 rounded-xs transition-colors cursor-pointer ${
+                    isDark
+                      ? 'text-zinc-400 hover:text-white hover:bg-red-600'
+                      : 'text-zinc-600 hover:text-white hover:bg-red-600'
+                  }`}
+                  title="Sembunyikan Sticky Widget Sepenuhnya"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
             </div>
-            <span className="font-gothic text-lg text-red-500">4BG</span>
-          </div>
 
           {/* Active Track Vinyl Deck */}
           <div className="p-4 border-b border-current/10 space-y-3">
@@ -360,8 +487,24 @@ export default function StickyAudioPlayer({ isDark = true }: PullOutAudioDrawerP
               );
             })}
           </div>
+
+          {/* Footer Options */}
+          <div
+            className={`p-2.5 border-t text-center ${
+              isDark ? 'bg-[#0E0709] border-white/10' : 'bg-zinc-50 border-zinc-200'
+            }`}
+          >
+            <button
+              onClick={handleDismiss}
+              className="text-[10px] font-mono-tech uppercase text-zinc-400 hover:text-red-500 transition-colors inline-flex items-center gap-1.5 cursor-pointer"
+            >
+              <EyeOff className="w-3 h-3" />
+              <span>Sembunyikan Sticky Widget</span>
+            </button>
+          </div>
         </div>
       </div>
+    )}
     </>
   );
 }

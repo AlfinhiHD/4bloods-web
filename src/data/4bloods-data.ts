@@ -11,6 +11,8 @@ export interface StreamerMember {
   bio?: string;
   subscribers?: number;
   subscribersText?: string;
+  banner?: string;
+  avatar?: string;
 }
 
 export interface LoreChapter {

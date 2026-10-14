@@ -3,10 +3,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
-import StickyAudioPlayer from '@/components/StickyAudioPlayer';
 import Tilt3DCard from '@/components/Tilt3DCard';
+import ThreeLogoHero from '@/components/ThreeLogoHero';
 import ShowroomCodex from '@/components/ShowroomCodex';
 import Icon3D from '@/components/Icon3D';
+import YouTubeCarousel3D from '@/components/YouTubeCarousel3D';
 import {
   LORE_CHAPTERS,
   HIERARCHY_TIERS,
@@ -199,20 +200,28 @@ export default function CompanyProfilePage() {
     filteredWarArchives[0] ||
     WAR_ARCHIVES[0];
 
-  // Filtered 54 Streamers
-  const filteredRoster = streamers.filter((m) => {
-    const q = rosterSearch.toLowerCase();
-    const matchName =
-      m.name.toLowerCase().includes(q) ||
-      (m.handle && m.handle.toLowerCase().includes(q)) ||
-      (m.role && m.role.toLowerCase().includes(q));
-    if (!matchName) return false;
-    if (rosterFilter === 'LIVE') return Boolean(m.isLive);
-    if (rosterFilter === 'OG') return m.rank === 'OG';
-    if (rosterFilter === 'Under OG') return m.rank === 'Under OG';
-    if (rosterFilter === 'Young Bloods') return m.rank === 'Young Bloods';
-    return true;
-  });
+  // Filtered 54 Streamers (Prioritize subscribers sort)
+  const filteredRoster = useMemo(() => {
+    return streamers
+      .filter((m) => {
+        const q = rosterSearch.toLowerCase();
+        const matchName =
+          m.name.toLowerCase().includes(q) ||
+          (m.handle && m.handle.toLowerCase().includes(q)) ||
+          (m.role && m.role.toLowerCase().includes(q));
+        if (!matchName) return false;
+        if (rosterFilter === 'LIVE') return Boolean(m.isLive);
+        if (rosterFilter === 'OG') return m.rank === 'OG';
+        if (rosterFilter === 'Under OG') return m.rank === 'Under OG';
+        if (rosterFilter === 'Young Bloods') return m.rank === 'Young Bloods';
+        return true;
+      })
+      .sort((a, b) => {
+        const subDiff = (b.subscribers || 0) - (a.subscribers || 0);
+        if (subDiff !== 0) return subDiff;
+        return a.name.localeCompare(b.name);
+      });
+  }, [streamers, rosterSearch, rosterFilter]);
 
   // Rank hierarchy priority ordering
   const RANK_PRIORITY: Record<string, number> = {
@@ -222,9 +231,11 @@ export default function CompanyProfilePage() {
     'Member': 4,
   };
 
-  // Complete Syndicate Roster ordered strictly by gang hierarchy (All 54 Members)
+  // Complete Syndicate Roster ordered by subscribers first (All 54 Members)
   const allSpotlightCreators = useMemo(() => {
     return [...streamers].sort((a, b) => {
+      const subDiff = (b.subscribers || 0) - (a.subscribers || 0);
+      if (subDiff !== 0) return subDiff;
       const pA = RANK_PRIORITY[a.rank] ?? 99;
       const pB = RANK_PRIORITY[b.rank] ?? 99;
       if (pA !== pB) return pA - pB;
@@ -261,11 +272,8 @@ export default function CompanyProfilePage() {
       {/* Clean Top Navbar */}
       <Navbar liveCount={liveCount} theme={theme} onToggleTheme={toggleTheme} />
 
-      {/* Right-Edge Pull-Out Drawer (Dedicated 100% to 4BG Song List & Audio Player) */}
-      <StickyAudioPlayer isDark={isDark} />
-
       {/* Dedicated Bottom-Left Floating Theme Switcher (Separate from Music Player, Smooth Transition) */}
-      <div className="fixed bottom-6 left-6 z-50 select-none">
+      <div className="fixed bottom-4 left-4 sm:bottom-6 sm:left-6 z-40 select-none">
         <button
           onClick={toggleTheme}
           className={`group p-1.5 border shadow-[0_15px_40px_rgba(0,0,0,0.65)] flex items-center gap-2 cursor-pointer backdrop-blur-xl ${
@@ -276,15 +284,15 @@ export default function CompanyProfilePage() {
           title={isDark ? 'Ganti ke Light Mode (Transisi Halus)' : 'Ganti ke Dark Mode (Transisi Halus)'}
         >
           <span
-            className={`w-8 h-8 flex items-center justify-center transition-transform duration-500 ${
+            className={`w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center transition-transform duration-500 ${
               isDark
                 ? 'bg-red-600 text-white rotate-0'
                 : 'bg-amber-400 text-black rotate-180'
             }`}
           >
-            {isDark ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
+            {isDark ? <Moon className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> : <Sun className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
           </span>
-          <div className="pr-2.5 text-left">
+          <div className="hidden sm:block pr-2.5 text-left">
             <div className="text-[8px] font-mono-tech text-red-500 font-bold uppercase tracking-widest leading-none">
               MODE TAMPILAN
             </div>
@@ -311,20 +319,21 @@ export default function CompanyProfilePage() {
             src="/assets/hero_bg.webp"
             alt="Hero Background"
             className={`w-full h-full object-cover object-center ${
-              isDark ? 'opacity-55 brightness-75 contrast-110' : 'opacity-30 brightness-95'
+              isDark ? 'opacity-75 brightness-90 contrast-105' : 'opacity-40 brightness-100'
             }`}
           />
           <div
             className={`absolute inset-0 ${
               isDark
-                ? 'bg-gradient-to-b from-black/75 via-black/55 to-[#090306]/98'
-                : 'bg-gradient-to-b from-white/80 via-white/60 to-[#FAF8F5]'
+                ? 'bg-gradient-to-b from-black/60 via-black/40 to-[#090306]/95'
+                : 'bg-gradient-to-b from-white/70 via-white/50 to-[#FAF8F5]'
             }`}
           />
           <div
             style={{
-              background:
-                'radial-gradient(circle at 50% 50%, rgba(0,0,0,0.2) 0%, rgba(9,3,6,0.85) 75%)',
+              background: isDark
+                ? 'radial-gradient(circle at 50% 50%, rgba(0,0,0,0.05) 0%, rgba(9,3,6,0.7) 80%)'
+                : 'radial-gradient(circle at 50% 50%, rgba(255,255,255,0) 0%, rgba(250,248,245,0.45) 80%)',
             }}
             className="absolute inset-0 pointer-events-none"
           />
@@ -486,9 +495,8 @@ export default function CompanyProfilePage() {
 
             {/* Right Column: 4Bloods Vintage Heritage V1 Crest */}
             <div className="lg:col-span-5 flex flex-col items-center justify-center relative">
-              <Tilt3DCard
-                intensity={14}
-                glare={false}
+              <ThreeLogoHero
+                isDark={isDark}
                 onClick={() =>
                   setLightboxImage({
                     src: '/assets/generated/crest_v1_3d.webp',
@@ -496,30 +504,8 @@ export default function CompanyProfilePage() {
                     subtitle: 'IME Roleplay // South Side Roxwood (Postal 1051–1052)',
                   })
                 }
-                className="relative w-64 h-64 sm:w-80 sm:h-80 md:w-[360px] md:h-[360px] lg:w-[420px] lg:h-[420px] xl:w-[460px] xl:h-[460px] flex items-center justify-center cursor-pointer group"
-              >
-                {/* Volumetric Crimson Ambient Lighting Ring */}
-                <div
-                  className={`absolute inset-4 rounded-full border ${
-                    isDark ? 'border-red-500/25' : 'border-red-500/35'
-                  } pointer-events-none`}
-                />
-                <div
-                  style={{
-                    background: isDark
-                      ? 'radial-gradient(circle, rgba(220,38,38,0.28) 0%, rgba(220,38,38,0) 70%)'
-                      : 'radial-gradient(circle, rgba(220,38,38,0.18) 0%, rgba(220,38,38,0) 70%)',
-                  }}
-                  className="absolute inset-2 rounded-full pointer-events-none"
-                />
-
-                <img
-                  src="/assets/generated/crest_v1_3d.webp"
-                  alt="4BLOODS GANG Official 3D Emblem"
-                  style={{ transform: 'translateZ(30px)' }}
-                  className="relative w-56 h-auto max-h-[300px] sm:w-[320px] sm:max-h-[360px] lg:w-[380px] lg:max-h-[420px] object-contain drop-shadow-[0_20px_45px_rgba(220,38,38,0.45)] drop-shadow-[0_10px_25px_rgba(0,0,0,0.85)] group-hover:scale-105 transition-transform duration-300 select-none"
-                />
-              </Tilt3DCard>
+                className="w-64 h-64 sm:w-80 sm:h-80 md:w-[360px] md:h-[360px] lg:w-[420px] lg:h-[420px] xl:w-[460px] xl:h-[460px]"
+              />
 
               {/* Dedicated Heritage V1 Label Badge */}
               <div
@@ -1864,149 +1850,14 @@ export default function CompanyProfilePage() {
         </div>
 
         <div className="max-w-[1520px] mx-auto px-4 sm:px-8 relative z-10">
-          <div className="flex flex-col lg:flex-row lg:items-end justify-between mb-10 gap-6">
-            <div className="flex items-center gap-4 sm:gap-6">
-              <Icon3D src="/assets/generated/icons3d/icon_roster.webp" alt="3D Studio Mic" />
-              <div>
-              <div className="text-xs font-mono-tech font-bold text-red-500 tracking-[0.25em] uppercase mb-1">
-                06 // JARINGAN KREATOR RESMI 4BLOODS DI IME RP
-              </div>
-              <h2
-                className={`font-display text-5xl sm:text-7xl uppercase tracking-wider leading-none ${
-                  isDark ? 'text-white' : 'text-zinc-900'
-                }`}
-              >
-                54 OFFICIAL <span className="text-red-600">STREAMERS</span>
-              </h2>
-              </div>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-2.5">
-              <div className="relative">
-                <Search className="w-4 h-4 text-zinc-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                <input
-                  type="text"
-                  value={rosterSearch}
-                  onChange={(e) => setRosterSearch(e.target.value)}
-                  placeholder="Cari member / @handle..."
-                  className={`pl-10 pr-4 py-2.5 border text-xs font-mono-tech focus:outline-none focus:border-red-500 w-56 ${
-                    isDark
-                      ? 'bg-[#120A0E] border-white/15 text-white placeholder:text-zinc-500'
-                      : 'bg-white border-zinc-300 text-zinc-900 placeholder:text-zinc-400'
-                  }`}
-                />
-              </div>
-
-              {(['ALL', 'LIVE', 'OG', 'Under OG', 'Young Bloods'] as const).map((f) => (
-                <button
-                  key={f}
-                  onClick={() => setRosterFilter(f)}
-                  className={`px-3.5 py-2.5 text-xs font-mono-tech font-bold uppercase border cursor-pointer ${
-                    rosterFilter === f
-                      ? 'bg-red-600 text-white border-red-500'
-                      : isDark
-                        ? 'bg-[#120A0E] text-zinc-300 border-white/10 hover:text-white'
-                        : 'bg-white text-zinc-700 border-zinc-300 hover:border-red-500'
-                  }`}
-                >
-                  {f === 'LIVE' ? `LIVE (${liveCount})` : f}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-            {filteredRoster.map((member) => (
-              <div
-                key={member.channelId}
-                className={`p-3.5 border flex items-center justify-between gap-3 ${
-                  member.isLive
-                    ? isDark
-                      ? 'border-red-500 bg-red-950/30 shadow-[0_0_20px_rgba(220,38,38,0.25)]'
-                      : 'border-red-500 bg-red-50 shadow-sm'
-                    : isDark
-                      ? 'bg-[#0E090C]/90 border-white/10 hover:border-white/30'
-                      : 'bg-white/95 border-zinc-300 hover:border-red-400 shadow-xs'
-                }`}
-              >
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="relative w-11 h-11 bg-zinc-900 border border-red-500/30 shrink-0 overflow-hidden">
-                    <img
-                      src={member.avatar || '/assets/logo_v2.png'}
-                      alt={member.name}
-                      onError={(e) => {
-                        (e.currentTarget as HTMLImageElement).src = '/assets/logo_v2.png';
-                      }}
-                      className="w-full h-full object-cover"
-                    />
-                    {member.isLive && (
-                      <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full ring-2 ring-black" />
-                    )}
-                  </div>
-
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-1.5">
-                      <span
-                        className={`font-display text-lg tracking-wider truncate ${
-                          isDark ? 'text-white' : 'text-zinc-900'
-                        }`}
-                      >
-                        {member.name}
-                      </span>
-                      {member.isLive && (
-                        <span className="px-1.5 py-0.5 bg-red-600 text-white text-[9px] font-mono-tech font-bold flex items-center gap-1">
-                          <span>LIVE</span>
-                          {typeof member.viewerCount === 'number' && member.viewerCount > 0 && (
-                            <span className="border-l border-white/30 pl-1 font-normal flex items-center gap-0.5">
-                              <Users className="w-2.5 h-2.5" />
-                              <span>{member.viewerCount.toLocaleString('id-ID')}</span>
-                            </span>
-                          )}
-                        </span>
-                      )}
-                    </div>
-                    <div
-                      className={`text-[11px] font-mono-tech truncate ${
-                        isDark ? 'text-zinc-400' : 'text-zinc-500'
-                      }`}
-                    >
-                      {member.handle ? `${member.handle} • ` : ''}
-                      <span className="text-red-500 font-bold">{member.rank}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-1.5 shrink-0">
-                  {member.isLive && (
-                    <Link
-                      href={`/cam?watch=${member.channelId}`}
-                      className="p-2 bg-red-600 hover:bg-red-500 text-white cursor-pointer"
-                      title="Tonton di 4Bloods Multi-POV Cam"
-                    >
-                      <Tv className="w-3.5 h-3.5" />
-                    </Link>
-                  )}
-                  <a
-                    href={
-                      member.handle
-                        ? `https://www.youtube.com/${member.handle}`
-                        : `https://www.youtube.com/channel/${member.channelId}`
-                    }
-                    target="_blank"
-                    rel="noreferrer"
-                    className={`p-2 border cursor-pointer ${
-                      isDark
-                        ? 'bg-white/[0.04] hover:bg-white/[0.12] border-white/10 text-zinc-300 hover:text-white'
-                        : 'bg-zinc-100 hover:bg-zinc-200 border-zinc-300 text-zinc-700'
-                    }`}
-                    title="Buka YouTube Channel"
-                  >
-                    <ExternalLink className="w-3.5 h-3.5" />
-                  </a>
-                </div>
-              </div>
-            ))}
-          </div>
+          <YouTubeCarousel3D
+            streamers={streamers}
+            isDark={isDark}
+            onOpenVideo={(v) => setVideoModal(v)}
+            title="54 OFFICIAL STREAMERS"
+            subtitle="Jaringan kreator resmi Four Bloods Gang di YouTube beserta status siaran langsung real-time di South Side Roxwood (IME RP)."
+            sectionBadge="06 // JARINGAN KREATOR RESMI 4BLOODS DI IME RP"
+          />
         </div>
       </section>
 
