@@ -376,7 +376,6 @@ export default function FourBloodsCamPage() {
       if (res.ok) {
         const data = await res.json();
         if (data?.streamers && Array.isArray(data.streamers) && data.streamers.length > 0) {
-          const liveFound = data.streamers.filter((s: any) => s.isLive).length;
           setLastScannerTime(
             new Date(data.lastScannerTime || Date.now()).toLocaleTimeString('id-ID', {
               hour: '2-digit',
@@ -384,11 +383,9 @@ export default function FourBloodsCamPage() {
               second: '2-digit',
             })
           );
-          if (liveFound > 0) {
-            setStreamers(data.streamers);
-            applyInitialStreamerSelection(data.streamers);
-            success = true;
-          }
+          setStreamers(data.streamers);
+          applyInitialStreamerSelection(data.streamers);
+          success = true;
         }
       }
     } catch (err) {
@@ -818,6 +815,32 @@ export default function FourBloodsCamPage() {
         const isError =
           data.event === 'onError' || (data.info && [100, 101, 150].includes(data.info));
         if (isEnded || isError) {
+          const matchingChannelId = Object.entries(iframeRefs.current).find(
+            ([_, iframe]) => iframe && iframe.contentWindow === event.source
+          )?.[0];
+
+          if (matchingChannelId) {
+            setStreamers((prev) =>
+              prev.map((s) =>
+                s.channelId === matchingChannelId
+                  ? { ...s, isLive: false, videoId: null }
+                  : s
+              )
+            );
+            fetch(
+              `https://blood-186bd-default-rtdb.firebaseio.com/streamers/${matchingChannelId}.json`,
+              {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  isLive: false,
+                  videoId: null,
+                  title: null,
+                  lastChecked: new Date().toISOString(),
+                }),
+              }
+            ).catch(() => {});
+          }
           fetchLiveStatus(true);
         }
       } catch {}

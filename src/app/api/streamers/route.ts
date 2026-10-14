@@ -112,6 +112,17 @@ async function safeCheckYouTubeChannel(channelId: string) {
       };
     }
 
+    if (isOffline) {
+      return {
+        isLive: false,
+        videoId: null,
+        streamTitle: null,
+        startTimestamp: null,
+        isUpcoming: false,
+        hasExplicitlyEnded: true,
+      };
+    }
+
     return null;
   } catch {
     return null;
@@ -165,12 +176,16 @@ export async function GET(request: Request) {
           if (!fbData) continue;
           const prev = snapshotMap[cid] || {};
           const isCandidateLive = Boolean(fbData.isLive && fbData.videoId);
+          const lastCheckedMs = fbData.lastChecked ? new Date(fbData.lastChecked).getTime() : 0;
+          const isStale = lastCheckedMs > 0 && now - lastCheckedMs > 8 * 60 * 60 * 1000;
+          const isLive = isCandidateLive && !isStale;
+
           snapshotMap[cid] = {
             ...prev,
-            isLive: isCandidateLive,
-            videoId: isCandidateLive ? fbData.videoId : null,
-            streamTitle: isCandidateLive ? fbData.title || prev.streamTitle || null : null,
-            startTimestamp: isCandidateLive
+            isLive,
+            videoId: isLive ? fbData.videoId : null,
+            streamTitle: isLive ? fbData.title || prev.streamTitle || null : null,
+            startTimestamp: isLive
               ? fbData.actualStartTime || prev.startTimestamp || null
               : null,
             lastChecked: fbData.lastChecked || prev.lastChecked || null,
@@ -247,6 +262,12 @@ export async function GET(request: Request) {
             snapshotMap[cid].videoId = null;
             snapshotMap[cid].streamTitle = null;
             snapshotMap[cid].viewerCount = null;
+            syncLiveToFirebase(cid, {
+              isLive: false,
+              videoId: null,
+              title: null,
+              lastChecked: new Date().toISOString(),
+            });
             return;
           }
 
@@ -302,6 +323,19 @@ export async function GET(request: Request) {
         actualStartTime: liveInfo.startTimestamp,
         lastChecked: new Date().toISOString(),
       });
+    } else if (liveInfo?.hasExplicitlyEnded) {
+      if (snapshotMap[cid]?.isLive) {
+        snapshotMap[cid].isLive = false;
+        snapshotMap[cid].videoId = null;
+        snapshotMap[cid].streamTitle = null;
+        syncLiveToFirebase(cid, {
+          channelId: cid,
+          isLive: false,
+          videoId: null,
+          title: null,
+          lastChecked: new Date().toISOString(),
+        });
+      }
     } else if (liveInfo?.isUpcoming && liveInfo.upcomingVideoId) {
       snapshotMap[cid] = {
         ...(snapshotMap[cid] || {}),

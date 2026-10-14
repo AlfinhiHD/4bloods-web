@@ -59,11 +59,11 @@
     "channelId": "UCgO8kYJBkm5jvUJkV9H9mIw",
     "handle": "@NAHMIER",
     "avatar": "/assets/avatars/UCgO8kYJBkm5jvUJkV9H9mIw.jpg",
-    "isLive": true,
-    "videoId": "w8Epz5zL948",
-    "streamTitle": "MASALAH GANG JALANAN MEMANJANG!! BERSIAP!! #imepolice #loudboyz",
-    "startTimestamp": "2026-10-14T07:35:21+00:00",
-    "viewerCount": 35
+    "isLive": false,
+    "videoId": null,
+    "streamTitle": null,
+    "startTimestamp": null,
+    "viewerCount": null
   },
   {
     "name": "Joy Braxton",
@@ -356,11 +356,11 @@
     "channelId": "UCHi0xCfpNPut25e_jcRcC3A",
     "handle": "@AzmiWildan",
     "avatar": "/assets/avatars/UCHi0xCfpNPut25e_jcRcC3A.jpg",
-    "isLive": true,
-    "videoId": "RDoXMT-Q6KY",
-    "streamTitle": "RESTREAM KERJA YUKKK.. #imeroleplay #4blood #msf",
-    "startTimestamp": "2026-10-14T07:35:26+00:00",
-    "viewerCount": 34
+    "isLive": false,
+    "videoId": null,
+    "streamTitle": null,
+    "startTimestamp": null,
+    "viewerCount": null
   },
   {
     "name": "Gavin",

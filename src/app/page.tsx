@@ -104,12 +104,13 @@ export default function CompanyProfilePage() {
         return res.json();
       })
       .then((data) => {
-        const count = data?.liveCount || data?.streamers?.filter((s: any) => s.isLive)?.length || 0;
-        if (count > 0 && data?.streamers) {
+        if (data?.streamers && Array.isArray(data.streamers)) {
+          const count =
+            data.liveCount !== undefined
+              ? data.liveCount
+              : data.streamers.filter((s: any) => s.isLive).length;
           setStreamers(data.streamers);
           setLiveCount(count);
-        } else {
-          throw new Error('API returned 0 live, fallback to direct Firebase');
         }
       })
       .catch(() => {

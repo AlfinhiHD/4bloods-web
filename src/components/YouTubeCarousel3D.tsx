@@ -18,6 +18,7 @@ import {
   Layers,
   Sparkles,
 } from 'lucide-react';
+import Icon3D from './Icon3D';
 
 function YouTubeIcon({ className = 'w-4 h-4' }: { className?: string }) {
   return (
@@ -199,19 +200,22 @@ export default function YouTubeCarousel3D({
     <div className="space-y-8">
       {/* Header & Controls Section */}
       <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
-        <div className="space-y-2 max-w-2xl">
-          <div className="inline-flex items-center gap-2 px-3 py-1 bg-red-600/15 border border-red-500/30 text-red-500 text-xs font-mono-tech font-bold uppercase tracking-widest">
-            <Tv className="w-3.5 h-3.5" />
-            <span>{sectionBadge}</span>
+        <div className="flex items-center gap-4 sm:gap-6">
+          <Icon3D src="/assets/generated/icons3d/icon_roster.webp" alt="3D Studio Mic" />
+          <div className="space-y-2 max-w-2xl">
+            <div className="inline-flex items-center gap-2 px-3 py-1 bg-red-600/15 border border-red-500/30 text-red-500 text-xs font-mono-tech font-bold uppercase tracking-widest">
+              <Tv className="w-3.5 h-3.5" />
+              <span>{sectionBadge}</span>
+            </div>
+            <h2
+              className={`font-display text-3xl sm:text-5xl uppercase tracking-wider ${
+                isDark ? 'text-white' : 'text-zinc-900'
+              }`}
+            >
+              {title}
+            </h2>
+            <p className="text-xs sm:text-sm font-mono-tech text-zinc-400">{subtitle}</p>
           </div>
-          <h2
-            className={`font-display text-3xl sm:text-5xl uppercase tracking-wider ${
-              isDark ? 'text-white' : 'text-zinc-900'
-            }`}
-          >
-            {title}
-          </h2>
-          <p className="text-xs sm:text-sm font-mono-tech text-zinc-400">{subtitle}</p>
         </div>
 
         {/* Quick View Mode Toggle & Live Counter */}
