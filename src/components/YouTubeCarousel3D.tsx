@@ -389,7 +389,7 @@ export default function YouTubeCarousel3D({
               </div>
             ) : (
               <div
-                className="relative w-[310px] sm:w-[380px] h-[490px] sm:h-[530px]"
+                className="relative w-[310px] sm:w-[380px] h-[520px] sm:h-[560px]"
                 style={{ transformStyle: 'preserve-3d' }}
               >
                 {filteredList.map((member, idx) => {
@@ -573,7 +573,7 @@ export default function YouTubeCarousel3D({
                               {member.handle || '@creator'}
                             </p>
                             {member.role && (
-                              <p className="text-xs font-mono-tech text-zinc-400 line-clamp-1 pt-0.5">
+                              <p className="text-xs font-mono-tech text-zinc-400 leading-snug break-words pt-0.5">
                                 {member.role}
                               </p>
                             )}
@@ -605,7 +605,7 @@ export default function YouTubeCarousel3D({
                                   </span>
                                 )}
                               </div>
-                              <p className="text-[11px] font-mono-tech text-zinc-200 line-clamp-1 leading-tight">
+                              <p className="text-[11px] font-mono-tech text-zinc-200 line-clamp-2 leading-tight">
                                 &ldquo;{member.streamTitle}&rdquo;
                               </p>
                             </div>
@@ -824,7 +824,7 @@ export default function YouTubeCarousel3D({
                         {member.handle || '@creator'}
                       </p>
                       {member.role && (
-                        <p className="text-xs font-mono-tech text-zinc-400 line-clamp-2 pt-0.5">
+                        <p className="text-xs font-mono-tech text-zinc-400 leading-snug break-words pt-0.5">
                           {member.role}
                         </p>
                       )}
