@@ -77,7 +77,8 @@ export default function CompanyProfilePage() {
 
   // Live Streamers from our Strict Edge API
   const [streamers, setStreamers] = useState<any[]>(STREAMER_ROSTER);
-  const [liveCount, setLiveCount] = useState<number>(1);
+  const [liveCount, setLiveCount] = useState<number | null>(null);
+  const [isStreamersLoading, setIsStreamersLoading] = useState<boolean>(true);
   const [rosterSearch, setRosterSearch] = useState('');
   const [rosterFilter, setRosterFilter] = useState<
     'ALL' | 'LIVE' | 'OG' | 'Under OG' | 'Young Bloods'
@@ -98,6 +99,7 @@ export default function CompanyProfilePage() {
       }
     } catch {}
 
+    setIsStreamersLoading(true);
     fetch('/api/streamers')
       .then((res) => {
         if (!res.ok) throw new Error('API route failed');
@@ -148,6 +150,9 @@ export default function CompanyProfilePage() {
             }
           })
           .catch(() => {});
+      })
+      .finally(() => {
+        setIsStreamersLoading(false);
       });
   }, []);
 
@@ -281,7 +286,7 @@ export default function CompanyProfilePage() {
       }`}
     >
       {/* Clean Top Navbar */}
-      <Navbar liveCount={liveCount} theme={theme} onToggleTheme={toggleTheme} />
+      <Navbar liveCount={liveCount} isLoadingLive={isStreamersLoading} theme={theme} onToggleTheme={toggleTheme} />
 
       {/* Dedicated Bottom-Left Floating Theme Switcher (Separate from Music Player, Smooth Transition) */}
       <div className="fixed bottom-4 left-4 sm:bottom-6 sm:left-6 z-40 select-none">
@@ -385,7 +390,12 @@ export default function CompanyProfilePage() {
                   <span>SOUTH SIDE ROXWOOD 1051–1052</span>
                 </div>
 
-                {liveMembers.length > 0 && (
+                {isStreamersLoading ? (
+                  <div className="inline-flex items-center gap-2 px-3 py-1 bg-red-950/60 border border-red-500/30 text-red-300 text-[11px] font-mono-tech font-bold uppercase tracking-wider animate-pulse">
+                    <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-ping" />
+                    <span>MEMINDAI SIARAN LIVE...</span>
+                  </div>
+                ) : (liveCount || 0) > 0 ? (
                   <Link
                     href="/cam"
                     className="inline-flex items-center gap-2 px-3 py-1 bg-red-600/90 hover:bg-red-500 text-white text-[11px] font-mono-tech font-bold uppercase tracking-wider transition-colors cursor-pointer"
@@ -399,7 +409,7 @@ export default function CompanyProfilePage() {
                       </span>
                     )}
                   </Link>
-                )}
+                ) : null}
               </div>
 
               {/* Bold Headline & Clean Tagline */}
@@ -431,7 +441,14 @@ export default function CompanyProfilePage() {
                   className="px-7 py-3.5 bg-red-600 hover:bg-red-500 text-white font-mono-tech text-xs sm:text-sm font-bold tracking-[0.18em] uppercase transition-all shadow-[0_0_30px_rgba(220,38,38,0.35)] hover:shadow-[0_0_40px_rgba(220,38,38,0.6)] flex items-center gap-2.5 cursor-pointer group"
                 >
                   <Tv className="w-4 h-4 transition-transform group-hover:scale-110" />
-                  <span>BUKA 4BLOODS CAM ({liveCount > 0 ? `${liveCount} LIVE` : 'MULTI-POV'})</span>
+                  <span>
+                    BUKA 4BLOODS CAM{' '}
+                    {isStreamersLoading
+                      ? '(MEMINDAI...)'
+                      : typeof liveCount === 'number' && liveCount > 0
+                        ? `(${liveCount} LIVE)`
+                        : '(MULTI-POV)'}
+                  </span>
                 </Link>
 
                 <button
@@ -1864,6 +1881,7 @@ export default function CompanyProfilePage() {
           <YouTubeCarousel3D
             streamers={streamers}
             isDark={isDark}
+            isLoading={isStreamersLoading}
             onOpenVideo={(v) => setVideoModal(v)}
             title="54 OFFICIAL STREAMERS"
             subtitle="Jaringan kreator resmi Four Bloods Gang di YouTube beserta status siaran langsung real-time di South Side Roxwood (IME RP)."

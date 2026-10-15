@@ -49,6 +49,7 @@ export interface YouTubeCreator {
 interface YouTubeCarousel3DProps {
   streamers: YouTubeCreator[];
   isDark?: boolean;
+  isLoading?: boolean;
   onOpenVideo?: (video: { videoId: string; title: string; streamer: string }) => void;
   title?: string;
   subtitle?: string;
@@ -58,6 +59,7 @@ interface YouTubeCarousel3DProps {
 export default function YouTubeCarousel3D({
   streamers,
   isDark = true,
+  isLoading = false,
   onOpenVideo,
   title = '54 OFFICIAL STREAMERS',
   subtitle = 'Daftar seluruh kreator resmi 4Bloods di YouTube beserta status siaran langsung real-time keluarga besar Four Bloods Gang.',
@@ -245,10 +247,17 @@ export default function YouTubeCarousel3D({
             </button>
           </div>
 
-          <div className="px-3.5 py-2 bg-red-600/20 border border-red-500/40 text-red-400 flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-            <span className="font-bold">{liveCount} SEDANG LIVE</span>
-          </div>
+          {isLoading ? (
+            <div className="px-3.5 py-2 bg-red-950/40 border border-red-500/30 text-red-300 flex items-center gap-2 animate-pulse">
+              <span className="w-2 h-2 rounded-full bg-red-500 animate-ping" />
+              <span className="font-bold text-xs uppercase font-mono-tech">MEMINDAI SIARAN...</span>
+            </div>
+          ) : (
+            <div className="px-3.5 py-2 bg-red-600/20 border border-red-500/40 text-red-400 flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+              <span className="font-bold">{liveCount} SEDANG LIVE</span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -316,7 +325,7 @@ export default function YouTubeCarousel3D({
             {(
               [
                 { id: 'ALL', label: `SEMUA (${streamers.length})` },
-                { id: 'LIVE', label: `🔴 LIVE (${liveCount})` },
+                { id: 'LIVE', label: isLoading ? '🔴 MEMINDAI...' : `🔴 LIVE (${liveCount})` },
                 { id: 'OG', label: '👑 OG' },
                 { id: 'Under OG', label: '⚡ UNDER OG' },
                 { id: 'Young Bloods', label: '🛡️ YOUNG BLOODS' },

@@ -341,7 +341,7 @@ export default function FourBloodsCamPage() {
               (s) => s.isLive && favList.includes(s.channelId)
             );
             if (liveFavs.length > 0) {
-              const liveFavIds = liveFavs.map((s) => s.channelId);
+              const liveFavIds = liveFavs.slice(0, 2).map((s) => s.channelId);
               hasInitializedSelection.current = true;
               setSelectedIds(liveFavIds);
               setUnmutedId(liveFavIds[0]);
@@ -352,14 +352,14 @@ export default function FourBloodsCamPage() {
         } catch {}
       }
 
-      // Auto-select active live streams so stage is never empty when members are broadcasting
+      // Auto-select active live streams (capped at top 2 streams by default so stage isn't overwhelmed)
       const liveOnes = loadedStreamers.filter((s) => s.isLive);
       if (liveOnes.length > 0) {
-        const liveIds = liveOnes.map((s) => s.channelId);
+        const defaultLiveIds = liveOnes.slice(0, 2).map((s) => s.channelId);
         hasInitializedSelection.current = true;
-        setSelectedIds(liveIds);
-        setUnmutedId(liveIds[0]);
-        setActiveChatIds(liveIds);
+        setSelectedIds(defaultLiveIds);
+        setUnmutedId(defaultLiveIds[0]);
+        setActiveChatIds(defaultLiveIds);
         return;
       }
 
@@ -1616,6 +1616,7 @@ export default function FourBloodsCamPage() {
               }
             >
               {activePovMembers.map((member, idx) => {
+                const isDenseGrid = activePovMembers.length >= 4 || gridDimensions.cols >= 3;
                 const isAudioActive = unmutedId === member.channelId;
                 const isCardFullscreen = fullscreenCardId === member.channelId;
                 const isChatSelected = activeChatMembers.some(
@@ -1768,7 +1769,7 @@ export default function FourBloodsCamPage() {
 
                       {/* Card Top Control Bar */}
                       <div
-                        className={`h-8 sm:h-9 px-2 sm:px-2.5 border-b flex items-center justify-between gap-1.5 shrink-0 ${
+                        className={`h-8 sm:h-9 px-1.5 sm:px-2 border-b flex items-center justify-between gap-1 shrink-0 ${
                           isDark
                             ? 'bg-[#120C0E] border-white/10'
                             : 'bg-zinc-100 border-zinc-200'
@@ -1791,10 +1792,10 @@ export default function FourBloodsCamPage() {
                             setDraggedChannelId(null);
                             setDragOverChannelId(null);
                           }}
-                          className="flex items-center gap-1.5 min-w-0 cursor-grab active:cursor-grabbing p-1 -m-1 rounded hover:bg-white/10 transition-colors select-none"
+                          className="flex items-center gap-1 sm:gap-1.5 min-w-0 flex-1 cursor-grab active:cursor-grabbing p-0.5 rounded hover:bg-white/10 transition-colors select-none"
                           title="Tarik grip ini untuk menata urutan posisi POV"
                         >
-                          <GripVertical className="w-4 h-4 text-red-500 shrink-0" />
+                          <GripVertical className={`shrink-0 text-red-500 ${isDenseGrid ? 'w-3 h-3' : 'w-3.5 h-3.5'}`} />
                           {member.isLive ? (
                             <div className="flex items-center gap-1 shrink-0">
                               <button
@@ -1809,12 +1810,14 @@ export default function FourBloodsCamPage() {
                                   }
                                 }}
                                 title="Live Aktif (Klik untuk tandai offline jika stream sudah selesai di YouTube)"
-                                className="px-1.5 py-0.5 bg-red-600 hover:bg-red-700 text-white text-[9px] font-mono-tech font-bold uppercase rounded-xs shrink-0 cursor-pointer transition-colors flex items-center gap-1"
+                                className={`bg-red-600 hover:bg-red-700 text-white font-mono-tech font-bold uppercase rounded-xs shrink-0 cursor-pointer transition-colors flex items-center gap-1 ${
+                                  isDenseGrid ? 'px-1 py-0.5 text-[8px]' : 'px-1.5 py-0.5 text-[9px]'
+                                }`}
                               >
                                 <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
                                 <span>LIVE</span>
                               </button>
-                              {typeof member.viewerCount === 'number' && member.viewerCount > 0 && (
+                              {typeof member.viewerCount === 'number' && member.viewerCount > 0 && !isDenseGrid && (
                                 <span
                                   className="inline-flex items-center gap-1 px-1.5 py-0.5 bg-red-950/70 border border-red-500/40 text-red-300 font-mono-tech text-[9px] font-bold rounded-xs shrink-0 shadow-xs"
                                   title={`${member.viewerCount.toLocaleString('id-ID')} penonton`}
@@ -1834,23 +1837,24 @@ export default function FourBloodsCamPage() {
                             </span>
                           )}
                           <span
-                            className={`text-xs font-bold truncate ${
-                              isDark ? 'text-white' : 'text-zinc-900'
-                            }`}
+                            className={`font-bold truncate min-w-0 ${
+                              isDenseGrid ? 'text-[11px]' : 'text-xs'
+                            } ${isDark ? 'text-white' : 'text-zinc-900'}`}
+                            title={member.name}
                           >
                             {member.name}
                           </span>
-                          {uptime && (
-                            <span className="hidden sm:inline text-[9px] font-mono-tech text-emerald-400">
+                          {uptime && !isDenseGrid && (
+                            <span className="hidden sm:inline text-[9px] font-mono-tech text-emerald-400 shrink-0">
                               ({uptime})
                             </span>
                           )}
                         </div>
 
                         {/* Card Controls */}
-                        <div className="flex items-center gap-1 shrink-0">
-                          {/* Quick Reorder Swap Arrows (Mobile, Tablet & Desktop) */}
-                          {activePovMembers.length > 1 && (
+                        <div className="flex items-center gap-0.5 sm:gap-1 shrink-0">
+                          {/* Quick Reorder Swap Arrows (Only when NOT dense grid) */}
+                          {!isDenseGrid && activePovMembers.length > 1 && (
                             <div className="flex items-center gap-0.5 border border-white/10 p-0.5 rounded-sm bg-black/40">
                               <button
                                 onClick={(e) => {
@@ -1887,8 +1891,8 @@ export default function FourBloodsCamPage() {
                               </button>
                             </div>
                           )}
-                          {/* Quick Width Cycle Button (Auto Fit -> 50% -> 100%) - Desktop/Tablet only */}
-                          {!isMobile && (
+                          {/* Quick Width Cycle Button (Hide in dense auto fit grid) */}
+                          {!isDenseGrid && !isMobile && (
                             <button
                               ref={(el) => {
                                 cardBadgeRefs.current[member.channelId] = el;
@@ -1929,23 +1933,25 @@ export default function FourBloodsCamPage() {
                             onClick={() =>
                               setSoloAudio(isAudioActive ? null : member.channelId)
                             }
-                            className={`px-2 py-0.5 text-[9px] font-mono-tech font-bold uppercase rounded-sm flex items-center gap-1 transition-colors cursor-pointer ${
+                            className={`p-1 sm:px-1.5 text-[9px] font-mono-tech font-bold uppercase rounded-sm flex items-center gap-1 transition-colors cursor-pointer ${
                               isAudioActive
                                 ? 'bg-emerald-600 text-white shadow-[0_0_10px_rgba(16,185,129,0.4)]'
                                 : isDark
                                   ? 'bg-zinc-800 text-zinc-400 hover:text-white'
                                   : 'bg-zinc-200 text-zinc-700 hover:text-black'
                             }`}
-                            title="Solo Audio untuk POV ini"
+                            title={isAudioActive ? 'Matikan Audio' : 'Solo Audio untuk POV ini'}
                           >
                             {isAudioActive ? (
                               <Volume2 className="w-3 h-3 text-white" />
                             ) : (
                               <VolumeX className="w-3 h-3 text-zinc-400" />
                             )}
-                            <span className="hidden md:inline">
-                              {isAudioActive ? 'AUDIO ON' : 'SUARA'}
-                            </span>
+                            {!isDenseGrid && (
+                              <span className="hidden md:inline">
+                                {isAudioActive ? 'AUDIO ON' : 'SUARA'}
+                              </span>
+                            )}
                           </button>
 
                           <button

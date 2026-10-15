@@ -6,13 +6,15 @@ import { usePathname } from 'next/navigation';
 import { Tv, Menu, X, Sun, Moon, BookOpen, Users, Compass } from 'lucide-react';
 
 interface NavbarProps {
-  liveCount?: number;
+  liveCount?: number | null;
+  isLoadingLive?: boolean;
   theme?: 'dark' | 'light';
   onToggleTheme?: () => void;
 }
 
 export default function Navbar({
-  liveCount = 0,
+  liveCount = null,
+  isLoadingLive = false,
   theme = 'dark',
   onToggleTheme,
 }: NavbarProps) {
@@ -144,11 +146,15 @@ export default function Navbar({
             </span>
             <Tv className="w-3.5 h-3.5" />
             <span>4BLOODS CAM</span>
-            {liveCount > 0 && (
+            {isLoadingLive ? (
+              <span className="px-1.5 py-0.5 bg-black/40 text-red-200 text-[10px] animate-pulse">
+                MEMINDAI...
+              </span>
+            ) : typeof liveCount === 'number' && liveCount > 0 ? (
               <span className="px-1.5 py-0.5 bg-black/40 text-white text-[10px]">
                 {liveCount} LIVE
               </span>
-            )}
+            ) : null}
           </Link>
         </div>
 
@@ -159,7 +165,9 @@ export default function Navbar({
             className="px-3 py-2 bg-red-600 text-white text-[10px] font-mono-tech font-bold uppercase flex items-center gap-1.5"
           >
             <Tv className="w-3.5 h-3.5" />
-            <span>CAM ({liveCount})</span>
+            <span>
+              CAM {isLoadingLive ? '(LIVE)' : typeof liveCount === 'number' && liveCount > 0 ? `(${liveCount})` : ''}
+            </span>
           </Link>
           <button
             onClick={() => setMobileOpen(!mobileOpen)}
