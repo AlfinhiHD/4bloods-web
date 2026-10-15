@@ -84,8 +84,24 @@ export default function Navbar({
           </div>
         </Link>
 
-        {/* Center: 2 Big Major Menus Navigation */}
+        {/* Center: 3 Major Menus Navigation (Overview on Left) */}
         <nav className="hidden md:flex items-center gap-2">
+          {/* Menu 00: Overview & Syndicate Portfolio (Always on Left) */}
+          <Link
+            href="/"
+            className={`px-4 py-2 text-xs font-mono-tech font-bold tracking-widest uppercase transition-all flex items-center gap-2 border ${
+              isHome
+                ? 'bg-red-600/15 border-red-500 text-white shadow-[0_0_20px_rgba(220,38,38,0.3)]'
+                : isDark
+                  ? 'bg-transparent border-white/10 text-zinc-300 hover:text-white hover:border-red-500/50 hover:bg-white/[0.04]'
+                  : 'bg-transparent border-zinc-200 text-zinc-700 hover:text-red-600 hover:border-red-300 hover:bg-red-50'
+            }`}
+          >
+            <Compass className={`w-3.5 h-3.5 ${isHome ? 'text-red-500' : 'text-zinc-400'}`} />
+            <span className="text-red-500 text-[10px]">00 //</span>
+            <span>OVERVIEW</span>
+          </Link>
+
           {/* Menu 01: 4Bloods Wiki & History */}
           <Link
             href="/wiki"
@@ -99,7 +115,7 @@ export default function Navbar({
           >
             <BookOpen className={`w-3.5 h-3.5 ${isWiki ? 'text-red-500' : 'text-zinc-400'}`} />
             <span className="text-red-500 text-[10px]">01 //</span>
-            <span>4BLOODS WIKI</span>
+            <span>BLOODS WIKI</span>
           </Link>
 
           {/* Menu 02: Community & Achievements Hub */}
@@ -117,21 +133,6 @@ export default function Navbar({
             <span className="text-red-500 text-[10px]">02 //</span>
             <span>COMMUNITY HUB</span>
           </Link>
-
-          {/* Home Link (if not on home) */}
-          {!isHome && (
-            <Link
-              href="/"
-              className={`px-3 py-2 text-xs font-mono-tech font-bold tracking-widest uppercase transition-all flex items-center gap-1.5 ${
-                isDark
-                  ? 'text-zinc-400 hover:text-white hover:bg-white/[0.04]'
-                  : 'text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100'
-              }`}
-            >
-              <Compass className="w-3.5 h-3.5" />
-              <span>OVERVIEW</span>
-            </Link>
-          )}
         </nav>
 
         {/* Right: Dedicated Primary 4BLOODS CAM Launch Button */}
@@ -191,6 +192,24 @@ export default function Navbar({
           }`}
         >
           <Link
+            href="/"
+            onClick={() => setMobileOpen(false)}
+            className={`block px-4 py-3 text-xs font-mono-tech font-bold border ${
+              isHome
+                ? 'bg-red-600/20 border-red-500 text-white'
+                : isDark
+                  ? 'bg-[#120B0E] border-white/10 text-zinc-200'
+                  : 'bg-zinc-50 border-zinc-200 text-zinc-800'
+            }`}
+          >
+            <div className="text-red-500 text-[10px]">PORTAL // 00</div>
+            <div className="text-sm font-display tracking-wider">OVERVIEW &amp; HIGHLIGHTS</div>
+            <div className="text-[10px] font-mono-tech text-zinc-400 font-normal">
+              Portofolio 4Bloods, Highlights War &amp; Quick Directory
+            </div>
+          </Link>
+
+          <Link
             href="/wiki"
             onClick={() => setMobileOpen(false)}
             className={`block px-4 py-3 text-xs font-mono-tech font-bold border ${
@@ -202,9 +221,9 @@ export default function Navbar({
             }`}
           >
             <div className="text-red-500 text-[10px]">MENU 01</div>
-            <div className="text-sm font-display tracking-wider">4BLOODS WIKI & ARCHIVE</div>
+            <div className="text-sm font-display tracking-wider">BLOODS WIKI &amp; ARCHIVE</div>
             <div className="text-[10px] font-mono-tech text-zinc-400 font-normal">
-              Origin, 3 Chapters, Hierarchy & War Chronicles
+              Origin, 3 Chapters, Hierarchy &amp; War Chronicles
             </div>
           </Link>
 
@@ -220,22 +239,10 @@ export default function Navbar({
             }`}
           >
             <div className="text-red-500 text-[10px]">MENU 02</div>
-            <div className="text-sm font-display tracking-wider">COMMUNITY & ACHIEVEMENTS</div>
+            <div className="text-sm font-display tracking-wider">COMMUNITY &amp; ACHIEVEMENTS</div>
             <div className="text-[10px] font-mono-tech text-zinc-400 font-normal">
-              Skala Komunitas, Social Hub, Discography & 54 Streamers
+              Skala Komunitas, Social Hub, Discography &amp; 54 Streamers
             </div>
-          </Link>
-
-          <Link
-            href="/"
-            onClick={() => setMobileOpen(false)}
-            className={`block px-4 py-2.5 text-xs font-mono-tech font-bold border ${
-              isDark
-                ? 'bg-black/40 border-white/10 text-zinc-400'
-                : 'bg-zinc-100 border-zinc-200 text-zinc-600'
-            }`}
-          >
-            OVERVIEW PORTAL // HOME
           </Link>
 
           {onToggleTheme && (

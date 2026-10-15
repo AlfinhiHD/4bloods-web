@@ -797,12 +797,14 @@ export default function CommunityPage() {
       </section>
 
       {/* Official 3D Showroom & Merch Codex */}
-      <section className="border-t border-white/10">
+      <section className={`border-t ${isDark ? 'border-white/10' : 'border-zinc-200'}`}>
         <ShowroomCodex isDark={isDark} onOpenLightbox={setLightboxImage} />
       </section>
 
       {/* 54 Official Streamers Directory — Featuring Interactive 3D Carousel & Popout */}
-      <section className="max-w-[1520px] mx-auto px-4 sm:px-8 py-16 border-t border-white/10">
+      <section className={`max-w-[1520px] mx-auto px-4 sm:px-8 py-16 border-t ${
+        isDark ? 'border-white/10' : 'border-zinc-200'
+      }`}>
         <YouTubeCarousel3D
           streamers={streamers}
           isDark={isDark}
