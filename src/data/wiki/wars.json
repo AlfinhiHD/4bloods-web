@@ -10,6 +10,56 @@
     "tag": "CHAPTER III CONFLICT"
   },
   {
+    "id": "asep-warrant",
+    "videoId": "UG1hYx8jSeA",
+    "title": "THIS IS ASEP 4BLOODS — TOP 1 WARRANT LOS SANTOS",
+    "streamer": "Asep Teriyaki",
+    "rank": "UNDER OG",
+    "category": "OG SPOTLIGHT",
+    "thumb": "/assets/streams/asep_top1.jpg",
+    "tag": "MOST WANTED RP"
+  },
+  {
+    "id": "louis-dakwah",
+    "videoId": "OIM_8ZymT60",
+    "title": "SANTRI LV BERI DAKWAH KE ANAK-ANAK 4BLOODS",
+    "streamer": "Louis Ven",
+    "rank": "ORIGINAL GANGSTER (OG)",
+    "category": "OG SPOTLIGHT",
+    "thumb": "/assets/streams/war_mx69.jpg",
+    "tag": "SYNDICATE CULTURE"
+  },
+  {
+    "id": "sumbul-garda",
+    "videoId": "UWzNP0fxL_A",
+    "title": "SUMBUL SIAP MENJADI GARDA TERDEPAN 4BLOODS",
+    "streamer": "Muhammad Sumbul",
+    "rank": "ORIGINAL GANGSTER (OG)",
+    "category": "OG SPOTLIGHT",
+    "thumb": "/assets/streams/deja_charity.jpg",
+    "tag": "VANGUARD LINE"
+  },
+  {
+    "id": "war-allstar-20v20",
+    "videoId": "a3NgNy4NDMU",
+    "title": "AFTERNOON LEAGUE WAR!! 4BLOODS VS ALLSTAR (20 VS 20 ALLCLASS)",
+    "streamer": "Ackai / War Archive",
+    "rank": "UNDER OG",
+    "category": "LEAGUE WAR",
+    "thumb": "/assets/streams/war_allstar.jpg",
+    "tag": "20V20 ALL CLASS"
+  },
+  {
+    "id": "war-51reaver",
+    "videoId": "9hhP8B0dDN8",
+    "title": "PERANG PANAS!! 4BLOODS VS 51REAVER PECAH DI ROXWOOD",
+    "streamer": "Jane Elisha / War Archive",
+    "rank": "UNDER OG",
+    "category": "LEAGUE WAR",
+    "thumb": "/assets/streams/war_51reaver.jpg",
+    "tag": "ROXWOOD TURF WAR"
+  },
+  {
     "id": "nahmier-cayo",
     "videoId": "fToo-U7hAs8",
     "title": "MISI MEMPEREBUTKAN PULAU CAYO!! KOMANDO PENUH 4BLOODS",
@@ -18,26 +68,6 @@
     "category": "NAHMIER POV",
     "thumb": "/assets/streams/nahmier_cayo.jpg",
     "tag": "SPECIAL OPERATION"
-  },
-  {
-    "id": "nahmier-liga",
-    "videoId": "H3mnaXEWzCs",
-    "title": "LIGA ROXWOOD DAN CUMER BERSAMAAN!! 4BLOODS VS VAGABOND",
-    "streamer": "Nahmier Davies",
-    "rank": "UNDER OG // HOOD PRESIDENT",
-    "category": "NAHMIER POV",
-    "thumb": "/assets/streams/nahmier_liga.jpg",
-    "tag": "TOURNAMENT & TURF WAR"
-  },
-  {
-    "id": "nahmier-rampok",
-    "videoId": "i1qxqRtdMzM",
-    "title": "MENCARI KANDIDAT MEMBER RAMPOK!! SELEKSI LAPANGAN 4BLOODS",
-    "streamer": "Nahmier Davies",
-    "rank": "UNDER OG // HOOD PRESIDENT",
-    "category": "NAHMIER POV",
-    "thumb": "/assets/streams/nahmier_rampok.jpg",
-    "tag": "RECRUITMENT & HEIST"
   },
   {
     "id": "ilham-return",
@@ -50,16 +80,6 @@
     "tag": "LEGENDARY OG MOMENT"
   },
   {
-    "id": "asep-warrant",
-    "videoId": "UG1hYx8jSeA",
-    "title": "THIS IS ASEP 4BLOODS — TOP 1 WARRANT LOS SANTOS",
-    "streamer": "Asep Teriyaki",
-    "rank": "UNDER OG",
-    "category": "OG SPOTLIGHT",
-    "thumb": "/assets/streams/asep_top1.jpg",
-    "tag": "MOST WANTED RP"
-  },
-  {
     "id": "deja-charity",
     "videoId": "K6kfspfbAwM",
     "title": "CHARITY 4BLOOD TO IMEFEST JAKARTA — SOLIDARITAS KOMUNITAS",
@@ -68,25 +88,5 @@
     "category": "OG SPOTLIGHT",
     "thumb": "/assets/streams/deja_charity.jpg",
     "tag": "COMMUNITY EVENT"
-  },
-  {
-    "id": "war-allstar-20v20",
-    "videoId": "a3NgNy4NDMU",
-    "title": "AFTERNOON LEAGUE WAR!! 4BLOODS VS ALLSTAR (20 VS 20 ALLCLASS)",
-    "streamer": "4Bloods War Archive",
-    "rank": "FULL SQUAD DEPLOYMENT",
-    "category": "LEAGUE WAR",
-    "thumb": "/assets/streams/war_allstar.jpg",
-    "tag": "20V20 ALL CLASS"
-  },
-  {
-    "id": "war-51reaver",
-    "videoId": "9hhP8B0dDN8",
-    "title": "PERANG PANAS!! 4BLOODS VS 51REAVER PECAH DI ROXWOOD",
-    "streamer": "4Bloods War Archive",
-    "rank": "ROXWOOD DEFENSE",
-    "category": "LEAGUE WAR",
-    "thumb": "/assets/streams/war_51reaver.jpg",
-    "tag": "ROXWOOD TURF WAR"
   }
 ]

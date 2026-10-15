@@ -1,232 +1,100 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
+import Tilt3DCard from '@/components/Tilt3DCard';
 import ThreeLogoHero from '@/components/ThreeLogoHero';
+import ShowroomCodex from '@/components/ShowroomCodex';
 import Icon3D from '@/components/Icon3D';
+import YouTubeCarousel3D from '@/components/YouTubeCarousel3D';
 import {
   LORE_CHAPTERS,
   HIERARCHY_TIERS,
+  WARDROBE_ITEMS,
   OFFICIAL_MEDIA_TRACKS,
+  WAR_ARCHIVES,
   STREAMER_ROSTER,
 } from '@/data/4bloods-data';
 import {
   Play,
-  Tv,
-  BookOpen,
-  Users,
-  Compass,
-  ExternalLink,
-  Shield,
-  Film,
-  Disc3,
-  Sparkles,
-  ChevronRight,
-  ArrowRight,
-  X,
-  Flame,
-  Award,
   Radio,
   MapPin,
-  CheckCircle2,
+  ExternalLink,
+  Search,
+  Tv,
+  RotateCw,
+  Maximize2,
+  X,
+  ChevronLeft,
+  ChevronRight,
+  Image as ImageIcon,
+  Shield,
+  Box,
+  Disc3,
+  Film,
+  Columns2,
+  Sun,
+  Moon,
+  Sparkles,
+  Users,
+  ArrowRight,
 } from 'lucide-react';
 
-function YouTubeIcon({ className = 'w-4 h-4' }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-      <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
-    </svg>
-  );
-}
+// Optimized Lightweight Fan Art visuals per rank/character
+const DEFAULT_SHOWCASE_FANARTS: Record<string, string> = {
+  'Nahmier Davies': '/assets/generated/fanart_roxwood.webp',
+  'Jane Elisha': '/assets/generated/fanart_council.webp',
+  'Asep Teriyaki': '/assets/generated/fanart_west_to_ssr.webp',
+  'Ilham Joseph': '/assets/generated/fanart_council.webp',
+  'Louis Ven': '/assets/generated/fanart_roxwood.webp',
+  'Deja Amari': '/assets/generated/fanart_west_to_ssr.webp',
+};
 
-// Curated high-impact YouTube videos from top 4Bloods creators (reserving 1 for Brando as allowed)
-interface HighlightVideo {
-  id: string;
-  videoId: string;
-  title: string;
-  creator: string;
-  handle: string;
-  rank: string;
-  category: 'TURF DEFENSE' | 'WAR POV' | 'COMMUNITY' | 'TACTICAL' | 'OG LEGEND';
-  thumb: string;
-  badge: string;
-  description: string;
-}
-
-const HIGHLIGHT_VIDEOS: HighlightVideo[] = [
-  {
-    id: 'nahmier-roxwood',
-    videoId: 'ylYwKzRaYeQ',
-    title: 'ROXWOOD SEMAKIN MEMANAS INIKAH SAATNYA?! BHB BERSIAPLAH',
-    creator: 'Nahmier Davies',
-    handle: '@NAHMIER',
-    rank: 'UNDER OG // HOOD PRESIDENT',
-    category: 'TURF DEFENSE',
-    thumb: '/assets/streams/nahmier_roxwood.jpg',
-    badge: 'HOT TRENDING',
-    description: 'Komando lapangan Nahmier mempertahankan kedaulatan teritori Roxwood saat tensi memuncak antarfaksi besar.',
-  },
-  {
-    id: 'asep-top1',
-    videoId: 'UG1hYx8jSeA',
-    title: 'THIS IS ASEP 4BLOODS — TOP 1 WARRANT LOS SANTOS',
-    creator: 'Asep Teriyaki',
-    handle: '@BarevsKi',
-    rank: 'UNDER OG',
-    category: 'WAR POV',
-    thumb: '/assets/streams/asep_top1.jpg',
-    badge: 'MOST WANTED',
-    description: 'Aksi kejar-kejaran intens di Los Santos saat Asep memuncaki status buronan nomor satu di kepolisian kota.',
-  },
-  {
-    id: 'louis-dakwah',
-    videoId: 'OIM_8ZymT60',
-    title: 'SANTRI LV BERI DAKWAH KE ANAK-ANAK 4BLOODS',
-    creator: 'Louis Ven',
-    handle: '@AkbarRangers',
-    rank: 'ORIGINAL GANGSTER (OG)',
-    category: 'COMMUNITY',
-    thumb: '/assets/streams/war_mx69.jpg',
-    badge: 'ICONIC RP',
-    description: 'Momen kultural khas 4Bloods: wejangan dan diplomasi santai namun penuh wibawa dari sang Supreme Strategist.',
-  },
-  {
-    id: 'sumbul-garda',
-    videoId: 'UWzNP0fxL_A',
-    title: 'SUMBUL SIAP MENJADI GARDA TERDEPAN 4BLOODS',
-    creator: 'Muhammad Sumbul',
-    handle: '@Ritsutakaa',
-    rank: 'ORIGINAL GANGSTER (OG)',
-    category: 'TACTICAL',
-    thumb: '/assets/streams/deja_charity.jpg',
-    badge: 'VANGUARD',
-    description: 'Kesiagaan armada perang 4Bloods di garis depan menyambut segala potensi gesekan di jalanan Roxwood.',
-  },
-  {
-    id: 'allstar-20v20',
-    videoId: 'a3NgNy4NDMU',
-    title: 'AFTERNOON LEAGUE WAR!! 4BLOODS VS ALLSTAR (20 VS 20 ALLCLASS)',
-    creator: 'Ackai / War Archive',
-    handle: '@Ackaiii',
-    rank: 'UNDER OG',
-    category: 'WAR POV',
-    thumb: '/assets/streams/war_allstar.jpg',
-    badge: '20V20 TOURNAMENT',
-    description: 'Pertempuran terorganisir 20 lawan 20 kelas all-out yang memperlihatkan kedisiplinan dan koordinasi taktis 4Bloods.',
-  },
-  {
-    id: '51reaver-pecah',
-    videoId: '9hhP8B0dDN8',
-    title: 'PERANG PANAS!! 4BLOODS VS 51REAVER PECAH DI ROXWOOD',
-    creator: 'Jane Elisha',
-    handle: '@Deciii08',
-    rank: 'UNDER OG',
-    category: 'TURF DEFENSE',
-    thumb: '/assets/streams/war_51reaver.jpg',
-    badge: 'CLUTCH DEFENSE',
-    description: 'Baku tembak jarak dekat mempertahankan blok pemukiman Roxwood dari serbuan skuad rival 51Reaver.',
-  },
-  {
-    id: 'ilham-return',
-    videoId: 'LwzAe09GEH8',
-    title: 'ILHAM THE RED BANDANA — 4BLOOD IS BACK LETS GO!',
-    creator: 'Ilham Joseph (Windah Basudara)',
-    handle: '@brandochillgames',
-    rank: 'ORIGINAL GANGSTER (OG)',
-    category: 'OG LEGEND',
-    thumb: '/assets/streams/ilham_back.jpg',
-    badge: 'LEGENDARY COMEBACK',
-    description: 'Momen legendaris kembalinya sang pendiri Ilham ke Los Santos, menyatukan kembali ribuan pendukung bendera merah.',
-  },
-  {
-    id: 'nahmier-cayo',
-    videoId: 'fToo-U7hAs8',
-    title: 'MISI MEMPEREBUTKAN PULAU CAYO!! KOMANDO PENUH 4BLOODS',
-    creator: 'Nahmier Davies',
-    handle: '@NAHMIER',
-    rank: 'UNDER OG // HOOD PRESIDENT',
-    category: 'TACTICAL',
-    thumb: '/assets/streams/nahmier_cayo.jpg',
-    badge: 'SPECIAL OPERATION',
-    description: 'Operasi amfibi gabungan merebut kendali pulau Cayo Perico dengan manuver serentak armada tempur 4Bloods.',
-  },
-];
-
-// High Council / Founding Pillars spotlight
-const KEY_PILLARS = [
-  {
-    name: 'Ilham Joseph',
-    rank: 'ORIGINAL GANGSTER (OG)',
-    role: 'Founding Father // The Red Bandana',
-    handle: '@brandochillgames',
-    avatar: '/assets/avatars/UCzjGSL8HMCRUi1sWH5VYGjQ.jpg',
-    fanart: '/assets/generated/fanart_council.webp',
-    bio: 'Simbol kepemimpinan moral dan magnet utama persatuan keluarga besar 4Bloods sejak era awal West Side Los Santos.',
-  },
-  {
-    name: 'Louis Ven',
-    rank: 'ORIGINAL GANGSTER (OG)',
-    role: 'Supreme Strategist & Diplomat',
-    handle: '@AkbarRangers',
-    avatar: '/assets/avatars/UC79cKOK5rTIABhvXxeINdHw.jpg',
-    fanart: '/assets/generated/fanart_roxwood.webp',
-    bio: 'Pilar strategi jangka panjang, negosiasi antarfaksi tingkat tinggi, dan penasihat dewan kehormatan 4Bloods.',
-  },
-  {
-    name: 'Muhammad Sumbul',
-    rank: 'ORIGINAL GANGSTER (OG)',
-    role: 'Vanguard Commander // Frontline Shield',
-    handle: '@Ritsutakaa',
-    avatar: '/assets/avatars/UCYjUv-UeZ36z6-qE1V2sL8g.jpg',
-    fanart: '/assets/generated/fanart_west_to_ssr.webp',
-    bio: 'Panglima garda terdepan dengan loyalitas baja yang memimpin pertahanan turf dan perlindungan keluarga.',
-  },
-  {
-    name: 'Deja Amari',
-    rank: 'ORIGINAL GANGSTER (OG)',
-    role: 'Tactical Operations & Community Pillar',
-    handle: '@DEJ4AA',
-    avatar: '/assets/avatars/UC0l8qL2FpYxO8cM7QkZ_zpw.jpg',
-    fanart: '/assets/generated/fanart_west_to_ssr.webp',
-    bio: 'Penggerak koordinasi operasional taktis, kegiatan amal sosial, dan perekat solidaritas seluruh divisi 4Bloods.',
-  },
-  {
-    name: 'Nahmier Davies',
-    rank: 'UNDER OG // HOOD PRESIDENT',
-    role: 'Field Commander & Hood Marshal',
-    handle: '@NAHMIER',
-    avatar: '/assets/avatars/UCRWc_9hD6v-7v2BqV0_8Y0Q.jpg',
-    fanart: '/assets/generated/fanart_roxwood.webp',
-    bio: 'Panglima operasional harian di Roxwood, memegang komando mutlak lapangan saat pertempuran dan patroli teritori.',
-  },
-  {
-    name: 'Asep Teriyaki',
-    rank: 'UNDER OG // TACTICAL STRIKE',
-    role: 'Top 1 Warrant // Gunner Specialist',
-    handle: '@BarevsKi',
-    avatar: '/assets/avatars/UCjM9N0F9P_a7jQ5QZ3k1k_w.jpg',
-    fanart: '/assets/generated/fanart_west_to_ssr.webp',
-    bio: 'Eksekutor lapangan paling berbahaya dengan presisi tembakan tinggi, disegani kawan maupun lawan di Los Santos.',
-  },
-];
-
-export default function OverviewPortalPage() {
+export default function CompanyProfilePage() {
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+  const [activeChapterIdx, setActiveChapterIdx] = useState(2); // Default Chapter III (SSR)
   const [heroLogoOption, setHeroLogoOption] = useState<'ORI' | '3D' | 'V1'>('ORI');
-  const [videoFilter, setVideoFilter] = useState<'ALL' | 'TURF DEFENSE' | 'WAR POV' | 'COMMUNITY' | 'TACTICAL'>('ALL');
-  const [videoModal, setVideoModal] = useState<{ videoId: string; title: string; streamer: string } | null>(null);
 
-  // Live Streamers Data
+  // Section 04: Vinyl Record Deck & Studio Tracklist State
+  const [trackFilter, setTrackFilter] = useState<'ALL' | 'MV' | 'DISS'>('ALL');
+  const [selectedTrackId, setSelectedTrackId] = useState<string>(OFFICIAL_MEDIA_TRACKS[0].id);
+
+  // Section 05: War Cinema Screen & Tactical Tape Reel State
+  const [warFilter, setWarFilter] = useState<'ALL' | 'WAR' | 'LORE'>('ALL');
+  const [selectedWarId, setSelectedWarId] = useState<string>(WAR_ARCHIVES[0].id);
+
+  // Modals
+  const [lightboxImage, setLightboxImage] = useState<{
+    src: string;
+    title: string;
+    subtitle?: string;
+  } | null>(null);
+  const [videoModal, setVideoModal] = useState<{
+    videoId: string;
+    title: string;
+    streamer: string;
+  } | null>(null);
+
+  // Live Streamers from our Strict Edge API
   const [streamers, setStreamers] = useState<any[]>(STREAMER_ROSTER);
   const [liveCount, setLiveCount] = useState<number | null>(null);
   const [isStreamersLoading, setIsStreamersLoading] = useState<boolean>(true);
+  const [rosterSearch, setRosterSearch] = useState('');
+  const [rosterFilter, setRosterFilter] = useState<
+    'ALL' | 'LIVE' | 'OG' | 'Under OG' | 'Young Bloods'
+  >('ALL');
+
+  // Gang Structure Interactive Showcase State
+  const [selectedShowcaseIdx, setSelectedShowcaseIdx] = useState<number>(0);
+  const [showcaseTierFilter, setShowcaseTierFilter] = useState<string>('ALL');
 
   const isDark = theme === 'dark';
 
   useEffect(() => {
     try {
-      const savedTheme = localStorage.getItem('4bg_theme') || localStorage.getItem('4bs_cam_theme');
+      const savedTheme =
+        localStorage.getItem('4bg_theme') || localStorage.getItem('4bs_cam_theme');
       if (savedTheme === 'light' || savedTheme === 'dark') {
         setTheme(savedTheme);
       }
@@ -234,7 +102,10 @@ export default function OverviewPortalPage() {
 
     setIsStreamersLoading(true);
     fetch('/api/streamers')
-      .then((res) => (res.ok ? res.json() : null))
+      .then((res) => {
+        if (!res.ok) throw new Error('API route failed');
+        return res.json();
+      })
       .then((data) => {
         if (data?.streamers && Array.isArray(data.streamers)) {
           const count =
@@ -245,8 +116,45 @@ export default function OverviewPortalPage() {
           setLiveCount(count);
         }
       })
-      .catch(() => {})
-      .finally(() => setIsStreamersLoading(false));
+      .catch(() => {
+        // Client direct fallback to Firebase RTDB if Vercel serverless fails
+        fetch('https://blood-186bd-default-rtdb.firebaseio.com/streamers.json')
+          .then((r) => r.json())
+          .then((fb) => {
+            if (fb && typeof fb === 'object') {
+              const liveCount = Object.values(fb).filter((v: any) => {
+                const isStale =
+                  v?.lastChecked &&
+                  Date.now() - new Date(v.lastChecked).getTime() > 8 * 60 * 60 * 1000;
+                return !isStale && Boolean(v?.isLive && v?.videoId);
+              }).length;
+              setLiveCount(liveCount);
+              setStreamers((prev) =>
+                prev.map((m) => {
+                  const s = fb[m.channelId];
+                  const isStale =
+                    s?.lastChecked &&
+                    Date.now() - new Date(s.lastChecked).getTime() > 8 * 60 * 60 * 1000;
+                  const isLive = !isStale && Boolean(s?.isLive && s?.videoId);
+                  return isLive
+                    ? {
+                        ...m,
+                        isLive: true,
+                        videoId: s.videoId,
+                        streamTitle: s.title || m.streamTitle || null,
+                        viewerCount: s.viewerCount || null,
+                        startTimestamp: s.actualStartTime || null,
+                      }
+                    : { ...m, isLive: false, videoId: null, streamTitle: null, viewerCount: null };
+                })
+              );
+            }
+          })
+          .catch(() => {});
+      })
+      .finally(() => {
+        setIsStreamersLoading(false);
+      });
   }, []);
 
   useEffect(() => {
@@ -272,715 +180,812 @@ export default function OverviewPortalPage() {
     } catch {}
   };
 
-  const filteredVideos = useMemo(() => {
-    if (videoFilter === 'ALL') return HIGHLIGHT_VIDEOS;
-    return HIGHLIGHT_VIDEOS.filter((v) => v.category === videoFilter);
-  }, [videoFilter]);
-
-  const liveStreamersList = useMemo(() => {
-    return streamers.filter((s) => s.isLive);
+  const currentChapter = LORE_CHAPTERS[activeChapterIdx];
+  const liveMembers = streamers.filter((s) => s.isLive);
+  const totalLiveViewers = useMemo(() => {
+    return streamers.reduce(
+      (acc, s) => acc + (s.isLive && typeof s.viewerCount === 'number' ? s.viewerCount : 0),
+      0
+    );
   }, [streamers]);
+
+  // Filtered MV & Diss Tracks
+  const filteredTracks = OFFICIAL_MEDIA_TRACKS.filter((track) => {
+    if (trackFilter === 'MV') return track.type !== 'DISS TRACK';
+    if (trackFilter === 'DISS') return track.type === 'DISS TRACK';
+    return true;
+  });
+
+  const activeTrack =
+    filteredTracks.find((t) => t.id === selectedTrackId) ||
+    filteredTracks[0] ||
+    OFFICIAL_MEDIA_TRACKS[0];
+
+  // Filtered War Tapes
+  const filteredWarArchives = WAR_ARCHIVES.filter((war) => {
+    if (warFilter === 'WAR') {
+      return war.category.includes('WAR') || war.category.includes('PURSUIT');
+    }
+    if (warFilter === 'LORE') {
+      return !war.category.includes('WAR') && !war.category.includes('PURSUIT');
+    }
+    return true;
+  });
+
+  const activeWarTape =
+    filteredWarArchives.find((w) => w.id === selectedWarId) ||
+    filteredWarArchives[0] ||
+    WAR_ARCHIVES[0];
+
+  // Filtered 54 Streamers (Prioritize subscribers sort)
+  const filteredRoster = useMemo(() => {
+    return streamers
+      .filter((m) => {
+        const q = rosterSearch.toLowerCase();
+        const matchName =
+          m.name.toLowerCase().includes(q) ||
+          (m.handle && m.handle.toLowerCase().includes(q)) ||
+          (m.role && m.role.toLowerCase().includes(q));
+        if (!matchName) return false;
+        if (rosterFilter === 'LIVE') return Boolean(m.isLive);
+        if (rosterFilter === 'OG') return m.rank === 'OG';
+        if (rosterFilter === 'Under OG') return m.rank === 'Under OG';
+        if (rosterFilter === 'Young Bloods') return m.rank === 'Young Bloods';
+        return true;
+      })
+      .sort((a, b) => {
+        const subDiff = (b.subscribers || 0) - (a.subscribers || 0);
+        if (subDiff !== 0) return subDiff;
+        return a.name.localeCompare(b.name);
+      });
+  }, [streamers, rosterSearch, rosterFilter]);
+
+  // Rank hierarchy priority ordering
+  const RANK_PRIORITY: Record<string, number> = {
+    'OG': 1,
+    'Under OG': 2,
+    'Young Bloods': 3,
+    'Member': 4,
+  };
+
+  // Complete Syndicate Roster ordered by subscribers first (All 54 Members)
+  const allSpotlightCreators = useMemo(() => {
+    return [...streamers].sort((a, b) => {
+      const subDiff = (b.subscribers || 0) - (a.subscribers || 0);
+      if (subDiff !== 0) return subDiff;
+      const pA = RANK_PRIORITY[a.rank] ?? 99;
+      const pB = RANK_PRIORITY[b.rank] ?? 99;
+      if (pA !== pB) return pA - pB;
+      return a.name.localeCompare(b.name);
+    });
+  }, [streamers]);
+
+  const showcaseList =
+    showcaseTierFilter === 'ALL'
+      ? allSpotlightCreators
+      : allSpotlightCreators.filter((m: any) => m.rank === showcaseTierFilter);
+
+  const activeShowcaseMember =
+    showcaseList[selectedShowcaseIdx] || showcaseList[0] || allSpotlightCreators[0];
+
+  const getMemberShowcaseArtwork = (member: any) => {
+    if (!member) return '/assets/generated/fanart_council.webp';
+    return (
+      DEFAULT_SHOWCASE_FANARTS[member.name] ||
+      (member.rank === 'OG'
+        ? '/assets/generated/fanart_council.webp'
+        : member.rank === 'Under OG'
+          ? '/assets/generated/fanart_roxwood.webp'
+          : '/assets/generated/fanart_west_to_ssr.webp')
+    );
+  };
 
   return (
     <div
-      className={`min-h-screen font-body transition-colors duration-300 selection:bg-red-600 selection:text-white ${
-        isDark ? 'bg-[#080507] text-[#EDE7DE]' : 'bg-[#FAF8F5] text-zinc-900'
+      className={`theme-smooth min-h-screen relative selection:bg-red-600 selection:text-white ${
+        isDark ? 'bg-[#070506] text-[#F4F4F6]' : 'bg-[#F4F1EC] text-[#141113]'
       }`}
     >
-      <Navbar
-        liveCount={liveCount}
-        isLoadingLive={isStreamersLoading}
-        theme={theme}
-        onToggleTheme={toggleTheme}
-      />
+      {/* Clean Top Navbar */}
+      <Navbar liveCount={liveCount} isLoadingLive={isStreamersLoading} theme={theme} onToggleTheme={toggleTheme} />
+
+      {/* Dedicated Bottom-Left Floating Theme Switcher (Separate from Music Player, Smooth Transition) */}
+      <div className="fixed bottom-4 left-4 sm:bottom-6 sm:left-6 z-40 select-none">
+        <button
+          onClick={toggleTheme}
+          className={`group p-1.5 border shadow-[0_15px_40px_rgba(0,0,0,0.65)] flex items-center gap-2 cursor-pointer backdrop-blur-xl ${
+            isDark
+              ? 'bg-[#120A0E]/95 border-red-500/40 text-white hover:border-red-500'
+              : 'bg-white/95 border-zinc-300 text-zinc-900 hover:border-red-500'
+          }`}
+          title={isDark ? 'Ganti ke Light Mode (Transisi Halus)' : 'Ganti ke Dark Mode (Transisi Halus)'}
+        >
+          <span
+            className={`w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center transition-transform duration-500 ${
+              isDark
+                ? 'bg-red-600 text-white rotate-0'
+                : 'bg-amber-400 text-black rotate-180'
+            }`}
+          >
+            {isDark ? <Moon className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> : <Sun className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
+          </span>
+          <div className="hidden sm:block pr-2.5 text-left">
+            <div className="text-[8px] font-mono-tech text-red-500 font-bold uppercase tracking-widest leading-none">
+              MODE TAMPILAN
+            </div>
+            <div className="text-[11px] font-mono-tech font-bold uppercase tracking-wider mt-0.5">
+              {isDark ? 'DARK // OBSIDIAN' : 'LIGHT // STREET'}
+            </div>
+          </div>
+        </button>
+      </div>
 
       {/* =====================================================================
-          HERO SECTION — 4BLOODS SYNDICATE SHOWCASE
+          HERO BANNER ΓÇö EXACT 1 VIEWPORT HEIGHT (100dvh)
       ===================================================================== */}
       <section
-        className={`relative min-h-[92vh] pt-24 pb-16 flex flex-col justify-center overflow-hidden border-b ${
+        className={`relative min-h-[100dvh] lg:h-[100dvh] pt-16 sm:pt-20 flex flex-col justify-between overflow-hidden border-b ${
           isDark
             ? 'bg-[#090306] border-red-500/25'
-            : 'bg-gradient-to-b from-[#FAF8F5] via-[#EDE7DE] to-[#F5F0E8] border-zinc-300'
+            : 'bg-gradient-to-b from-[#FAF8F5] via-[#EDE7DE] to-[#F5F0E8] border-zinc-200'
         }`}
       >
-        {/* Ambient Hero Backdrop */}
+        {/* Prominent High-Visibility Hero Wallpaper (Vivid, Clear & Cinematic) */}
         <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
           <img
             src="/assets/hero_bg.webp"
             alt="Hero Background"
             className={`w-full h-full object-cover object-center ${
-              isDark ? 'opacity-70 brightness-90 contrast-105' : 'opacity-25 brightness-105'
+              isDark ? 'opacity-75 brightness-90 contrast-105' : 'opacity-40 brightness-100'
             }`}
           />
           <div
             className={`absolute inset-0 ${
               isDark
-                ? 'bg-gradient-to-b from-black/60 via-black/40 to-[#080507]'
+                ? 'bg-gradient-to-b from-black/60 via-black/40 to-[#090306]/95'
                 : 'bg-gradient-to-b from-white/70 via-white/50 to-[#FAF8F5]'
             }`}
           />
           <div
-            className={`absolute -top-32 -left-32 w-96 h-96 rounded-full blur-[140px] pointer-events-none ${
-              isDark ? 'bg-red-600/20' : 'bg-red-500/10'
+            style={{
+              background: isDark
+                ? 'radial-gradient(circle at 50% 50%, rgba(0,0,0,0.05) 0%, rgba(9,3,6,0.7) 80%)'
+                : 'radial-gradient(circle at 50% 50%, rgba(255,255,255,0) 0%, rgba(250,248,245,0.45) 80%)',
+            }}
+            className="absolute inset-0 pointer-events-none"
+          />
+          <div
+            className={`absolute inset-0 ${
+              isDark ? 'bg-tactical-grid opacity-15' : 'bg-cam-light-grid opacity-20'
             }`}
           />
           <div
-            className={`absolute top-1/2 -right-32 w-[500px] h-[500px] rounded-full blur-[160px] pointer-events-none ${
-              isDark ? 'bg-red-900/25' : 'bg-red-400/10'
+            className={`absolute -top-32 -left-32 w-96 h-96 rounded-full blur-[120px] pointer-events-none ${
+              isDark ? 'bg-red-600/15' : 'bg-red-500/5'
+            }`}
+          />
+          <div
+            className={`absolute top-1/2 -right-32 w-[500px] h-[500px] rounded-full blur-[140px] pointer-events-none ${
+              isDark ? 'bg-red-900/20' : 'bg-red-400/10'
             }`}
           />
         </div>
 
-        <div className="max-w-[1520px] mx-auto px-4 sm:px-8 relative z-10 w-full py-8">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-center">
-            {/* Left Col: Core Narrative & Actions (7 Cols) */}
-            <div className="lg:col-span-7 space-y-6">
-              <div className="flex flex-wrap items-center gap-2.5">
-                <div className="inline-flex items-center gap-2 px-3 py-1 bg-red-600/15 border border-red-500/30 text-red-500 text-xs font-mono-tech font-bold uppercase tracking-widest backdrop-blur-md">
-                  <Flame className="w-3.5 h-3.5" />
-                  <span>THE 4BLOODS SYNDICATE // IME ROLEPLAY</span>
+        {/* Main Hero Content */}
+        <div className="relative z-10 max-w-[1520px] mx-auto px-4 sm:px-8 w-full my-auto py-3 sm:py-5">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-8 items-center">
+            {/* Left Column: Refined Editorial Typography & CTAs */}
+            <div className="lg:col-span-7 space-y-4 sm:space-y-5 text-center lg:text-left">
+              {/* Status Pill */}
+              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-2.5">
+                <div
+                  className={`inline-flex items-center gap-2 px-3 py-1 border text-xs font-mono-tech tracking-wider uppercase backdrop-blur-md ${
+                    isDark
+                      ? 'bg-[#12080B]/90 border-red-500/30 text-zinc-200'
+                      : 'bg-white/90 border-red-500/30 text-zinc-900 shadow-sm'
+                  }`}
+                >
+                  <span className="w-2 h-2 rounded-full bg-red-600 animate-pulse" />
+                  <span className="font-bold text-red-500">IME RP</span>
+                  <span className="text-zinc-500">//</span>
+                  <span>SOUTH SIDE ROXWOOD 1051ΓÇô1052</span>
                 </div>
-                {liveCount !== null && liveCount > 0 && (
+
+                {isStreamersLoading ? (
+                  <div className="inline-flex items-center gap-2 px-3 py-1 bg-red-950/60 border border-red-500/30 text-red-300 text-[11px] font-mono-tech font-bold uppercase tracking-wider animate-pulse">
+                    <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-ping" />
+                    <span>MEMINDAI SIARAN LIVE...</span>
+                  </div>
+                ) : (liveCount || 0) > 0 ? (
                   <Link
                     href="/cam"
-                    className="inline-flex items-center gap-1.5 px-3 py-1 bg-red-600 text-white text-xs font-mono-tech font-bold uppercase tracking-wider shadow-[0_0_15px_rgba(220,38,38,0.6)] animate-pulse"
+                    className="inline-flex items-center gap-2 px-3 py-1 bg-red-600/90 hover:bg-red-500 text-white text-[11px] font-mono-tech font-bold uppercase tracking-wider transition-colors cursor-pointer"
                   >
-                    <span className="w-1.5 h-1.5 rounded-full bg-white" />
-                    <span>{liveCount} STREAMER SEDANG LIVE</span>
+                    <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />
+                    <span>{liveCount} STREAMER LIVE</span>
+                    {totalLiveViewers > 0 && (
+                      <span className="border-l border-white/30 pl-2 text-red-100 font-normal flex items-center gap-1">
+                        <Users className="w-3 h-3" />
+                        <span>{totalLiveViewers.toLocaleString('id-ID')} PENONTON</span>
+                      </span>
+                    )}
                   </Link>
-                )}
+                ) : null}
               </div>
 
-              <div className="space-y-2">
+              {/* Bold Headline & Clean Tagline */}
+              <div className="space-y-3">
+                <div className="text-[11px] sm:text-xs font-mono-tech text-red-500 font-bold tracking-[0.3em] uppercase">
+                  FOUR BLOODS GANG (4BG) // OFFICIAL PORTAL
+                </div>
+
                 <h1
-                  className={`font-display text-5xl sm:text-7xl xl:text-8xl tracking-wider uppercase leading-[0.92] ${
+                  className={`font-display text-4xl sm:text-6xl md:text-7xl xl:text-[84px] leading-[0.92] tracking-wider uppercase ${
                     isDark ? 'text-white' : 'text-zinc-950'
                   }`}
                 >
-                  FOUR BLOODS <span className="text-red-600 drop-shadow-[0_0_35px_rgba(220,38,38,0.35)]">GANG</span>
+                  BLOOD IN,<br />
+                  <span className="text-red-600 drop-shadow-[0_0_35px_rgba(220,38,38,0.35)]">
+                    BLOOD OUT
+                  </span>
                 </h1>
-                <p className="font-mono-tech text-xs sm:text-sm tracking-[0.25em] text-red-500 font-bold uppercase">
-                  PORTOFOLIO SINDIKAT, ARSIP WIKI &amp; DIREKTORI RESMI
+
+                <p className="font-script text-xl sm:text-2xl lg:text-3xl text-red-500 drop-shadow-[0_2px_15px_rgba(220,38,38,0.4)] max-w-2xl mx-auto lg:mx-0">
+                  &ldquo;Hidup dalam darah, berjalan bersama keluarga, dan mati demi 4Bloods.&rdquo;
                 </p>
               </div>
 
-              <p
-                className={`text-sm sm:text-base font-mono-tech leading-relaxed max-w-2xl ${
-                  isDark ? 'text-zinc-300' : 'text-zinc-700'
-                }`}
-              >
-                Pusat data terpadu keluarga besar <strong>Four Bloods Gang (4BG)</strong> di server <strong>IME Roleplay</strong>:
-                arsip sejarah 3 chapter, struktur dewan pendiri (High Council), kompilasi video perang teramai di YouTube,
-                koleksi musik anthem, serta direktori 54 kreator resmi.
-              </p>
-
-              {/* Action Buttons Hub */}
-              <div className="flex flex-wrap items-center gap-3 pt-2">
-                <Link
-                  href="/wiki"
-                  className="px-6 py-3.5 bg-red-600 hover:bg-red-500 text-white font-mono-tech text-xs font-bold uppercase tracking-widest flex items-center gap-2.5 transition-all shadow-[0_0_25px_rgba(220,38,38,0.45)] hover:scale-105"
-                >
-                  <BookOpen className="w-4 h-4" />
-                  <span>JELAJAHI BLOODS WIKI (01)</span>
-                  <ArrowRight className="w-4 h-4" />
-                </Link>
-
-                <Link
-                  href="/community"
-                  className={`px-6 py-3.5 font-mono-tech text-xs font-bold uppercase tracking-widest flex items-center gap-2.5 transition-all border ${
-                    isDark
-                      ? 'bg-white/5 hover:bg-white/10 text-white border-white/20 hover:border-red-500'
-                      : 'bg-white hover:bg-zinc-100 text-zinc-900 border-zinc-300 shadow-sm'
-                  }`}
-                >
-                  <Users className="w-4 h-4 text-red-500" />
-                  <span>COMMUNITY &amp; ACHIEVEMENTS (02)</span>
-                </Link>
-
+              {/* Direct Action CTAs */}
+              <div className="flex flex-wrap items-center justify-center lg:justify-start gap-3.5 pt-0.5">
                 <Link
                   href="/cam"
-                  className={`px-5 py-3.5 font-mono-tech text-xs font-bold uppercase tracking-widest flex items-center gap-2 transition-all border ${
-                    isDark
-                      ? 'bg-black/60 hover:bg-red-600 text-zinc-300 hover:text-white border-white/15'
-                      : 'bg-zinc-100 hover:bg-red-600 hover:text-white text-zinc-800 border-zinc-300'
-                  }`}
+                  className="px-7 py-3.5 bg-red-600 hover:bg-red-500 text-white font-mono-tech text-xs sm:text-sm font-bold tracking-[0.18em] uppercase transition-all shadow-[0_0_30px_rgba(220,38,38,0.35)] hover:shadow-[0_0_40px_rgba(220,38,38,0.6)] flex items-center gap-2.5 cursor-pointer group"
                 >
-                  <Tv className="w-4 h-4" />
-                  <span>MULTI-POV CAM</span>
+                  <Tv className="w-4 h-4 transition-transform group-hover:scale-110" />
+                  <span>
+                    BUKA 4BLOODS CAM{' '}
+                    {isStreamersLoading
+                      ? '(MEMINDAI...)'
+                      : typeof liveCount === 'number' && liveCount > 0
+                        ? `(${liveCount} LIVE)`
+                        : '(MULTI-POV)'}
+                  </span>
                 </Link>
+
+                <button
+                  onClick={() =>
+                    setVideoModal({
+                      videoId: 'wJyovquNR24',
+                      title: 'THIS IS 4BLOODS (Official Music Video)',
+                      streamer: '4BLOODS OFFICIAL ANTHEM // IME RP',
+                    })
+                  }
+                  className={`px-6 py-3.5 border font-mono-tech text-xs sm:text-sm font-bold tracking-[0.16em] uppercase transition-colors flex items-center gap-2.5 cursor-pointer ${
+                    isDark
+                      ? 'bg-[#120A0D] hover:bg-white hover:text-black text-white border-white/15'
+                      : 'bg-white hover:bg-zinc-900 hover:text-white text-zinc-900 border-zinc-300 shadow-sm'
+                  }`}
+                >
+                  <Play className="w-4 h-4 text-red-500 fill-red-500" />
+                  <span>TONTON MV ANTHEM</span>
+                </button>
               </div>
 
-              {/* Quick Jump Pills */}
-              <div className="pt-4 flex flex-wrap items-center gap-2 text-xs font-mono-tech">
-                <span className={`text-[11px] uppercase ${isDark ? 'text-zinc-500' : 'text-zinc-500'}`}>
-                  LOMPAT KE HIGHLIGHT:
-                </span>
-                <a
-                  href="#metrics"
-                  className={`px-2.5 py-1 border transition-colors ${
-                    isDark ? 'bg-white/5 border-white/10 text-zinc-400 hover:text-white' : 'bg-zinc-100 border-zinc-300 text-zinc-700 hover:text-black'
-                  }`}
-                >
-                  #PORTOFOLIO
-                </a>
-                <a
-                  href="#council"
-                  className={`px-2.5 py-1 border transition-colors ${
-                    isDark ? 'bg-white/5 border-white/10 text-zinc-400 hover:text-white' : 'bg-zinc-100 border-zinc-300 text-zinc-700 hover:text-black'
-                  }`}
-                >
-                  #DEWAN-OG
-                </a>
-                <a
-                  href="#eras"
-                  className={`px-2.5 py-1 border transition-colors ${
-                    isDark ? 'bg-white/5 border-white/10 text-zinc-400 hover:text-white' : 'bg-zinc-100 border-zinc-300 text-zinc-700 hover:text-black'
-                  }`}
-                >
-                  #3-CHAPTER
-                </a>
-                <a
-                  href="#youtube-war"
-                  className={`px-2.5 py-1 border transition-colors ${
-                    isDark ? 'bg-white/5 border-white/10 text-zinc-400 hover:text-white' : 'bg-zinc-100 border-zinc-300 text-zinc-700 hover:text-black'
-                  }`}
-                >
-                  #REKAMAN-VIRAL
-                </a>
-                <a
-                  href="#media-culture"
-                  className={`px-2.5 py-1 border transition-colors ${
-                    isDark ? 'bg-white/5 border-white/10 text-zinc-400 hover:text-white' : 'bg-zinc-100 border-zinc-300 text-zinc-700 hover:text-black'
-                  }`}
-                >
-                  #MUSIK-MERCH
-                </a>
+              {/* Sleek Minimalist Metadata Bar */}
+              <div
+                className={`pt-3 sm:pt-4 flex items-center justify-center lg:justify-start gap-6 sm:gap-10 border-t ${
+                  isDark ? 'border-white/10' : 'border-zinc-300/80'
+                }`}
+              >
+                <div>
+                  <div className="text-[10px] font-mono-tech text-red-500 font-bold uppercase tracking-widest">
+                    TURF
+                  </div>
+                  <div
+                    className={`font-display text-xl sm:text-2xl tracking-wide mt-0.5 ${
+                      isDark ? 'text-white' : 'text-zinc-900'
+                    }`}
+                  >
+                    SSR 1051ΓÇô1052
+                  </div>
+                </div>
+
+                <div className={`w-px h-7 ${isDark ? 'bg-white/10' : 'bg-zinc-300'}`} />
+
+                <div>
+                  <div className="text-[10px] font-mono-tech text-red-500 font-bold uppercase tracking-widest">
+                    KOMANDO
+                  </div>
+                  <div
+                    className={`font-display text-xl sm:text-2xl tracking-wide mt-0.5 ${
+                      isDark ? 'text-white' : 'text-zinc-900'
+                    }`}
+                  >
+                    HIGH COUNCIL
+                  </div>
+                </div>
+
+                <div className={`w-px h-7 ${isDark ? 'bg-white/10' : 'bg-zinc-300'}`} />
+
+                <div>
+                  <div className="text-[10px] font-mono-tech text-red-500 font-bold uppercase tracking-widest">
+                    ROSTER
+                  </div>
+                  <div
+                    className={`font-display text-xl sm:text-2xl tracking-wide mt-0.5 ${
+                      isDark ? 'text-white' : 'text-zinc-900'
+                    }`}
+                  >
+                    54 STREAMERS
+                  </div>
+                </div>
               </div>
             </div>
 
-            {/* Right Col: Interactive 3D Emblem Stage (5 Cols) */}
+            {/* Right Column: 4Bloods Vintage Heritage V1 Crest */}
             <div className="lg:col-span-5 flex flex-col items-center justify-center relative">
+              <ThreeLogoHero
+                isDark={isDark}
+                onClick={() =>
+                  setLightboxImage({
+                    src: '/assets/generated/crest_v1_3d.webp',
+                    title: '4BLOODS GANG ΓÇö 3D HERITAGE V1 EMBLEM',
+                    subtitle: 'IME Roleplay // South Side Roxwood (Postal 1051ΓÇô1052)',
+                  })
+                }
+                className="w-64 h-64 sm:w-80 sm:h-80 md:w-[360px] md:h-[360px] lg:w-[420px] lg:h-[420px] xl:w-[460px] xl:h-[460px]"
+              />
+
+              {/* Dedicated Heritage V1 Label Badge */}
               <div
-                className={`relative w-full max-w-md aspect-square rounded-full flex items-center justify-center p-6 border ${
+                className={`mt-3 inline-flex items-center gap-2 px-3 py-1 border backdrop-blur-md rounded-xs ${
                   isDark
-                    ? 'bg-gradient-to-b from-[#180A10]/80 to-[#0A0407]/90 border-red-500/30 shadow-[0_0_60px_rgba(220,38,38,0.25)]'
-                    : 'bg-gradient-to-b from-white to-zinc-100 border-zinc-300 shadow-2xl'
+                    ? 'bg-black/60 border-white/10 text-zinc-300'
+                    : 'bg-white/80 border-zinc-300 text-zinc-800 shadow-sm'
                 }`}
               >
-                {heroLogoOption === '3D' ? (
-                  <ThreeLogoHero isDark={isDark} className="w-full h-full" />
-                ) : heroLogoOption === 'V1' ? (
-                  <img
-                    src="/assets/generated/crest_v1_3d.webp"
-                    alt="4Bloods Crest V1"
-                    className="w-4/5 h-4/5 object-contain drop-shadow-[0_0_30px_rgba(220,38,38,0.5)] animate-in fade-in"
-                  />
-                ) : (
-                  <img
-                    src="/assets/logo_v2.png"
-                    alt="4Bloods Official Crest"
-                    className="w-4/5 h-4/5 object-contain drop-shadow-[0_0_35px_rgba(220,38,38,0.5)] animate-in fade-in"
-                  />
-                )}
-
-                {/* Subtle spinning glow ring */}
-                <div className="absolute inset-0 rounded-full border border-red-500/20 pointer-events-none" />
-              </div>
-
-              {/* Logo Variant Switcher */}
-              <div
-                className={`mt-4 inline-flex items-center gap-1 p-1 border rounded-xs font-mono-tech text-[10px] ${
-                  isDark ? 'bg-black/60 border-white/15' : 'bg-white border-zinc-300 shadow-sm'
-                }`}
-              >
-                <button
-                  onClick={() => setHeroLogoOption('ORI')}
-                  className={`px-2.5 py-1 uppercase font-bold cursor-pointer transition-all ${
-                    heroLogoOption === 'ORI'
-                      ? 'bg-red-600 text-white'
-                      : isDark
-                        ? 'text-zinc-400 hover:text-white'
-                        : 'text-zinc-600 hover:text-black'
-                  }`}
-                >
-                  LOGO RESMI
-                </button>
-                <button
-                  onClick={() => setHeroLogoOption('3D')}
-                  className={`px-2.5 py-1 uppercase font-bold cursor-pointer transition-all ${
-                    heroLogoOption === '3D'
-                      ? 'bg-red-600 text-white'
-                      : isDark
-                        ? 'text-zinc-400 hover:text-white'
-                        : 'text-zinc-600 hover:text-black'
-                  }`}
-                >
-                  INTERACTIVE 3D
-                </button>
-                <button
-                  onClick={() => setHeroLogoOption('V1')}
-                  className={`px-2.5 py-1 uppercase font-bold cursor-pointer transition-all ${
-                    heroLogoOption === 'V1'
-                      ? 'bg-red-600 text-white'
-                      : isDark
-                        ? 'text-zinc-400 hover:text-white'
-                        : 'text-zinc-600 hover:text-black'
-                  }`}
-                >
-                  CREST CLASSIC
-                </button>
+                <span className="w-1.5 h-1.5 rounded-full bg-red-600 animate-pulse" />
+                <span className="text-[10px] font-mono-tech font-bold uppercase tracking-widest text-red-500">
+                  HERITAGE V1
+                </span>
+                <span className="text-zinc-500">//</span>
+                <span className="text-[10px] font-mono-tech tracking-wider">
+                  3D OFFICIAL CREST
+                </span>
               </div>
             </div>
+          </div>
+        </div>
+
+        {/* STREETWEAR MARQUEE TAPE ΓÇö Sits exactly at bottom of 100dvh Hero */}
+        <div className="relative z-10 w-full bg-red-600 text-white py-2 sm:py-2.5 border-t border-red-400/30 overflow-hidden select-none shrink-0">
+          <div className="animate-marquee flex items-center gap-10 text-xs font-mono-tech font-bold tracking-[0.28em] uppercase">
+            {Array.from({ length: 2 }).map((_, idx) => (
+              <React.Fragment key={idx}>
+                <span className="font-gothic text-base tracking-normal">4BG</span>
+                <span>FOUR BLOODS GANG // IME ROLEPLAY</span>
+                <span>Γ£ª</span>
+                <span>SOUTH SIDE ROXWOOD // POSTAL 1051ΓÇô1052</span>
+                <span>Γ£ª</span>
+                <span>BLOOD IN, BLOOD OUT</span>
+                <span>Γ£ª</span>
+                <span>54 OFFICIAL STREAMERS</span>
+                <span>Γ£ª</span>
+              </React.Fragment>
+            ))}
           </div>
         </div>
       </section>
 
       {/* =====================================================================
-          HIGHLIGHT 01: SYNDICATE PORTFOLIO BENTO METRICS (PORTO 4BLOODS)
+          TWO MAJOR GATEWAYS: 01 WIKI & ARCHIVE  vs  02 COMMUNITY & ACHIEVEMENTS
       ===================================================================== */}
-      <section
-        id="metrics"
-        className={`py-20 border-b ${
-          isDark ? 'bg-[#0B0609] border-white/10' : 'bg-[#F4EFEA] border-zinc-300'
-        }`}
-      >
-        <div className="max-w-[1520px] mx-auto px-4 sm:px-8 space-y-10">
-          <div className="flex flex-col lg:flex-row items-start lg:items-end justify-between gap-6">
-            <div className="space-y-2">
-              <div className="text-xs font-mono-tech text-red-500 font-bold uppercase tracking-[0.25em] flex items-center gap-2">
-                <Award className="w-4 h-4" />
-                <span>HIGHLIGHT 01 // PORTOFOLIO &amp; SKALA KEKUATAN</span>
+      <section className={`py-16 border-b ${isDark ? 'bg-[#090507] border-white/10' : 'bg-[#F2ECE4] border-zinc-300'}`}>
+        <div className="max-w-[1520px] mx-auto px-4 sm:px-8 space-y-8">
+          <div className="flex flex-col md:flex-row items-start md:items-end justify-between gap-4">
+            <div>
+              <div className="text-xs font-mono-tech text-red-500 font-bold uppercase tracking-[0.25em]">
+                DUA PILAR UTAMA EKOSISTEM
               </div>
-              <h2
-                className={`font-display text-4xl sm:text-6xl uppercase tracking-wider ${
-                  isDark ? 'text-white' : 'text-zinc-950'
-                }`}
-              >
-                FACTION <span className="text-red-600">PORTFOLIO</span>
+              <h2 className={`font-display text-4xl sm:text-5xl tracking-wider uppercase mt-1 ${isDark ? 'text-white' : 'text-zinc-950'}`}>
+                PILIH GERBANG <span className="text-red-600">4BLOODS</span>
               </h2>
             </div>
-            <p className={`text-xs sm:text-sm font-mono-tech max-w-lg ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>
-              Rekam jejak dominasi faksi: dari jumlah kreator siaran langsung terbanyak di IME,
-              komunitas beranggotakan ribuan warga, hingga supremasi teritori South Side Roxwood.
+            <p className={`text-xs font-mono-tech max-w-md ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>
+              Eksplorasi arsip mendalam sejarah lore faksi di Wiki resmi, atau selami skala masif komunitas, pencapaian turnamen, dan media sosial.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-            {/* Card 01: Streamers */}
-            <div
-              className={`p-6 border flex flex-col justify-between transition-all hover:-translate-y-1 ${
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {/* Gateway 01: 4Bloods Wiki & History */}
+            <Link
+              href="/wiki"
+              className={`group p-8 sm:p-10 border transition-all duration-300 relative overflow-hidden flex flex-col justify-between min-h-[320px] cursor-pointer ${
                 isDark
-                  ? 'bg-[#12080C] border-red-500/25 shadow-lg hover:border-red-500/60'
-                  : 'bg-white border-zinc-300 shadow-md hover:shadow-xl'
+                  ? 'bg-gradient-to-br from-[#1A080D] via-[#0E0407] to-black border-red-500/30 hover:border-red-500 hover:shadow-[0_0_40px_rgba(220,38,38,0.3)]'
+                  : 'bg-white border-zinc-300 hover:border-red-500 shadow-md hover:shadow-xl'
               }`}
             >
-              <div className="space-y-3">
-                <div className="w-10 h-10 rounded-full bg-red-600/15 text-red-500 flex items-center justify-center">
-                  <Tv className="w-5 h-5" />
+              <div className="space-y-4 relative z-10">
+                <div className="flex items-center justify-between">
+                  <span className="px-3 py-1 bg-red-600 text-white text-[10px] font-mono-tech font-bold uppercase tracking-widest">
+                    MENU 01 // ENSiKLOPEDIA
+                  </span>
+                  <span className="text-xs font-mono-tech text-red-500 font-bold">EST. 23 JUNI 2025</span>
                 </div>
-                <div className="font-display text-4xl sm:text-5xl text-red-600 leading-none">54</div>
-                <div className="font-display text-xl uppercase tracking-wider">OFFICIAL STREAMERS</div>
-                <p className={`text-xs font-mono-tech ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>
-                  Roster terverifikasi YouTuber dan kreator siaran langsung keluarga besar 4Bloods.
+                <h3 className={`font-display text-4xl sm:text-5xl tracking-wider uppercase group-hover:text-red-500 transition-colors ${isDark ? 'text-white' : 'text-zinc-900'}`}>
+                  4BLOODS WIKI & ARCHIVE
+                </h3>
+                <p className={`text-xs sm:text-sm font-mono-tech leading-relaxed ${isDark ? 'text-zinc-300' : 'text-zinc-600'}`}>
+                  Kisah awal mula pekerja burger (Ilham, Louis, Deja, Sumbul), migrasi 3 chapter (West Side &rarr; Jamestown &rarr; Roxwood), hierarki sindikat, kode etik Blood In Blood Out, serta arsip rekaman perang bersejarah.
                 </p>
               </div>
-              <Link
-                href="/community"
-                className="mt-4 pt-3 border-t border-current/10 inline-flex items-center gap-1.5 text-xs font-mono-tech font-bold text-red-500 hover:underline"
-              >
-                <span>LIHAT DIREKTORI</span>
-                <ChevronRight className="w-3.5 h-3.5" />
-              </Link>
-            </div>
 
-            {/* Card 02: Discord Army */}
-            <div
-              className={`p-6 border flex flex-col justify-between transition-all hover:-translate-y-1 ${
-                isDark
-                  ? 'bg-[#12080C] border-red-500/25 shadow-lg hover:border-red-500/60'
-                  : 'bg-white border-zinc-300 shadow-md hover:shadow-xl'
-              }`}
-            >
-              <div className="space-y-3">
-                <div className="w-10 h-10 rounded-full bg-indigo-600/15 text-indigo-500 flex items-center justify-center">
-                  <Users className="w-5 h-5" />
-                </div>
-                <div className="font-display text-4xl sm:text-5xl text-indigo-500 leading-none">7.2K+</div>
-                <div className="font-display text-xl uppercase tracking-wider">DISCORD CITIZENS</div>
-                <p className={`text-xs font-mono-tech ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>
-                  Komunitas gang terbesar di IME Roleplay dengan aktivitas pengumuman dan voice aktif.
-                </p>
+              <div className="pt-6 border-t border-white/10 flex items-center justify-between relative z-10">
+                <span className="text-xs font-mono-tech text-red-500 font-bold tracking-widest uppercase flex items-center gap-2 group-hover:translate-x-1 transition-transform">
+                  <span>MASUK KE WIKI & SEJARAH</span>
+                  <span>&rarr;</span>
+                </span>
+                <span className="text-[10px] font-mono-tech text-zinc-500">ORIGIN ┬╖ CHAPTERS ┬╖ HIERARCHY ┬╖ WARS</span>
               </div>
-              <a
-                href="https://discord.gg/4bloods"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-4 pt-3 border-t border-current/10 inline-flex items-center gap-1.5 text-xs font-mono-tech font-bold text-indigo-500 hover:underline"
-              >
-                <span>GABUNG DISCORD</span>
-                <ExternalLink className="w-3.5 h-3.5" />
-              </a>
-            </div>
+            </Link>
 
-            {/* Card 03: Territory */}
-            <div
-              className={`p-6 border flex flex-col justify-between transition-all hover:-translate-y-1 ${
+            {/* Gateway 02: Community & Achievements */}
+            <Link
+              href="/community"
+              className={`group p-8 sm:p-10 border transition-all duration-300 relative overflow-hidden flex flex-col justify-between min-h-[320px] cursor-pointer ${
                 isDark
-                  ? 'bg-[#12080C] border-red-500/25 shadow-lg hover:border-red-500/60'
-                  : 'bg-white border-zinc-300 shadow-md hover:shadow-xl'
+                  ? 'bg-gradient-to-br from-[#1A080D] via-[#0E0407] to-black border-red-500/30 hover:border-red-500 hover:shadow-[0_0_40px_rgba(220,38,38,0.3)]'
+                  : 'bg-white border-zinc-300 hover:border-red-500 shadow-md hover:shadow-xl'
               }`}
             >
-              <div className="space-y-3">
-                <div className="w-10 h-10 rounded-full bg-amber-600/15 text-amber-500 flex items-center justify-center">
-                  <MapPin className="w-5 h-5" />
+              <div className="space-y-4 relative z-10">
+                <div className="flex items-center justify-between">
+                  <span className="px-3 py-1 bg-red-600 text-white text-[10px] font-mono-tech font-bold uppercase tracking-widest">
+                    MENU 02 // KOMUNITAS & MEDIA
+                  </span>
+                  <span className="text-xs font-mono-tech text-red-500 font-bold">7.2K+ DISCORD ┬╖ 54 STREAMERS</span>
                 </div>
-                <div className="font-display text-4xl sm:text-5xl text-amber-500 leading-none">POSTAL 620</div>
-                <div className="font-display text-xl uppercase tracking-wider">ROXWOOD SOVEREIGN</div>
-                <p className={`text-xs font-mono-tech ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>
-                  Teritori kedaulatan utama 4Bloods di South Side Roxwood dengan pos patroli 24 jam.
+                <h3 className={`font-display text-4xl sm:text-5xl tracking-wider uppercase group-hover:text-red-500 transition-colors ${isDark ? 'text-white' : 'text-zinc-900'}`}>
+                  COMMUNITY & ACHIEVEMENTS
+                </h3>
+                <p className={`text-xs sm:text-sm font-mono-tech leading-relaxed ${isDark ? 'text-zinc-300' : 'text-zinc-600'}`}>
+                  Skala komunitas nyata: 54 streamer aktif, hub YouTube @4blood-plug (1 Year Anniversary & Charity), Instagram @4bloodmedia, TikTok, discography vinyl lagu resmi, 3D merch lookbook, dan direktori kreator.
                 </p>
               </div>
-              <Link
-                href="/wiki"
-                className="mt-4 pt-3 border-t border-current/10 inline-flex items-center gap-1.5 text-xs font-mono-tech font-bold text-amber-500 hover:underline"
-              >
-                <span>PETA &amp; SEJARAH HOOD</span>
-                <ChevronRight className="w-3.5 h-3.5" />
-              </Link>
-            </div>
 
-            {/* Card 04: Wars & Tournaments */}
-            <div
-              className={`p-6 border flex flex-col justify-between transition-all hover:-translate-y-1 ${
-                isDark
-                  ? 'bg-[#12080C] border-red-500/25 shadow-lg hover:border-red-500/60'
-                  : 'bg-white border-zinc-300 shadow-md hover:shadow-xl'
-              }`}
-            >
-              <div className="space-y-3">
-                <div className="w-10 h-10 rounded-full bg-rose-600/15 text-rose-500 flex items-center justify-center">
-                  <Shield className="w-5 h-5" />
-                </div>
-                <div className="font-display text-4xl sm:text-5xl text-rose-500 leading-none">15+ WARS</div>
-                <div className="font-display text-xl uppercase tracking-wider">RECORDED CONFLICTS</div>
-                <p className={`text-xs font-mono-tech ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>
-                  Catatan kemenangan pertempuran aliansi, League War 20v20, hingga operasi pulau Cayo.
-                </p>
+              <div className="pt-6 border-t border-white/10 flex items-center justify-between relative z-10">
+                <span className="text-xs font-mono-tech text-red-500 font-bold tracking-widest uppercase flex items-center gap-2 group-hover:translate-x-1 transition-transform">
+                  <span>MASUK KE COMMUNITY HUB</span>
+                  <span>&rarr;</span>
+                </span>
+                <span className="text-[10px] font-mono-tech text-zinc-500">METRICS ┬╖ SOCIALS ┬╖ DISCOGRAPHY ┬╖ MERCH</span>
               </div>
-              <Link
-                href="/wiki"
-                className="mt-4 pt-3 border-t border-current/10 inline-flex items-center gap-1.5 text-xs font-mono-tech font-bold text-rose-500 hover:underline"
-              >
-                <span>ARSIP PERANG</span>
-                <ChevronRight className="w-3.5 h-3.5" />
-              </Link>
-            </div>
-
-            {/* Card 05: Culture & Media */}
-            <div
-              className={`p-6 border flex flex-col justify-between transition-all hover:-translate-y-1 ${
-                isDark
-                  ? 'bg-[#12080C] border-red-500/25 shadow-lg hover:border-red-500/60'
-                  : 'bg-white border-zinc-300 shadow-md hover:shadow-xl'
-              }`}
-            >
-              <div className="space-y-3">
-                <div className="w-10 h-10 rounded-full bg-emerald-600/15 text-emerald-500 flex items-center justify-center">
-                  <Disc3 className="w-5 h-5" />
-                </div>
-                <div className="font-display text-4xl sm:text-5xl text-emerald-500 leading-none">5 TRACKS</div>
-                <div className="font-display text-xl uppercase tracking-wider">OFFICIAL MUSIC</div>
-                <p className={`text-xs font-mono-tech ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>
-                  Anthem resmi, musik video sinematik, dan diss track psywar yang mendominasi skena.
-                </p>
-              </div>
-              <Link
-                href="/community"
-                className="mt-4 pt-3 border-t border-current/10 inline-flex items-center gap-1.5 text-xs font-mono-tech font-bold text-emerald-500 hover:underline"
-              >
-                <span>DISKOGRAFI &amp; MERCH</span>
-                <ChevronRight className="w-3.5 h-3.5" />
-              </Link>
-            </div>
+            </Link>
           </div>
         </div>
       </section>
 
       {/* =====================================================================
-          HIGHLIGHT 02: HIGH COUNCIL & FOUNDING PILLARS SPOTLIGHT (PORTO & WIKI)
+          SECTION 01 ΓÇö THE 3 CHAPTERS (DYNAMIC SATELLITE MAP BACKDROP)
+          Layout Rhythm: Main Satellite Map on LEFT (7 Cols) | Era Dossier on RIGHT (5 Cols)
       ===================================================================== */}
       <section
-        id="council"
+        id="chronicles"
         className={`py-24 border-b relative overflow-hidden ${
-          isDark ? 'bg-[#080406] border-white/10' : 'bg-[#FAF8F5] border-zinc-300'
+          isDark
+            ? 'bg-gradient-to-br from-[#2D0610] via-[#160308] to-[#24050E] border-red-600/35'
+            : 'bg-gradient-to-br from-[#FDE8EC] via-[#F6D2D9] to-[#FDE8EC] border-red-300'
         }`}
       >
-        <div className="max-w-[1520px] mx-auto px-4 sm:px-8 space-y-12">
-          <div className="flex flex-col lg:flex-row items-start lg:items-end justify-between gap-6">
-            <div className="flex items-center gap-4 sm:gap-6">
-              <Icon3D src="/assets/generated/icons3d/icon_hierarchy.webp" alt="3D Crown Emblem" />
-              <div className="space-y-1">
-                <div className="text-xs font-mono-tech text-red-500 font-bold uppercase tracking-[0.25em]">
-                  HIGHLIGHT 02 // TOKOH UTAMA &amp; DEWAN PENDIRI
-                </div>
-                <h2
-                  className={`font-display text-4xl sm:text-6xl uppercase tracking-wider ${
-                    isDark ? 'text-white' : 'text-zinc-950'
-                  }`}
-                >
-                  HIGH COUNCIL <span className="text-red-600">SPOTLIGHT</span>
-                </h2>
-              </div>
-            </div>
-
-            <Link
-              href="/wiki"
-              className="px-5 py-3 bg-red-600 hover:bg-red-500 text-white font-mono-tech text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-all shadow-md"
-            >
-              <span>BUKA STRUKTUR LENGKAP 54 ANGGOTA DI WIKI</span>
-              <ArrowRight className="w-4 h-4" />
-            </Link>
-          </div>
-
-          {/* 6 Key Pillars Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {KEY_PILLARS.map((pillar) => (
-              <div
-                key={pillar.name}
-                className={`relative border overflow-hidden transition-all group flex flex-col justify-between ${
-                  isDark
-                    ? 'bg-[#100609] border-red-500/25 hover:border-red-500/60 shadow-lg'
-                    : 'bg-white border-zinc-300 shadow-md hover:shadow-xl hover:border-red-400'
-                }`}
-              >
-                <div className="relative h-44 overflow-hidden border-b border-current/10">
-                  <img
-                    src={pillar.fanart}
-                    alt={pillar.name}
-                    className="w-full h-full object-cover object-top opacity-85 group-hover:scale-105 transition-transform duration-500"
-                  />
-                  <div
-                    className={`absolute inset-0 bg-gradient-to-t ${
-                      isDark ? 'from-[#100609] via-transparent to-black/40' : 'from-white via-transparent to-black/20'
-                    }`}
-                  />
-                  <div className="absolute top-3 left-3">
-                    <span className="px-2.5 py-1 bg-red-600 text-white text-[10px] font-mono-tech font-bold uppercase tracking-wider">
-                      {pillar.rank}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="p-6 pt-0 -mt-8 relative z-10 space-y-3 flex-1 flex flex-col justify-between">
-                  <div>
-                    <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-red-500 shadow-xl mb-3 bg-black">
-                      <img
-                        src={pillar.avatar}
-                        alt={pillar.name}
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).src = '/assets/logo_v2.png';
-                        }}
-                      />
-                    </div>
-                    <h3 className={`font-display text-2xl uppercase tracking-wider ${isDark ? 'text-white' : 'text-zinc-900'}`}>
-                      {pillar.name}
-                    </h3>
-                    <p className="text-xs font-mono-tech text-red-500 font-bold">{pillar.role}</p>
-                    <p className={`text-xs font-mono-tech leading-relaxed pt-2 ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>
-                      {pillar.bio}
-                    </p>
-                  </div>
-
-                  <div className="pt-3 border-t border-current/10 flex items-center justify-between text-xs font-mono-tech text-zinc-500">
-                    <span>{pillar.handle}</span>
-                    <span className="text-[10px] uppercase font-bold text-red-500">IME ROLEPLAY</span>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Direct CTA Banner to Wiki Hierarchy */}
+        {/* Dynamic Section 01 Background Art: Active Chapter Map Mural + Tactical Grid */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
           <div
-            className={`p-6 border flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
-              isDark ? 'bg-red-950/20 border-red-500/30' : 'bg-red-50 border-red-200'
+            style={{
+              background:
+                'radial-gradient(circle at 20% 40%, rgba(220,38,38,0.24) 0%, rgba(220,38,38,0) 70%)',
+            }}
+            className="absolute inset-0 pointer-events-none"
+          />
+          <img
+            src={currentChapter.mapImage}
+            alt=""
+            loading="lazy"
+            decoding="async"
+            className={`w-full h-full object-cover ${
+              isDark ? 'opacity-15 grayscale' : 'opacity-10 grayscale'
+            }`}
+          />
+          <div
+            className={`absolute inset-0 ${
+              isDark ? 'bg-tactical-grid opacity-60' : 'bg-cam-light-grid opacity-60'
+            }`}
+          />
+          <div
+            className={`absolute -top-24 right-10 font-display text-[180px] sm:text-[240px] leading-none select-none ${
+              isDark ? 'text-red-500/[0.08]' : 'text-red-900/[0.08]'
             }`}
           >
-            <div className="space-y-1">
-              <h4 className={`font-display text-2xl uppercase ${isDark ? 'text-white' : 'text-zinc-900'}`}>
-                PENASARAN DENGAN SISTEM TIER 1 SAMPAI TIER 6?
-              </h4>
-              <p className={`text-xs font-mono-tech ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>
-                Pelajari hierarki dewan: Tier 1 Original Gangster, Tier 2 Under OG, Tier 3 Young Bloods, Tier 4 Member, Tier 5 Prospect, dan Tier 6 W-Hotdog Screening.
-              </p>
-            </div>
-            <Link
-              href="/wiki"
-              className="px-6 py-3 bg-red-600 hover:bg-red-500 text-white font-mono-tech text-xs font-bold uppercase tracking-wider shrink-0 transition-all flex items-center gap-2"
-            >
-              <span>EKSPLORASI HIERARKI LENGKAP</span>
-              <ArrowRight className="w-4 h-4" />
-            </Link>
+            {currentChapter.roman}
           </div>
         </div>
-      </section>
 
-      {/* =====================================================================
-          HIGHLIGHT 03: 3 ERAS TIMELINE SNAPSHOT (WIKI HIGHLIGHT)
-      ===================================================================== */}
-      <section
-        id="eras"
-        className={`py-24 border-b relative ${
-          isDark ? 'bg-[#0A0508] border-white/10' : 'bg-[#F2ECE4] border-zinc-300'
-        }`}
-      >
-        <div className="max-w-[1520px] mx-auto px-4 sm:px-8 space-y-12">
-          <div className="flex flex-col lg:flex-row items-start lg:items-end justify-between gap-6">
+        <div className="max-w-[1520px] mx-auto px-4 sm:px-8 relative z-10">
+          <div className="flex flex-col lg:flex-row lg:items-end justify-between mb-10 gap-6">
             <div className="flex items-center gap-4 sm:gap-6">
-              <Icon3D src="/assets/generated/icons3d/icon_chronicles.webp" alt="3D Chronicles Flag" />
-              <div className="space-y-1">
-                <div className="text-xs font-mono-tech text-red-500 font-bold uppercase tracking-[0.25em]">
-                  HIGHLIGHT 03 // ARSIP SEJARAH TIGA CHAPTER
-                </div>
-                <h2
-                  className={`font-display text-4xl sm:text-6xl uppercase tracking-wider ${
-                    isDark ? 'text-white' : 'text-zinc-950'
-                  }`}
-                >
-                  THE THREE <span className="text-red-600">CHAPTERS</span>
-                </h2>
+              <Icon3D src="/assets/generated/icons3d/icon_territory.webp" alt="3D Territory Map" />
+              <div>
+              <div className="text-xs font-mono-tech font-bold text-red-500 tracking-[0.25em] uppercase mb-1">
+                01 // SEJARAH TERITORI DI IME ROLEPLAY (CHAPTER I ΓÇô III)
               </div>
-            </div>
-
-            <Link
-              href="/wiki"
-              className="px-5 py-3 bg-red-600 hover:bg-red-500 text-white font-mono-tech text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-all shadow-md"
-            >
-              <span>BACA DOKUMEN SEJARAH LENGKAP DI WIKI</span>
-              <ArrowRight className="w-4 h-4" />
-            </Link>
-          </div>
-
-          {/* 3 Era Cards */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {LORE_CHAPTERS.map((ch, idx) => (
-              <div
-                key={ch.id}
-                className={`border overflow-hidden flex flex-col justify-between transition-all group ${
-                  isDark
-                    ? 'bg-[#12070B] border-red-500/25 hover:border-red-500/60 shadow-lg'
-                    : 'bg-white border-zinc-300 shadow-md hover:shadow-xl hover:border-red-400'
+              <h2
+                className={`font-display text-5xl sm:text-7xl uppercase tracking-wider leading-none ${
+                  isDark ? 'text-white' : 'text-zinc-900'
                 }`}
               >
-                <div className="relative h-52 overflow-hidden border-b border-current/10">
-                  <img
-                    src={ch.mapImage}
-                    alt={ch.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                  <div
-                    className={`absolute inset-0 bg-gradient-to-t ${
-                      isDark ? 'from-[#12070B] via-transparent to-black/50' : 'from-white via-transparent to-black/30'
+                THE <span className="text-red-600">TERRITORY</span> ARCHIVES
+              </h2>
+              </div>
+            </div>
+
+            {/* Link to Wiki & Chapter Switcher Pills */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+              <Link
+                href="/wiki#chronicles"
+                className="px-4 py-2.5 bg-red-600/15 hover:bg-red-600 text-red-500 hover:text-white border border-red-500/40 text-xs font-mono-tech font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all"
+              >
+                <span>BACA SEJARAH LENGKAP DI WIKI</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+            {/* Chapter Switcher Pills */}
+            <div className="flex flex-wrap items-center gap-2">
+              <Link
+                href="/wiki#archives"
+                className="px-4 py-2 bg-red-600/15 hover:bg-red-600 text-red-500 hover:text-white border border-red-500/40 text-xs font-mono-tech font-bold uppercase tracking-wider flex items-center gap-2 transition-all"
+              >
+                <span>ARSIP PERANG DI WIKI</span>
+                <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+              {LORE_CHAPTERS.map((chap, idx) => {
+                const active = idx === activeChapterIdx;
+                return (
+                  <button
+                    key={chap.id}
+                    onClick={() => setActiveChapterIdx(idx)}
+                    className={`px-5 py-3 font-mono-tech text-xs font-bold tracking-widest uppercase border cursor-pointer flex items-center gap-2.5 ${
+                      active
+                        ? 'bg-red-600 text-white border-red-500 shadow-[0_0_25px_rgba(220,38,38,0.4)]'
+                        : isDark
+                          ? 'bg-[#120A0E]/90 text-zinc-300 border-white/15 hover:text-white'
+                          : 'bg-white text-zinc-700 border-zinc-300 hover:border-red-500'
                     }`}
-                  />
-                  <div className="absolute top-3 left-3 flex items-center gap-2">
-                    <span className="px-2.5 py-1 bg-red-600 text-white text-[10px] font-mono-tech font-bold uppercase tracking-widest">
-                      CHAPTER {ch.roman}
-                    </span>
-                    <span className="px-2 py-0.5 bg-black/70 text-white text-[10px] font-mono-tech">
-                      {ch.era}
-                    </span>
-                  </div>
-                  <div className="absolute bottom-3 left-4">
-                    <span className="text-xs font-mono-tech font-bold text-red-500 uppercase">
-                      POSTAL {ch.postalCode} // {ch.turfName}
-                    </span>
-                  </div>
+                  >
+                    <span className="font-display text-base">{chap.roman}</span>
+                    <span className="opacity-60">//</span>
+                    <span>{chap.title}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            {/* LEFT 7 COLS: Interactive 3D Satellite Turf Map */}
+            <Tilt3DCard
+              intensity={7}
+              onClick={() =>
+                setLightboxImage({
+                  src: currentChapter.mapImage,
+                  title: `${currentChapter.roman} ΓÇö ${currentChapter.turfName}`,
+                  subtitle: `${currentChapter.postalCode} // IME Roleplay`,
+                })
+              }
+              className="lg:col-span-7 relative bg-black border border-red-500/40 overflow-hidden group cursor-pointer min-h-[380px] sm:min-h-[480px] shadow-2xl"
+            >
+              <img
+                src={currentChapter.mapImage}
+                alt={currentChapter.turfName}
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
+
+              <div
+                style={{ transform: 'translateZ(30px)' }}
+                className="absolute top-4 left-4 right-4 flex items-center justify-between"
+              >
+                <span className="px-3 py-1 bg-black/85 border border-red-500/50 text-red-400 text-xs font-mono-tech font-bold uppercase tracking-widest flex items-center gap-2">
+                  <MapPin className="w-3.5 h-3.5 text-red-500" />
+                  {currentChapter.postalCode}
+                </span>
+                <span className="px-3 py-1 bg-red-600 text-white text-xs font-mono-tech font-bold uppercase flex items-center gap-1.5">
+                  <Maximize2 className="w-3.5 h-3.5" />
+                  PERBESAR PETA
+                </span>
+              </div>
+
+              <div
+                style={{ transform: 'translateZ(35px)' }}
+                className="absolute bottom-5 left-5 right-5"
+              >
+                <div className="text-xs font-mono-tech text-red-400 uppercase tracking-widest">
+                  IME RP SATELLITE TURF // {currentChapter.era}
                 </div>
+                <h3 className="font-display text-4xl sm:text-6xl text-white uppercase tracking-wider mt-1">
+                  {currentChapter.turfName}
+                </h3>
+              </div>
+            </Tilt3DCard>
 
-                <div className="p-6 space-y-4 flex-1 flex flex-col justify-between">
-                  <div className="space-y-2">
-                    <h3 className={`font-display text-2xl uppercase tracking-wider ${isDark ? 'text-white' : 'text-zinc-900'}`}>
-                      {ch.title}
-                    </h3>
-                    <p className={`text-xs font-mono-tech italic ${isDark ? 'text-red-400' : 'text-red-600'}`}>
-                      &ldquo;{ch.quote}&rdquo;
-                    </p>
-                    <p className={`text-xs font-mono-tech leading-relaxed pt-1 ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>
-                      {ch.summary}
-                    </p>
+            {/* RIGHT 5 COLS: Action Photo + Narrative + Milestones */}
+            <div className="lg:col-span-5 flex flex-col justify-between gap-5">
+              <div
+                onClick={() =>
+                  setLightboxImage({
+                    src: currentChapter.actionImage,
+                    title: currentChapter.title,
+                    subtitle: currentChapter.subtitle,
+                  })
+                }
+                className="relative h-52 sm:h-60 bg-black border border-red-500/40 overflow-hidden group cursor-pointer shadow-xl"
+              >
+                <img
+                  src={currentChapter.actionImage}
+                  alt={currentChapter.title}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
+                <div className="absolute bottom-4 left-4 right-4 flex items-end justify-between">
+                  <div>
+                    <span className="px-2 py-0.5 bg-red-600 text-white text-[10px] font-mono-tech font-bold">
+                      {currentChapter.roman}
+                    </span>
+                    <h4 className="font-display text-3xl text-white uppercase tracking-wider mt-1">
+                      {currentChapter.title}
+                    </h4>
                   </div>
-
-                  {/* Milestones list */}
-                  <div className="pt-3 border-t border-current/10 space-y-2">
-                    <div className="text-[10px] font-mono-tech font-bold text-red-500 uppercase">
-                      PERISTIWA KUNCI:
-                    </div>
-                    {ch.milestones.slice(0, 2).map((m, mIdx) => (
-                      <div key={mIdx} className="flex items-start gap-2 text-xs font-mono-tech">
-                        <CheckCircle2 className="w-3.5 h-3.5 text-red-500 shrink-0 mt-0.5" />
-                        <span className={isDark ? 'text-zinc-300' : 'text-zinc-700'}>
-                          <strong>{m.label}</strong>: {m.detail}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
+                  <img
+                    src={currentChapter.logoUsed}
+                    alt="Era Logo"
+                    className="w-14 h-14 object-contain drop-shadow-lg"
+                  />
                 </div>
               </div>
-            ))}
+
+              <div
+                className={`border p-6 flex-1 flex flex-col justify-between space-y-4 ${
+                  isDark
+                    ? 'bg-[#120A0E]/90 border-red-500/25'
+                    : 'bg-white/95 border-zinc-300 shadow-md'
+                }`}
+              >
+                <div className="space-y-2">
+                  <blockquote className="font-script text-2xl text-red-500 border-l-4 border-red-600 pl-3.5">
+                    &ldquo;{currentChapter.quote}&rdquo;
+                  </blockquote>
+                  <p
+                    className={`text-xs sm:text-sm leading-relaxed ${
+                      isDark ? 'text-zinc-300' : 'text-zinc-700'
+                    }`}
+                  >
+                    {currentChapter.summary}
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 gap-2">
+                  {currentChapter.milestones.map((ms, i) => (
+                    <div
+                      key={i}
+                      className={`px-3.5 py-2 border flex items-center justify-between gap-3 ${
+                        isDark
+                          ? 'bg-black/75 border-white/10'
+                          : 'bg-zinc-50 border-zinc-200'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <span className="font-mono-tech text-xs font-bold text-red-500">
+                          0{i + 1}
+                        </span>
+                        <span
+                          className={`text-xs font-bold uppercase tracking-wider ${
+                            isDark ? 'text-white' : 'text-zinc-900'
+                          }`}
+                        >
+                          {ms.label}
+                        </span>
+                      </div>
+                      <span
+                        className={`text-[11px] font-mono-tech truncate max-w-[200px] ${
+                          isDark ? 'text-zinc-400' : 'text-zinc-600'
+                        }`}
+                      >
+                        {ms.detail}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
       {/* =====================================================================
-          HIGHLIGHT 04: CURATED YOUTUBE WAR CINEMA & VIRAL HIGHLIGHTS
-          Researched popular videos across multiple 4Bloods creators
+          SECTION 02 ΓÇö GANG STRUCTURE INTERACTIVE SHOWCASE
+          Layout Rhythm FLIPPED: Selector Rail on LEFT (4 Cols) | Giant Character Stage on RIGHT (8 Cols)!
+          Background: Crimson Bandana Mural & Diagonal Streetwear Slashes
       ===================================================================== */}
       <section
-        id="youtube-war"
-        className={`py-24 border-b relative ${
-          isDark ? 'bg-[#090306] border-red-500/25' : 'bg-[#FAF8F5] border-zinc-300'
+        id="hierarchy"
+        className={`py-24 border-b relative overflow-hidden ${
+          isDark
+            ? 'bg-gradient-to-br from-[#1B1626] via-[#251F33] to-[#181323] border-white/20'
+            : 'bg-gradient-to-tr from-[#ECEAE4] via-[#DFDDD6] to-[#ECEAE4] border-zinc-300'
         }`}
       >
-        <div className="max-w-[1520px] mx-auto px-4 sm:px-8 space-y-10">
-          <div className="flex flex-col lg:flex-row items-start lg:items-end justify-between gap-6">
+        {/* Rich Section 02 Background Art */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
+          <img
+            src="/assets/generated/fanart_west_to_ssr.webp"
+            alt=""
+            loading="lazy"
+            decoding="async"
+            className={`w-full h-full object-cover ${
+              isDark ? 'opacity-25' : 'opacity-[0.08]'
+            }`}
+          />
+          <div
+            className={`absolute inset-0 ${
+              isDark ? 'bg-diagonal-slashes opacity-85' : 'bg-diagonal-slashes-light opacity-75'
+            }`}
+          />
+          <div
+            className={`absolute -bottom-10 left-8 font-gothic text-[200px] sm:text-[280px] leading-none select-none ${
+              isDark ? 'text-red-600/[0.05]' : 'text-red-900/[0.05]'
+            }`}
+          >
+            4BG
+          </div>
+        </div>
+
+        <div className="max-w-[1520px] mx-auto px-4 sm:px-8 relative z-10">
+          <div className="flex flex-col lg:flex-row lg:items-end justify-between mb-8 gap-6">
             <div className="flex items-center gap-4 sm:gap-6">
-              <Icon3D src="/assets/generated/icons3d/icon_archives.webp" alt="3D War Cinema VHS" />
-              <div className="space-y-1">
-                <div className="text-xs font-mono-tech text-red-500 font-bold uppercase tracking-[0.25em]">
-                  HIGHLIGHT 04 // REKAMAN PERANG &amp; MOMEN TERAMAI DI YOUTUBE
-                </div>
-                <h2
-                  className={`font-display text-4xl sm:text-6xl uppercase tracking-wider ${
-                    isDark ? 'text-white' : 'text-zinc-950'
-                  }`}
-                >
-                  WAR CINEMA &amp; <span className="text-red-600">VIRAL REELS</span>
-                </h2>
+              <Icon3D src="/assets/generated/icons3d/icon_hierarchy.webp" alt="3D Syndicate Crown" />
+              <div>
+              <div className="text-xs font-mono-tech font-bold text-red-500 tracking-[0.25em] uppercase mb-1">
+                02 // STRUKTUR KOMANDO &amp; CHARACTER SHOWCASE (IME RP)
+              </div>
+              <h2
+                className={`font-display text-5xl sm:text-7xl uppercase tracking-wider leading-none ${
+                  isDark ? 'text-white' : 'text-zinc-900'
+                }`}
+              >
+                SYNDICATE <span className="text-red-600">HIERARCHY</span> SHOWCASE
+              </h2>
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2">
-              {(
-                [
-                  { id: 'ALL', label: 'SEMUA VIDEO (8)' },
-                  { id: 'TURF DEFENSE', label: 'TURF DEFENSE' },
-                  { id: 'WAR POV', label: 'WAR POV' },
-                  { id: 'COMMUNITY', label: 'COMMUNITY & RP' },
-                  { id: 'TACTICAL', label: 'TACTICAL OPS' },
-                ] as const
-              ).map((tab) => (
+            <div className="flex flex-wrap gap-1.5">
+              {[
+                { id: 'ALL', label: `ALL MEMBERS (${allSpotlightCreators.length})` },
+                { id: 'OG', label: `TIER 01 // OG (${allSpotlightCreators.filter((m: any) => m.rank === 'OG').length})` },
+                { id: 'Under OG', label: `TIER 02 // UNDER OG (${allSpotlightCreators.filter((m: any) => m.rank === 'Under OG').length})` },
+                { id: 'Young Bloods', label: `TIER 03 // YOUNG BLOODS (${allSpotlightCreators.filter((m: any) => m.rank === 'Young Bloods').length})` },
+                { id: 'Member', label: `TIER 04 // MEMBERS (${allSpotlightCreators.filter((m: any) => m.rank === 'Member').length})` },
+              ].map((tab) => (
                 <button
                   key={tab.id}
-                  onClick={() => setVideoFilter(tab.id as any)}
-                  className={`px-3 py-1.5 text-xs font-mono-tech font-bold uppercase border cursor-pointer transition-colors ${
-                    videoFilter === tab.id
-                      ? 'bg-red-600 text-white border-red-500 shadow-md'
+                  onClick={() => {
+                    setShowcaseTierFilter(tab.id);
+                    setSelectedShowcaseIdx(0);
+                  }}
+                  className={`px-3.5 py-2 text-xs font-mono-tech font-bold uppercase border cursor-pointer ${
+                    showcaseTierFilter === tab.id
+                      ? 'bg-red-600 text-white border-red-500 shadow-[0_0_20px_rgba(220,38,38,0.4)]'
                       : isDark
-                        ? 'bg-black/60 text-zinc-400 border-white/10 hover:text-white'
-                        : 'bg-zinc-100 text-zinc-700 border-zinc-300 hover:text-black'
+                        ? 'bg-[#120A0E]/90 text-zinc-300 border-white/15 hover:text-white'
+                        : 'bg-white text-zinc-700 border-zinc-300 hover:border-red-500'
                   }`}
                 >
                   {tab.label}
@@ -989,403 +994,1076 @@ export default function OverviewPortalPage() {
             </div>
           </div>
 
-          {/* Videos Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            {filteredVideos.map((video) => (
+          <div className="flex justify-end mb-4">
+            <Link
+              href="/wiki#hierarchy"
+              className="px-4 py-2 bg-red-600/15 hover:bg-red-600 text-red-500 hover:text-white border border-red-500/40 text-xs font-mono-tech font-bold uppercase tracking-wider flex items-center gap-2 transition-all"
+            >
+              <span>PELAJARI DOKUMEN HIERARKI LENGKAP DI WIKI</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+          {/* 6-Tier Architectural Command Ribbon */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 mb-8">
+            {HIERARCHY_TIERS.map((t) => (
               <div
-                key={video.id}
-                onClick={() =>
-                  setVideoModal({
-                    videoId: video.videoId,
-                    title: video.title,
-                    streamer: `${video.creator} // ${video.rank}`,
-                  })
-                }
-                className={`border overflow-hidden cursor-pointer group flex flex-col justify-between transition-all hover:-translate-y-1 ${
+                key={t.tier}
+                className={`border px-3.5 py-3 flex flex-col justify-between hover:border-red-500/50 ${
                   isDark
-                    ? 'bg-[#100609] border-red-500/25 hover:border-red-500 shadow-lg'
-                    : 'bg-white border-zinc-300 shadow-md hover:shadow-xl hover:border-red-400'
+                    ? 'bg-[#11090D]/90 border-white/15'
+                    : 'bg-white/95 border-zinc-300 shadow-sm'
                 }`}
               >
-                {/* Thumbnail Frame */}
-                <div className="relative aspect-video bg-black overflow-hidden border-b border-current/10">
-                  <img
-                    src={video.thumb}
-                    alt={video.title}
-                    onError={(e) => {
-                      (e.currentTarget as HTMLImageElement).src = '/assets/streams/war_allstar.jpg';
-                    }}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  />
-                  <div className="absolute inset-0 bg-black/30 group-hover:bg-black/10 transition-colors" />
-
-                  {/* Play Overlay Button */}
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-12 h-12 rounded-full bg-red-600 text-white flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
-                      <Play className="w-5 h-5 fill-white ml-0.5" />
-                    </div>
-                  </div>
-
-                  <div className="absolute top-2.5 left-2.5 flex items-center gap-1.5">
-                    <span className="px-2 py-0.5 bg-red-600 text-white text-[9px] font-mono-tech font-bold uppercase">
-                      {video.badge}
-                    </span>
-                  </div>
+                <div className="flex items-center justify-between">
+                  <span className="font-mono-tech text-[10px] font-bold text-red-500">
+                    TIER {t.tier}
+                  </span>
+                  <Shield className="w-3 h-3 text-red-500/60" />
                 </div>
-
-                {/* Content */}
-                <div className="p-4 space-y-3 flex-1 flex flex-col justify-between">
-                  <div className="space-y-1">
-                    <div className="text-[10px] font-mono-tech text-red-500 font-bold uppercase truncate">
-                      {video.category} • {video.creator}
-                    </div>
-                    <h3
-                      className={`font-display text-lg uppercase tracking-wider line-clamp-2 leading-tight group-hover:text-red-500 transition-colors ${
-                        isDark ? 'text-white' : 'text-zinc-900'
-                      }`}
-                    >
-                      {video.title}
-                    </h3>
-                    <p className={`text-[11px] font-mono-tech line-clamp-2 pt-1 ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>
-                      {video.description}
-                    </p>
-                  </div>
-
-                  <div className="pt-2 border-t border-current/10 flex items-center justify-between text-xs font-mono-tech">
-                    <span className="text-[10px] text-zinc-500">{video.handle}</span>
-                    <span className="inline-flex items-center gap-1 text-[10px] text-red-500 font-bold">
-                      <YouTubeIcon className="w-3.5 h-3.5" />
-                      PUTAR VIDEO
-                    </span>
-                  </div>
+                <div
+                  className={`font-display text-xl tracking-wider mt-1 ${
+                    isDark ? 'text-white' : 'text-zinc-900'
+                  }`}
+                >
+                  {t.code}
+                </div>
+                <div
+                  className={`text-[10px] font-mono-tech truncate ${
+                    isDark ? 'text-zinc-400' : 'text-zinc-500'
+                  }`}
+                >
+                  {t.name}
                 </div>
               </div>
             ))}
           </div>
 
-          {/* Direct CTA to War Archives in Wiki */}
-          <div
-            className={`p-6 border flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${
-              isDark ? 'bg-red-950/20 border-red-500/30' : 'bg-red-50 border-red-200'
-            }`}
-          >
-            <div className="space-y-1">
-              <h4 className={`font-display text-2xl uppercase ${isDark ? 'text-white' : 'text-zinc-900'}`}>
-                ARSIP PERANG LENGKAP DENGAN DOKUMEN TANGGAL &amp; TAKTIK
-              </h4>
-              <p className={`text-xs font-mono-tech ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>
-                Eksplorasi dokumentasi kronologis perang antarfaksi di Roxwood dan Los Santos secara mendalam di Bloods Wiki.
-              </p>
-            </div>
-            <Link
-              href="/wiki"
-              className="px-6 py-3 bg-red-600 hover:bg-red-500 text-white font-mono-tech text-xs font-bold uppercase tracking-wider shrink-0 transition-all flex items-center gap-2"
-            >
-              <span>BUKA WAR ARCHIVES DI WIKI</span>
-              <ArrowRight className="w-4 h-4" />
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* =====================================================================
-          HIGHLIGHT 05: CULTURE, ANTHEMS & STREETWEAR (COMMUNITY HIGHLIGHT)
-      ===================================================================== */}
-      <section
-        id="media-culture"
-        className={`py-24 border-b relative ${
-          isDark ? 'bg-[#0B0609] border-white/10' : 'bg-[#F2ECE4] border-zinc-300'
-        }`}
-      >
-        <div className="max-w-[1520px] mx-auto px-4 sm:px-8 space-y-12">
-          <div className="flex flex-col lg:flex-row items-start lg:items-end justify-between gap-6">
-            <div className="flex items-center gap-4 sm:gap-6">
-              <Icon3D src="/assets/generated/icons3d/icon_records.webp" alt="3D Vinyl & Sound" />
-              <div className="space-y-1">
-                <div className="text-xs font-mono-tech text-red-500 font-bold uppercase tracking-[0.25em]">
-                  HIGHLIGHT 05 // BUDAYA, ANTHEM &amp; IDENTITAS KARYA
-                </div>
-                <h2
-                  className={`font-display text-4xl sm:text-6xl uppercase tracking-wider ${
-                    isDark ? 'text-white' : 'text-zinc-950'
-                  }`}
-                >
-                  MUSIC &amp; <span className="text-red-600">STREETWEAR</span>
-                </h2>
-              </div>
-            </div>
-
-            <Link
-              href="/community"
-              className="px-5 py-3 bg-red-600 hover:bg-red-500 text-white font-mono-tech text-xs font-bold uppercase tracking-wider flex items-center gap-2 transition-all shadow-md"
-            >
-              <span>EKSPLORASI SHOWROOM &amp; DISKOGRAFI LENGKAP</span>
-              <ArrowRight className="w-4 h-4" />
-            </Link>
-          </div>
-
-          {/* 2 Big Feature Cards: Music vs Merch */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Box 1: Music Spotlight */}
-            <div
-              className={`p-8 border flex flex-col justify-between space-y-6 ${
-                isDark ? 'bg-[#12070C] border-red-500/25' : 'bg-white border-zinc-300 shadow-md'
-              }`}
-            >
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 text-xs font-mono-tech font-bold text-red-500 uppercase">
-                  <Disc3 className="w-4 h-4 animate-spin" />
-                  <span>OFFICIAL DISCOGRAPHY &amp; ANTHEMS</span>
-                </div>
-                <h3 className={`font-display text-3xl uppercase tracking-wider ${isDark ? 'text-white' : 'text-zinc-900'}`}>
-                  THIS IS 4BLOODS &amp; DRILL BEATS
-                </h3>
-                <p className={`text-xs sm:text-sm font-mono-tech leading-relaxed ${isDark ? 'text-zinc-300' : 'text-zinc-700'}`}>
-                  Kompilasi karya musik orisinal yang mendefinisikan jiwa jalanan 4Bloods: dari anthem persaudaraan legendaris hingga diss track yang membakar semangat di pertempuran.
-                </p>
-
-                {/* Track mini list */}
-                <div className="space-y-2 pt-2">
-                  {OFFICIAL_MEDIA_TRACKS.slice(0, 3).map((track) => (
-                    <div
-                      key={track.id}
-                      onClick={() =>
-                        setVideoModal({
-                          videoId: track.videoId,
-                          title: track.title,
-                          streamer: track.artist,
-                        })
-                      }
-                      className={`p-3 border flex items-center justify-between gap-3 cursor-pointer transition-colors ${
-                        isDark ? 'bg-black/40 border-white/10 hover:border-red-500' : 'bg-zinc-50 border-zinc-200 hover:border-red-500'
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-red-600 text-white flex items-center justify-center shrink-0">
-                          <Play className="w-3.5 h-3.5 fill-white ml-0.5" />
-                        </div>
-                        <div>
-                          <div className={`text-xs font-mono-tech font-bold uppercase ${isDark ? 'text-white' : 'text-zinc-900'}`}>
-                            {track.title}
-                          </div>
-                          <div className="text-[10px] font-mono-tech text-red-500">
-                            {track.type} • {track.duration}
-                          </div>
-                        </div>
-                      </div>
-                      <span className="text-[10px] font-mono-tech text-zinc-500">PUTAR</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <Link
-                href="/community"
-                className="w-full py-3 bg-red-600 hover:bg-red-500 text-white font-mono-tech text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2"
-              >
-                <span>BUKA DISKOGRAFI RESMI DI COMMUNITY HUB</span>
-                <ChevronRight className="w-4 h-4" />
-              </Link>
-            </div>
-
-            {/* Box 2: 3D Apparel & Showroom */}
-            <div
-              className={`p-8 border flex flex-col justify-between space-y-6 ${
-                isDark ? 'bg-[#12070C] border-red-500/25' : 'bg-white border-zinc-300 shadow-md'
-              }`}
-            >
-              <div className="space-y-4">
-                <div className="flex items-center gap-2 text-xs font-mono-tech font-bold text-red-500 uppercase">
-                  <Sparkles className="w-4 h-4" />
-                  <span>3D WARDROBE &amp; MERCH SHOWROOM</span>
-                </div>
-                <h3 className={`font-display text-3xl uppercase tracking-wider ${isDark ? 'text-white' : 'text-zinc-900'}`}>
-                  CRIMSON APPAREL &amp; STREETWEAR CODEX
-                </h3>
-                <p className={`text-xs sm:text-sm font-mono-tech leading-relaxed ${isDark ? 'text-zinc-300' : 'text-zinc-700'}`}>
-                  Seragam identitas kebanggaan keluarga: Red Paisley Bandana, Varsity Jackets, Roxwood Heavy Hoodies, dan Tactical Workshirts yang dikenakan setiap anggota in-game.
-                </p>
-
-                <div className="grid grid-cols-2 gap-3 pt-2">
-                  <div className={`p-4 border text-center space-y-2 ${isDark ? 'bg-black/40 border-white/10' : 'bg-zinc-50 border-zinc-200'}`}>
-                    <img
-                      src="/assets/generated/merch_bandana.webp"
-                      alt="Bandana"
-                      className="w-20 h-20 mx-auto object-contain drop-shadow-md"
-                    />
-                    <div className="text-xs font-mono-tech font-bold uppercase">RED BANDANA</div>
-                    <span className="text-[9px] font-mono-tech text-red-500 uppercase">TIER 1 ICONIC</span>
-                  </div>
-                  <div className={`p-4 border text-center space-y-2 ${isDark ? 'bg-black/40 border-white/10' : 'bg-zinc-50 border-zinc-200'}`}>
-                    <img
-                      src="/assets/generated/merch_hoodie.webp"
-                      alt="Hoodie"
-                      className="w-20 h-20 mx-auto object-contain drop-shadow-md"
-                    />
-                    <div className="text-xs font-mono-tech font-bold uppercase">ROXWOOD HOODIE</div>
-                    <span className="text-[9px] font-mono-tech text-red-500 uppercase">HEAVY FLEECE</span>
-                  </div>
-                </div>
-              </div>
-
-              <Link
-                href="/community"
-                className={`w-full py-3 font-mono-tech text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 border transition-all ${
+          {/* ALTERNATED LAYOUT: Left 4 Cols Roster Selector | RIGHT 8 Cols Giant Character Stage */}
+          {activeShowcaseMember && (
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+              {/* LEFT 4 COLUMNS: Interactive Character Selector Rail */}
+              <div
+                className={`lg:col-span-4 border flex flex-col justify-between overflow-hidden max-h-[580px] order-2 lg:order-1 ${
                   isDark
-                    ? 'bg-white/10 hover:bg-white text-white hover:text-black border-white/20'
-                    : 'bg-zinc-100 hover:bg-zinc-900 text-zinc-900 hover:text-white border-zinc-300'
+                    ? 'bg-[#0E080B]/95 border-white/15'
+                    : 'bg-white/95 border-zinc-300 shadow-lg'
                 }`}
               >
-                <span>LIHAT 3D SHOWROOM DI COMMUNITY HUB</span>
-                <ChevronRight className="w-4 h-4" />
-              </Link>
+                <div
+                  className={`px-4 py-3.5 border-b flex items-center justify-between ${
+                    isDark ? 'bg-[#160C10] border-white/10' : 'bg-zinc-100 border-zinc-200'
+                  }`}
+                >
+                  <span
+                    className={`text-xs font-mono-tech font-bold uppercase tracking-wider ${
+                      isDark ? 'text-white' : 'text-zinc-900'
+                    }`}
+                  >
+                    PILIH KARAKTER SHOWCASE ({showcaseList.length})
+                  </span>
+                  <span className="font-gothic text-lg text-red-500">4BG</span>
+                </div>
+
+                <div className="flex-1 overflow-y-auto p-3 space-y-2">
+                  {showcaseList.map((member: any, idx: number) => {
+                    const isSelected = activeShowcaseMember?.channelId === member.channelId;
+                    return (
+                      <button
+                        key={member.channelId}
+                        onClick={() => setSelectedShowcaseIdx(idx)}
+                        className={`w-full text-left p-3 border flex items-center justify-between gap-3 cursor-pointer ${
+                          isSelected
+                            ? 'bg-red-600/15 border-red-500 shadow-[inset_4px_0_0_#dc2626]'
+                            : isDark
+                              ? 'bg-[#120A0E] border-white/10 hover:border-white/30'
+                              : 'bg-zinc-50 border-zinc-200 hover:border-red-400'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <img
+                            src={member.avatar || '/assets/logo_v2.png'}
+                            alt={member.name}
+                            onError={(e) => {
+                              (e.currentTarget as HTMLImageElement).src = '/assets/logo_v2.png';
+                            }}
+                            className={`w-11 h-11 object-cover border shrink-0 ${
+                              isSelected ? 'border-red-500' : 'border-zinc-400/30'
+                            }`}
+                          />
+                          <div className="min-w-0">
+                            <div
+                              className={`font-display text-xl tracking-wider truncate leading-none ${
+                                isDark ? 'text-white' : 'text-zinc-900'
+                              }`}
+                            >
+                              {member.name}
+                            </div>
+                            <div
+                              className={`text-[10px] font-mono-tech truncate mt-1 ${
+                                isDark ? 'text-zinc-400' : 'text-zinc-500'
+                              }`}
+                            >
+                              <span className="text-red-500 font-bold">{member.rank}</span>
+                              {member.handle ? ` ΓÇó ${member.handle}` : ''}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="shrink-0 flex items-center gap-1.5">
+                          {member.isLive && (
+                            <span className="px-1.5 py-0.5 bg-red-600 text-white text-[9px] font-mono-tech font-bold">
+                              LIVE
+                            </span>
+                          )}
+                          <ChevronRight
+                            className={`w-4 h-4 ${
+                              isSelected ? 'text-red-500' : 'text-zinc-500'
+                            }`}
+                          />
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <div
+                  className={`p-3 border-t text-[10px] font-mono-tech text-center ${
+                    isDark
+                      ? 'bg-[#080507] border-white/10 text-zinc-400'
+                      : 'bg-zinc-100 border-zinc-200 text-zinc-600'
+                  }`}
+                >
+                  Artwork latar tiap anggota dapat diganti dengan Fan Art resmi komunitas 4Bloods.
+                </div>
+              </div>
+
+              {/* RIGHT 8 COLUMNS: Giant Character & Fan Art Showcase Canvas (MAIN PREVIEW ON RIGHT) */}
+              <div className="lg:col-span-8 relative bg-[#0C080A] border border-red-500/40 overflow-hidden min-h-[520px] sm:min-h-[580px] flex flex-col justify-between shadow-2xl order-1 lg:order-2">
+                <div className="absolute inset-0 z-0">
+                  <img
+                    src={getMemberShowcaseArtwork(activeShowcaseMember)}
+                    alt={activeShowcaseMember.name}
+                    onError={(e) => {
+                      (e.currentTarget as HTMLImageElement).src =
+                        '/assets/generated/fanart_council.webp';
+                    }}
+                    className="w-full h-full object-cover opacity-90 transition-all duration-700 brightness-105 contrast-105"
+                  />
+                  {/* Subtle readable gradient for text legibility without making the art dark */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-[#070506]/95 via-[#070506]/35 to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-[#070506]/75 via-[#070506]/20 to-transparent" />
+                </div>
+
+                {/* Top Showcase Bar */}
+                <div className="relative z-10 p-5 sm:p-7 flex flex-wrap items-center justify-between gap-3">
+                  <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-black/80 border border-red-500/30 text-zinc-200 text-[10px] font-mono-tech backdrop-blur-xs">
+                    <span className="w-1.5 h-1.5 rounded-full bg-red-600 animate-pulse" />
+                    <span className="font-bold text-red-500">DOSSIER</span>
+                    <span className="text-zinc-500">ΓÇó</span>
+                    <span>{activeShowcaseMember.rank.toUpperCase()} ARCHIVE</span>
+                  </div>
+
+                  <div className="flex items-center gap-2 bg-black/80 p-1 border border-white/15 backdrop-blur-xs">
+                    <button
+                      onClick={() =>
+                        setLightboxImage({
+                          src: getMemberShowcaseArtwork(activeShowcaseMember),
+                          title: `${activeShowcaseMember.name} ΓÇö ${activeShowcaseMember.rank}`,
+                          subtitle: `Arsip Visual 4Bloods // ${activeShowcaseMember.role || activeShowcaseMember.rank}`,
+                        })
+                      }
+                      className="px-3 py-1 bg-red-600/20 hover:bg-red-600 border border-red-500/40 hover:border-red-500 text-zinc-200 hover:text-white text-[10px] font-mono-tech font-bold uppercase cursor-pointer flex items-center gap-1.5 transition-all"
+                      title="Perbesar Artwork"
+                    >
+                      <Maximize2 className="w-3.5 h-3.5" />
+                      <span>PERBESAR ARTWORK</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Bottom Character Dossier Overlay */}
+                <div className="relative z-10 p-6 sm:p-8 space-y-6 mt-auto text-white">
+                  <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6">
+                    <div className="flex items-end gap-5">
+                      <div className="relative shrink-0">
+                        <img
+                          src={activeShowcaseMember.avatar || '/assets/logo_v2.png'}
+                          alt={activeShowcaseMember.name}
+                          onError={(e) => {
+                            (e.currentTarget as HTMLImageElement).src = '/assets/logo_v2.png';
+                          }}
+                          className="w-20 h-20 sm:w-24 sm:h-24 object-cover border-2 border-red-600 bg-zinc-900 shadow-[0_0_30px_rgba(220,38,38,0.5)]"
+                        />
+                        <span className="absolute -top-2.5 -left-2.5 px-2 py-0.5 bg-red-600 text-white font-gothic text-sm">
+                          4BG
+                        </span>
+                      </div>
+
+                      <div className="space-y-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="px-2.5 py-0.5 bg-red-600 text-white text-[10px] font-mono-tech font-bold uppercase tracking-widest">
+                            {activeShowcaseMember.rank}
+                          </span>
+                          <span className="text-xs font-mono-tech text-zinc-300">
+                            {activeShowcaseMember.handle || '@4bloods_member'}
+                          </span>
+                          {activeShowcaseMember.isLive && (
+                            <span className="px-2 py-0.5 bg-emerald-600 text-white text-[10px] font-mono-tech font-bold uppercase flex items-center gap-1.5">
+                              <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" />
+                              <span>LIVE DI IME RP</span>
+                              {typeof activeShowcaseMember.viewerCount === 'number' &&
+                                activeShowcaseMember.viewerCount > 0 && (
+                                  <span className="border-l border-white/30 pl-1.5 text-emerald-100 font-normal flex items-center gap-1">
+                                    <Users className="w-2.5 h-2.5" />
+                                    <span>
+                                      {activeShowcaseMember.viewerCount.toLocaleString('id-ID')} PENONTON
+                                    </span>
+                                  </span>
+                                )}
+                            </span>
+                          )}
+                        </div>
+
+                        <h3 className="font-display text-5xl sm:text-7xl text-white uppercase tracking-wider leading-none">
+                          {activeShowcaseMember.name}
+                        </h3>
+
+                        <p className="font-script text-2xl text-red-400">
+                          {activeShowcaseMember.role ||
+                            `${activeShowcaseMember.rank} // Four Bloods Gang`}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Prev / Next Character Showcase Controls */}
+                    <div className="flex items-center gap-2 self-start sm:self-end">
+                      <button
+                        onClick={() =>
+                          setSelectedShowcaseIdx(
+                            (prev) => (prev - 1 + showcaseList.length) % showcaseList.length
+                          )
+                        }
+                        className="p-3 bg-black/80 hover:bg-red-600 border border-white/15 text-white transition-colors cursor-pointer"
+                      >
+                        <ChevronLeft className="w-4 h-4" />
+                      </button>
+                      <span className="px-3 py-2 bg-black/80 border border-white/15 text-xs font-mono-tech text-zinc-300">
+                        {selectedShowcaseIdx + 1} / {showcaseList.length}
+                      </span>
+                      <button
+                        onClick={() =>
+                          setSelectedShowcaseIdx((prev) => (prev + 1) % showcaseList.length)
+                        }
+                        className="p-3 bg-black/80 hover:bg-red-600 border border-white/15 text-white transition-colors cursor-pointer"
+                      >
+                        <ChevronRight className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Character Actions */}
+                  <div className="pt-4 border-t border-white/15 flex flex-wrap items-center justify-between gap-3">
+                    <div className="flex flex-wrap items-center gap-3">
+                      {(activeShowcaseMember.isLive || activeShowcaseMember.featuredVideoId) && (
+                        <button
+                          onClick={() =>
+                            setVideoModal({
+                              videoId: activeShowcaseMember.isLive
+                                ? activeShowcaseMember.videoId
+                                : activeShowcaseMember.featuredVideoId,
+                              title:
+                                (activeShowcaseMember.isLive
+                                  ? activeShowcaseMember.streamTitle
+                                  : activeShowcaseMember.featuredTitle) ||
+                                `${activeShowcaseMember.name} ΓÇö 4Bloods IME RP POV`,
+                              streamer: `${activeShowcaseMember.name} (${activeShowcaseMember.rank})`,
+                            })
+                          }
+                          className="px-5 py-2.5 bg-red-600 hover:bg-red-500 text-white text-xs font-mono-tech font-bold uppercase tracking-wider flex items-center gap-2 cursor-pointer"
+                        >
+                          <Play className="w-3.5 h-3.5 fill-white" />
+                          {activeShowcaseMember.isLive ? 'TONTON LIVE STREAM' : 'PUTAR POV UNGGULAN'}
+                        </button>
+                      )}
+
+                      {activeShowcaseMember.isLive && (
+                        <Link
+                          href={`/cam?watch=${activeShowcaseMember.channelId}`}
+                          className="px-4 py-2.5 bg-white text-black hover:bg-zinc-200 text-xs font-mono-tech font-bold uppercase tracking-wider flex items-center gap-2 cursor-pointer"
+                        >
+                          <Tv className="w-3.5 h-3.5 text-red-600" />
+                          BUKA DI MULTI-POV CAM
+                        </Link>
+                      )}
+
+                      <a
+                        href={
+                          activeShowcaseMember.handle
+                            ? `https://www.youtube.com/${activeShowcaseMember.handle}`
+                            : `https://www.youtube.com/channel/${activeShowcaseMember.channelId}`
+                        }
+                        target="_blank"
+                        rel="noreferrer"
+                        className="px-4 py-2.5 bg-black/80 hover:bg-white/10 border border-white/20 text-xs font-mono-tech text-zinc-200 flex items-center gap-2 cursor-pointer"
+                      >
+                        <span>YOUTUBE CHANNEL</span>
+                        <ExternalLink className="w-3.5 h-3.5" />
+                      </a>
+                    </div>
+
+                    <span className="text-[11px] font-mono-tech text-zinc-400">
+                      IME ROLEPLAY // SOUTH SIDE ROXWOOD
+                    </span>
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </section>
 
       {/* =====================================================================
-          HIGHLIGHT 06: CREATOR RADAR & MULTI-POV LIVE CAM GATEWAY
+          SECTION 03 ΓÇö OFFICIAL 3D SHOWROOM & APPAREL CODEX
+          Marketplace Catalog & 3D Interactive Fitting Room Showcase
+      ===================================================================== */}
+      <ShowroomCodex isDark={isDark} onOpenLightbox={setLightboxImage} />
+      <div className={`max-w-[1520px] mx-auto px-4 sm:px-8 py-5 flex flex-col sm:flex-row items-center justify-between gap-4 border-b ${
+        isDark ? 'border-white/10 bg-[#0B0609]' : 'border-zinc-300 bg-white'
+      }`}>
+        <p className={`text-xs font-mono-tech ${isDark ? 'text-zinc-400' : 'text-zinc-600'}`}>
+          Lihat seluruh variasi apparel, lookbook, dan katalog seragam resmi 4Bloods di Community Hub.
+        </p>
+        <Link
+          href="/community#showroom"
+          className="px-5 py-2.5 bg-red-600 hover:bg-red-500 text-white text-xs font-mono-tech font-bold uppercase tracking-wider flex items-center gap-2 transition-all shrink-0"
+        >
+          <span>EKSPLORASI SHOWROOM DI COMMUNITY HUB</span>
+          <ArrowRight className="w-3.5 h-3.5" />
+        </Link>
+      </div>
+
+      {/* =====================================================================
+          SECTION 04 ΓÇö 4BLOODS RECORDS: SPINNING VINYL SLEEVE & STUDIO TRACKLIST
+          Layout Rhythm: LEFT 5 Cols Spinning Vinyl Sleeve | Right 7 Cols Studio Tracklist
+          Background: Warm Analog Recording Studio + Concentric Vinyl Grooves
       ===================================================================== */}
       <section
-        className={`py-20 border-b ${
-          isDark ? 'bg-[#080305] border-red-500/30' : 'bg-gradient-to-b from-[#F2ECE4] to-[#FAF8F5] border-zinc-300'
+        id="records"
+        className={`py-24 border-b relative overflow-hidden ${
+          isDark
+            ? 'bg-gradient-to-tr from-[#08080C] via-[#0E0C12] to-[#07060A] border-red-500/20'
+            : 'bg-gradient-to-tr from-[#EDE9E1] via-[#E2DED5] to-[#EDE9E1] border-zinc-300'
         }`}
       >
-        <div className="max-w-[1520px] mx-auto px-4 sm:px-8 space-y-8">
-          <div className="p-8 sm:p-12 border bg-gradient-to-r from-red-950/40 via-red-900/20 to-black/60 border-red-500/40 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-8 shadow-2xl">
-            <div className="space-y-3 max-w-2xl">
-              <div className="inline-flex items-center gap-2 text-xs font-mono-tech font-bold text-red-400 uppercase tracking-widest">
-                <Tv className="w-4 h-4 text-red-500" />
-                <span>4BLOODS REAL-TIME MULTI-POV SURVEILLANCE</span>
+        {/* Rich Section 04 Background Art: Concentric Vinyl Grooves + Blurred Track Cover */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
+          <img
+            src={activeTrack.thumb}
+            alt=""
+            loading="lazy"
+            decoding="async"
+            className={`w-full h-full object-cover ${
+              isDark ? 'opacity-15' : 'opacity-10'
+            }`}
+          />
+          <div className="absolute inset-0 bg-vinyl-grooves opacity-85" />
+          <div
+            className={`absolute -bottom-14 right-10 font-display text-[170px] sm:text-[240px] leading-none select-none ${
+              isDark ? 'text-red-500/[0.05]' : 'text-red-900/[0.05]'
+            }`}
+          >
+            RECORDS
+          </div>
+        </div>
+
+        <div className="max-w-[1520px] mx-auto px-4 sm:px-8 relative z-10">
+          <div className="flex flex-col lg:flex-row lg:items-end justify-between mb-10 gap-6">
+            <div className="flex items-center gap-4 sm:gap-6">
+              <Icon3D src="/assets/generated/icons3d/icon_records.webp" alt="3D Vinyl Record" />
+              <div>
+              <div className="inline-flex items-center gap-2 text-xs font-mono-tech font-bold text-red-500 tracking-[0.25em] uppercase mb-1">
+                <Disc3 className="w-3.5 h-3.5 animate-spin" style={{ animationDuration: '6s' }} />
+                <span>04 // 4BLOODS RECORDS ΓÇö UNDERGROUND SOUNDTRACK &amp; DISS TRACKS</span>
               </div>
-              <h3 className="font-display text-3xl sm:text-5xl uppercase tracking-wider text-white">
-                PANTAU SELURUH PERSPEKTIF <span className="text-red-500">LIVE</span> DI 4BLOODS CAM
-              </h3>
-              <p className="text-xs sm:text-sm font-mono-tech text-zinc-300 leading-relaxed">
-                Tonton multi-kamera real-time hingga 4 sudut pandang streamer sekaligus (Quad-Cam), pantau status siaran langsung 54 kreator, dan rasakan atmosfer operasi keluarga 4Bloods.
-              </p>
+              <h2
+                className={`font-display text-5xl sm:text-7xl uppercase tracking-wider leading-none ${
+                  isDark ? 'text-white' : 'text-zinc-900'
+                }`}
+              >
+                OFFICIAL <span className="text-red-600">MV &amp; DISS TRACKS</span>
+              </h2>
+              </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0">
-              <Link
-                href="/cam"
-                className="px-8 py-4 bg-red-600 hover:bg-red-500 text-white font-mono-tech text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2 shadow-[0_0_30px_rgba(220,38,38,0.6)]"
+            <div className="flex flex-wrap gap-2">
+              {[
+                { id: 'ALL', label: 'ALL RELEASES (5)' },
+                { id: 'MV', label: 'OFFICIAL MV & ANTHEMS (3)' },
+                { id: 'DISS', label: 'WAR DISS TRACKS (2)' },
+              ].map((t) => (
+                <button
+                  key={t.id}
+                  onClick={() => {
+                    setTrackFilter(t.id as any);
+                    const first = OFFICIAL_MEDIA_TRACKS.find((tr) =>
+                      t.id === 'MV'
+                        ? tr.type !== 'DISS TRACK'
+                        : t.id === 'DISS'
+                          ? tr.type === 'DISS TRACK'
+                          : true
+                    );
+                    if (first) setSelectedTrackId(first.id);
+                  }}
+                  className={`px-4 py-2.5 text-xs font-mono-tech font-bold uppercase border cursor-pointer ${
+                    trackFilter === t.id
+                      ? 'bg-red-600 text-white border-red-500 shadow-[0_0_20px_rgba(220,38,38,0.4)]'
+                      : isDark
+                        ? 'bg-[#120A0E]/90 text-zinc-300 border-white/15 hover:text-white'
+                        : 'bg-white text-zinc-700 border-zinc-300 hover:border-red-500'
+                  }`}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-stretch">
+            {/* LEFT 5 COLUMNS: Active Vinyl Record Sleeve & Direct MV Trigger */}
+            <Tilt3DCard
+              intensity={10}
+              onClick={() =>
+                setVideoModal({
+                  videoId: activeTrack.videoId,
+                  title: activeTrack.title,
+                  streamer: `${activeTrack.artist} // ${activeTrack.type}`,
+                })
+              }
+              className={`lg:col-span-5 border p-6 sm:p-8 flex flex-col justify-between cursor-pointer group relative overflow-hidden ${
+                isDark
+                  ? 'bg-[#0E080B]/95 border-red-500/40 shadow-2xl'
+                  : 'bg-white/95 border-zinc-300 shadow-xl'
+              }`}
+            >
+              <div className="relative my-4 flex items-center justify-center">
+                <div
+                  className="w-56 h-56 sm:w-64 sm:h-64 rounded-full bg-zinc-950 border-4 border-zinc-800 shadow-2xl flex items-center justify-center translate-x-10 sm:translate-x-14 group-hover:translate-x-20 transition-transform duration-500 animate-spin"
+                  style={{ animationDuration: '9s' }}
+                >
+                  <div className="w-44 h-44 rounded-full border border-white/10 flex items-center justify-center">
+                    <div className="w-20 h-20 rounded-full bg-red-600 border-4 border-black flex items-center justify-center">
+                      <span className="font-gothic text-lg text-white">4BG</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="relative z-10 w-60 h-60 sm:w-68 sm:h-68 -translate-x-8 sm:-translate-x-10 bg-black border-2 border-white/20 shadow-[0_25px_50px_rgba(0,0,0,0.9)] overflow-hidden">
+                  <img
+                    src={activeTrack.thumb}
+                    alt={activeTrack.title}
+                    onError={(e) => {
+                      (e.currentTarget as HTMLImageElement).src = '/assets/yt_this_is_4bloods.jpg';
+                    }}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
+                  <div className="absolute top-3 left-3">
+                    <span className="px-2.5 py-0.5 bg-red-600 text-white text-[10px] font-mono-tech font-bold uppercase">
+                      {activeTrack.type}
+                    </span>
+                  </div>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="w-14 h-14 bg-red-600 text-white flex items-center justify-center shadow-[0_0_30px_rgba(220,38,38,0.8)] group-hover:scale-110 transition-transform">
+                      <Play className="w-6 h-6 fill-white ml-0.5" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-3 pt-4 border-t border-red-500/20">
+                <div className="flex items-center justify-between text-xs font-mono-tech">
+                  <span className="text-red-500 font-bold uppercase">{activeTrack.artist}</span>
+                  <span className={isDark ? 'text-zinc-400' : 'text-zinc-500'}>
+                    DURASI: {activeTrack.duration}
+                  </span>
+                </div>
+                <h3
+                  className={`font-display text-4xl sm:text-5xl tracking-wider uppercase leading-none ${
+                    isDark ? 'text-white' : 'text-zinc-900'
+                  }`}
+                >
+                  {activeTrack.title}
+                </h3>
+                <p
+                  className={`text-xs sm:text-sm leading-relaxed ${
+                    isDark ? 'text-zinc-300' : 'text-zinc-600'
+                  }`}
+                >
+                  {activeTrack.description}
+                </p>
+                <div className="pt-2">
+                  <span className="w-full py-3 bg-red-600 group-hover:bg-red-500 text-white text-xs font-mono-tech font-bold uppercase tracking-widest flex items-center justify-center gap-2">
+                    <Play className="w-4 h-4 fill-white" />
+                    PUTAR VIDEO KLIP (MV) SEKARANG
+                  </span>
+                </div>
+              </div>
+            </Tilt3DCard>
+
+            {/* RIGHT 7 COLUMNS: Interactive Studio Master Tracklist Ledger */}
+            <div
+              className={`lg:col-span-7 border flex flex-col justify-between ${
+                isDark
+                  ? 'bg-[#0D080B]/95 border-white/15'
+                  : 'bg-white/95 border-zinc-300 shadow-lg'
+              }`}
+            >
+              <div
+                className={`px-6 py-4 border-b flex items-center justify-between ${
+                  isDark ? 'bg-[#150C10] border-white/10' : 'bg-zinc-100 border-zinc-200'
+                }`}
               >
-                <Tv className="w-4 h-4" />
-                <span>BUKA 4BLOODS CAM SEKARANG</span>
-              </Link>
-              <Link
-                href="/community"
-                className="px-6 py-4 bg-white/10 hover:bg-white/20 text-white font-mono-tech text-xs font-bold uppercase tracking-widest flex items-center justify-center gap-2 border border-white/20"
+                <span
+                  className={`text-xs font-mono-tech font-bold uppercase tracking-widest ${
+                    isDark ? 'text-white' : 'text-zinc-900'
+                  }`}
+                >
+                  4BG MASTER RECORDINGS // TRACKLIST DECK
+                </span>
+                <span className="text-[11px] font-mono-tech text-red-500 font-bold">
+                  KLIK BARIS UNTUK PREVIEW ΓÇó KLIK PLAY UNTUK MV
+                </span>
+              </div>
+
+              <div className="divide-y divide-current/10 flex-1">
+                {filteredTracks.map((track, idx) => {
+                  const isSelected = track.id === activeTrack.id;
+                  return (
+                    <div
+                      key={track.id}
+                      onClick={() => setSelectedTrackId(track.id)}
+                      className={`p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 cursor-pointer ${
+                        isSelected
+                          ? isDark
+                            ? 'bg-red-600/15 shadow-[inset_4px_0_0_#dc2626]'
+                            : 'bg-red-50 shadow-[inset_4px_0_0_#dc2626]'
+                          : isDark
+                            ? 'hover:bg-white/[0.03]'
+                            : 'hover:bg-zinc-50'
+                      }`}
+                    >
+                      <div className="flex items-center gap-4 min-w-0">
+                        <span
+                          className={`font-display text-3xl w-8 shrink-0 ${
+                            isSelected
+                              ? 'text-red-500'
+                              : isDark
+                                ? 'text-zinc-600'
+                                : 'text-zinc-400'
+                          }`}
+                        >
+                          0{idx + 1}
+                        </span>
+
+                        <img
+                          src={track.thumb}
+                          alt={track.title}
+                          onError={(e) => {
+                            (e.currentTarget as HTMLImageElement).src =
+                              '/assets/yt_this_is_4bloods.jpg';
+                          }}
+                          className="w-16 h-11 object-cover border border-red-500/30 shrink-0"
+                        />
+
+                        <div className="min-w-0">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span
+                              className={`px-2 py-0.5 text-[9px] font-mono-tech font-bold uppercase ${
+                                track.type === 'DISS TRACK'
+                                  ? 'bg-red-600 text-white'
+                                  : isDark
+                                    ? 'bg-white/10 text-zinc-200'
+                                    : 'bg-zinc-200 text-zinc-800'
+                              }`}
+                            >
+                              {track.type}
+                            </span>
+                            <span
+                              className={`text-[11px] font-mono-tech truncate ${
+                                isDark ? 'text-zinc-400' : 'text-zinc-500'
+                              }`}
+                            >
+                              {track.artist} {track.target ? `ΓÇó ${track.target}` : ''}
+                            </span>
+                          </div>
+                          <h4
+                            className={`font-display text-2xl sm:text-3xl tracking-wider truncate mt-0.5 ${
+                              isDark ? 'text-white' : 'text-zinc-900'
+                            }`}
+                          >
+                            {track.title}
+                          </h4>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-3 self-end sm:self-center shrink-0">
+                        <span
+                          className={`text-xs font-mono-tech ${
+                            isDark ? 'text-zinc-400' : 'text-zinc-500'
+                          }`}
+                        >
+                          {track.duration}
+                        </span>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setVideoModal({
+                              videoId: track.videoId,
+                              title: track.title,
+                              streamer: `${track.artist} // ${track.type}`,
+                            });
+                          }}
+                          className="px-4 py-2 bg-red-600 hover:bg-red-500 text-white text-xs font-mono-tech font-bold uppercase flex items-center gap-1.5 cursor-pointer"
+                        >
+                          <Play className="w-3.5 h-3.5 fill-white" />
+                          <span>PLAY MV</span>
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div
+                className={`px-6 py-3.5 border-t text-xs font-mono-tech flex flex-wrap items-center justify-between gap-2 ${
+                  isDark
+                    ? 'bg-[#080507] border-white/10 text-zinc-400'
+                    : 'bg-zinc-100 border-zinc-200 text-zinc-600'
+                }`}
               >
-                <Users className="w-4 h-4" />
-                <span>DIREKTORI 54 STREAMER</span>
-              </Link>
+                <span>INGIN DENGAR LAGU SAMBIL SCROLL?</span>
+                <span className="text-red-500 font-bold">
+                  TARIK TAB &ldquo;4BG SONG LIST&rdquo; DI SISI KANAN LAYAR ΓåÆ
+                </span>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
       {/* =====================================================================
-          FOOTER — OFFICIAL ECOSYSTEM FOOTER
+          SECTION 05 ΓÇö IME RP WAR CINEMA & ARCHIVES
+          Layout Rhythm: TOP WIDESCREEN CINEMA BANNER + BOTTOM HORIZONTAL VHS FILMSTRIP GRID
+          Background: Tactical War Room Mural & Film Grain
       ===================================================================== */}
-      <footer
-        className={`py-14 border-t ${
-          isDark ? 'bg-[#060305] border-white/10 text-zinc-400' : 'bg-[#EAE4DC] border-zinc-300 text-zinc-700'
+      <section
+        id="archives"
+        className={`py-24 border-b relative overflow-hidden ${
+          isDark
+            ? 'bg-gradient-to-br from-[#100508] via-[#090306] to-[#0E0407] border-red-600/35'
+            : 'bg-gradient-to-br from-[#FDF2F4] via-[#F8E2E6] to-[#FDF2F4] border-red-300'
         }`}
       >
-        <div className="max-w-[1520px] mx-auto px-4 sm:px-8 space-y-10">
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 pb-8 border-b border-current/10">
-            <div className="flex items-center gap-3">
-              <img
-                src="/assets/logo_v2.png"
-                alt="4Bloods"
-                className="w-10 h-10 object-contain drop-shadow-[0_0_10px_rgba(220,38,38,0.4)]"
-              />
+        {/* Cinematic Turf Wallpaper (Vivid, Clear & Atmospheric Roxwood Scenery) */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
+          <img
+            src="/assets/hood_roxwood.webp"
+            alt="Cinematic Backdrop"
+            className={`w-full h-full object-cover object-center ${
+              isDark ? 'opacity-40 brightness-80 contrast-115' : 'opacity-[0.10] grayscale'
+            }`}
+          />
+          <div
+            style={{
+              background:
+                'radial-gradient(circle at 50% 35%, rgba(0,0,0,0.2) 0%, rgba(9,3,6,0.88) 75%)',
+            }}
+            className="absolute inset-0 pointer-events-none"
+          />
+          <div className="absolute inset-0 bg-film-grain opacity-45" />
+        </div>
+
+        <div className="max-w-[1520px] mx-auto px-4 sm:px-8 relative z-10">
+          <div className="flex flex-col lg:flex-row lg:items-end justify-between mb-10 gap-6">
+            <div className="flex items-center gap-4 sm:gap-6">
+              <Icon3D src="/assets/generated/icons3d/icon_archives.webp" alt="3D VHS Archive" />
               <div>
-                <div className={`font-display text-2xl uppercase tracking-wider ${isDark ? 'text-white' : 'text-zinc-950'}`}>
-                  FOUR BLOODS GANG
-                </div>
-                <div className="text-[10px] font-mono-tech text-red-500 font-bold uppercase">
-                  IME ROLEPLAY // SOUTH SIDE ROXWOOD
-                </div>
+              <div className="inline-flex items-center gap-2 text-xs font-mono-tech font-bold text-red-500 tracking-[0.25em] uppercase mb-1">
+                <Film className="w-3.5 h-3.5" />
+                <span>05 // DOKUMENTASI PERANG, KOMANDO &amp; SOLIDARITAS IME RP</span>
+              </div>
+              <h2
+                className={`font-display text-5xl sm:text-7xl uppercase tracking-wider leading-none ${
+                  isDark ? 'text-white' : 'text-zinc-900'
+                }`}
+              >
+                WAR CINEMA &amp; <span className="text-red-600">ARCHIVES</span>
+              </h2>
               </div>
             </div>
 
-            <div className="flex flex-wrap items-center gap-4 text-xs font-mono-tech uppercase font-bold">
-              <Link href="/" className="hover:text-red-500 transition-colors">
-                OVERVIEW
-              </Link>
-              <Link href="/wiki" className="hover:text-red-500 transition-colors">
-                BLOODS WIKI
-              </Link>
-              <Link href="/community" className="hover:text-red-500 transition-colors">
-                COMMUNITY HUB
-              </Link>
-              <Link href="/cam" className="hover:text-red-500 transition-colors">
-                4BLOODS CAM
-              </Link>
+            <div className="flex flex-wrap gap-2">
+              {[
+                { id: 'ALL', label: 'SEMUA REKAMAN (9)' },
+                { id: 'WAR', label: 'WAR & PURSUIT POV' },
+                { id: 'LORE', label: 'COMMAND & SOLIDARITY' },
+              ].map((w) => (
+                <button
+                  key={w.id}
+                  onClick={() => {
+                    setWarFilter(w.id as any);
+                    const first = WAR_ARCHIVES.find((war) =>
+                      w.id === 'WAR'
+                        ? war.category.includes('WAR') || war.category.includes('PURSUIT')
+                        : w.id === 'LORE'
+                          ? !war.category.includes('WAR') && !war.category.includes('PURSUIT')
+                          : true
+                    );
+                    if (first) setSelectedWarId(first.id);
+                  }}
+                  className={`px-4 py-2.5 text-xs font-mono-tech font-bold uppercase border cursor-pointer ${
+                    warFilter === w.id
+                      ? 'bg-red-600 text-white border-red-500 shadow-[0_0_20px_rgba(220,38,38,0.4)]'
+                      : isDark
+                        ? 'bg-[#120A0E]/90 text-zinc-300 border-white/15 hover:text-white'
+                        : 'bg-white text-zinc-700 border-zinc-300 hover:border-red-500'
+                  }`}
+                >
+                  {w.label}
+                </button>
+              ))}
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-mono-tech">
-            <p>
-              &copy; {new Date().getFullYear()} 4Bloods Gang (4BG). Arsip Portofolio &amp; Wiki Komunitas IME Roleplay.
-            </p>
-            <p className="text-[11px] text-zinc-500">
-              Dikurasi untuk seluruh keluarga besar dan warga setia bendera merah.
-            </p>
+          {/* 1. TOP FULL-WIDTH WIDESCREEN FEATURED WAR CINEMA STAGE */}
+          <div
+            onClick={() =>
+              setVideoModal({
+                videoId: activeWarTape.videoId,
+                title: activeWarTape.title,
+                streamer: `${activeWarTape.streamer} // ${activeWarTape.rank}`,
+              })
+            }
+            className={`border overflow-hidden grid grid-cols-1 lg:grid-cols-12 cursor-pointer group mb-6 ${
+              isDark
+                ? 'bg-[#0C070A]/95 border-red-500/45 shadow-[0_25px_70px_rgba(0,0,0,0.85)]'
+                : 'bg-white border-zinc-300 shadow-2xl'
+            }`}
+          >
+            {/* Widescreen Dossier Info on Left 5 Cols */}
+            <div className="lg:col-span-5 p-6 sm:p-10 flex flex-col justify-between gap-6 order-2 lg:order-1">
+              <div className="space-y-4">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="px-3 py-1 bg-red-600 text-white text-[10px] font-mono-tech font-bold uppercase tracking-widest">
+                    FEATURED TAPE // {activeWarTape.category}
+                  </span>
+                  <span
+                    className={`px-2.5 py-1 border text-[10px] font-mono-tech uppercase ${
+                      isDark
+                        ? 'bg-black/60 border-white/15 text-zinc-300'
+                        : 'bg-zinc-100 border-zinc-300 text-zinc-700'
+                    }`}
+                  >
+                    IME ROLEPLAY
+                  </span>
+                </div>
+
+                <div>
+                  <div className="text-xs font-mono-tech text-red-500 font-bold uppercase tracking-widest">
+                    POV KOMANDO: {activeWarTape.streamer} ({activeWarTape.rank})
+                  </div>
+                  <h3
+                    className={`font-display text-4xl sm:text-6xl tracking-wider uppercase leading-none mt-2 ${
+                      isDark ? 'text-white' : 'text-zinc-900'
+                    }`}
+                  >
+                    {activeWarTape.title}
+                  </h3>
+                </div>
+
+                <p
+                  className={`text-xs sm:text-sm leading-relaxed ${
+                    isDark ? 'text-zinc-300' : 'text-zinc-600'
+                  }`}
+                >
+                  Rekaman arsip pertempuran, pengawalan konvoi, dan solidaritas keluarga besar{' '}
+                  <strong>Four Bloods Gang (4BG)</strong> di wilayah South Side Roxwood.
+                </p>
+              </div>
+
+              <div className="pt-4 border-t border-current/10 flex flex-wrap items-center justify-between gap-3">
+                <span className="px-6 py-3.5 bg-red-600 group-hover:bg-red-500 text-white text-xs font-mono-tech font-bold uppercase tracking-widest flex items-center gap-2.5 shadow-lg">
+                  <Play className="w-4 h-4 fill-white" />
+                  PUTAR REKAMAN LAYAR PENUH
+                </span>
+                <span className="font-gothic text-2xl text-red-600">4BG</span>
+              </div>
+            </div>
+
+            {/* Widescreen 16:9 Cinema Frame on Right 7 Cols */}
+            <div className="lg:col-span-7 relative aspect-video bg-black overflow-hidden order-1 lg:order-2">
+              <img
+                src={activeWarTape.thumb}
+                alt={activeWarTape.title}
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).src = '/assets/streams/war_allstar.jpg';
+                }}
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+              />
+              <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-transparent to-transparent hidden lg:block" />
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-16 h-16 bg-red-600 text-white flex items-center justify-center shadow-[0_0_40px_rgba(220,38,38,0.85)] group-hover:scale-110 transition-transform">
+                  <Play className="w-7 h-7 fill-white ml-0.5" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* 2. BOTTOM HORIZONTAL VHS TAPE SELECTOR STRIP */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+            {filteredWarArchives.map((war, idx) => {
+              const isSelected = war.id === activeWarTape.id;
+              return (
+                <div
+                  key={war.id}
+                  onClick={() => setSelectedWarId(war.id)}
+                  className={`p-3 border flex items-center justify-between gap-3 cursor-pointer ${
+                    isSelected
+                      ? isDark
+                        ? 'bg-red-600/20 border-red-500 shadow-[inset_4px_0_0_#dc2626]'
+                        : 'bg-red-50 border-red-500 shadow-[inset_4px_0_0_#dc2626]'
+                      : isDark
+                        ? 'bg-[#0E090C]/90 border-white/15 hover:border-red-500/50'
+                        : 'bg-white/95 border-zinc-300 hover:border-red-400'
+                  }`}
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <span className="font-mono-tech text-xs font-bold text-red-500 w-5 shrink-0">
+                      0{idx + 1}
+                    </span>
+                    <img
+                      src={war.thumb}
+                      alt={war.title}
+                      onError={(e) => {
+                        (e.currentTarget as HTMLImageElement).src =
+                          '/assets/streams/war_allstar.jpg';
+                      }}
+                      className="w-20 h-12 object-cover border border-red-500/30 shrink-0"
+                    />
+                    <div className="min-w-0">
+                      <div className="text-[9px] font-mono-tech text-red-500 font-bold uppercase truncate">
+                        {war.category} ΓÇó {war.streamer}
+                      </div>
+                      <div
+                        className={`font-display text-lg tracking-wider truncate ${
+                          isDark ? 'text-white' : 'text-zinc-900'
+                        }`}
+                      >
+                        {war.title}
+                      </div>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setVideoModal({
+                        videoId: war.videoId,
+                        title: war.title,
+                        streamer: `${war.streamer} // ${war.rank}`,
+                      });
+                    }}
+                    className="p-2 bg-red-600 hover:bg-red-500 text-white shrink-0 cursor-pointer"
+                    title="Langsung Putar Video"
+                  >
+                    <Play className="w-3.5 h-3.5 fill-white" />
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* =====================================================================
+          SECTION 06 ΓÇö 54 OFFICIAL STREAMERS WALL (IME RP)
+          Background: Roxwood Broadcast Matrix with Dual Crimson/Amber Spotlights
+      ===================================================================== */}
+      <section
+        id="roster"
+        className={`py-24 border-b relative overflow-hidden ${
+          isDark
+            ? 'bg-gradient-to-br from-[#181422] via-[#221C2D] to-[#16121F] border-zinc-500/25'
+            : 'bg-gradient-to-b from-[#EAE8E2] via-[#DFDCD5] to-[#E9E7E0] border-zinc-300'
+        }`}
+      >
+        <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
+          <div
+            className={`absolute inset-0 ${
+              isDark ? 'bg-tactical-grid opacity-65' : 'bg-cam-light-grid opacity-65'
+            }`}
+          />
+          <div
+            style={{
+              background: 'radial-gradient(circle, rgba(220,38,38,0.18) 0%, rgba(220,38,38,0) 70%)',
+            }}
+            className="absolute -top-24 left-1/3 w-[600px] h-[600px] rounded-full pointer-events-none"
+          />
+          <div
+            className={`absolute bottom-0 right-10 font-display text-[180px] sm:text-[250px] leading-none select-none ${
+              isDark ? 'text-red-500/[0.05]' : 'text-zinc-900/[0.04]'
+            }`}
+          >
+            54 POV
+          </div>
+        </div>
+
+        <div className="max-w-[1520px] mx-auto px-4 sm:px-8 relative z-10">
+          <YouTubeCarousel3D
+            streamers={streamers}
+            isDark={isDark}
+            
+            onOpenVideo={(v) => setVideoModal(v)}
+            title="54 OFFICIAL STREAMERS"
+            subtitle="Jaringan kreator resmi Four Bloods Gang di YouTube beserta status siaran langsung real-time di South Side Roxwood (IME RP)."
+            sectionBadge="06 // JARINGAN KREATOR RESMI 4BLOODS DI IME RP"
+          />
+        </div>
+      </section>
+
+      {/* =====================================================================
+          MONUMENTAL FOOTER & SIGNATURE BOTTOM BAR ΓÇö FAN-MADE BY (FINN)EGAN DAVIS
+      ===================================================================== */}
+      <footer
+        className={`border-t ${
+          isDark ? 'bg-[#050304] border-white/10' : 'bg-[#120D10] border-zinc-300 text-white'
+        }`}
+      >
+        <div className="max-w-[1520px] mx-auto px-4 sm:px-8 py-14 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-10 border-b border-white/10">
+          <div className="flex items-center gap-5">
+            <img
+              src="/assets/logo_v2.png"
+              alt="4BG Emblem"
+              className="w-16 h-16 object-contain drop-shadow-[0_0_25px_rgba(220,38,38,0.5)]"
+            />
+            <div>
+              <div className="flex items-baseline gap-2.5">
+                <span className="font-gothic text-3xl sm:text-4xl text-white">4BG</span>
+                <span className="font-script text-2xl text-red-400">Four Bloods Gang</span>
+              </div>
+              <p className="text-xs font-mono-tech text-zinc-400 tracking-widest uppercase mt-1">
+                IME ROLEPLAY (IME RP) // SOUTH SIDE ROXWOOD // POSTAL 1051ΓÇô1052
+              </p>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3">
+            <Link
+              href="/cam"
+              className="px-6 py-3 bg-red-600 hover:bg-red-500 text-white font-mono-tech text-xs font-bold uppercase tracking-widest flex items-center gap-2 cursor-pointer"
+            >
+              <Tv className="w-4 h-4" />
+              OPEN 4BLOODS CAM
+            </Link>
+          </div>
+        </div>
+
+        {/* Signature Bottom Bar: Fan-Made by (Finn)egan Davis */}
+        <div className="bg-[#030203] py-5 px-4 sm:px-8">
+          <div className="max-w-[1520px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-mono-tech text-zinc-400">
+            <div className="flex items-center gap-2 tracking-wider uppercase">
+              <span className="w-2 h-2 bg-red-600 inline-block" />
+              <span>IME ROLEPLAY // BLOOD IN, BLOOD OUT // FOUR BLOODS GANG ARCHIVE</span>
+            </div>
+
+            <div className="px-4 py-2 bg-white/[0.03] border border-white/10 text-zinc-300 tracking-wider">
+              FAN-MADE OFFICIAL CONCEPT BY{' '}
+              <span className="text-white">
+                <strong className="font-extrabold text-red-500">Finn</strong>egan Davis
+              </span>
+            </div>
           </div>
         </div>
       </footer>
 
-      {/* Fullscreen Video Modal */}
-      {videoModal && (
+      {/* =====================================================================
+          LIGHTBOX MODAL
+      ===================================================================== */}
+      {lightboxImage && (
         <div
-          onClick={() => setVideoModal(null)}
-          className="fixed inset-0 z-50 bg-black/92 backdrop-blur-xl flex items-center justify-center p-4 animate-in fade-in duration-200"
+          onClick={() => setLightboxImage(null)}
+          className="fixed inset-0 z-50 bg-black/92 backdrop-blur-xl flex items-center justify-center p-4"
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="max-w-5xl w-full bg-[#0B0709] border border-white/20 overflow-hidden shadow-2xl"
+            className="max-w-5xl w-full bg-[#0B0709] border border-white/20 overflow-hidden"
           >
             <div className="px-5 py-3.5 bg-[#120B0E] border-b border-white/10 flex items-center justify-between">
               <div>
-                <h4 className="font-display text-xl sm:text-2xl text-white tracking-wider truncate max-w-2xl">
+                <h4 className="font-display text-2xl text-white tracking-wider">
+                  {lightboxImage.title}
+                </h4>
+                {lightboxImage.subtitle && (
+                  <p className="text-xs font-mono-tech text-red-400">{lightboxImage.subtitle}</p>
+                )}
+              </div>
+              <button
+                onClick={() => setLightboxImage(null)}
+                className="p-2 bg-white/5 hover:bg-red-600 text-white cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-6 bg-black flex items-center justify-center max-h-[80vh]">
+              <img
+                src={lightboxImage.src}
+                alt={lightboxImage.title}
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).src = '/assets/logo_v2.png';
+                }}
+                className="max-h-[72vh] w-auto object-contain"
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* =====================================================================
+          FULLSCREEN VIDEO STREAM / MV MODAL
+      ===================================================================== */}
+      {videoModal && (
+        <div
+          onClick={() => setVideoModal(null)}
+          className="fixed inset-0 z-50 bg-black/92 backdrop-blur-xl flex items-center justify-center p-4"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="max-w-5xl w-full bg-[#0B0709] border border-red-500/50 overflow-hidden shadow-[0_0_60px_rgba(220,38,38,0.3)]"
+          >
+            <div className="px-5 py-3.5 bg-[#120B0E] border-b border-white/10 flex items-center justify-between">
+              <div>
+                <span className="text-[10px] font-mono-tech text-red-500 font-bold uppercase tracking-widest">
+                  {videoModal.streamer}
+                </span>
+                <h4 className="font-display text-2xl text-white tracking-wider">
                   {videoModal.title}
                 </h4>
-                <p className="text-xs font-mono-tech text-red-400">{videoModal.streamer}</p>
               </div>
               <button
                 onClick={() => setVideoModal(null)}
-                className="p-2 bg-white/5 hover:bg-red-600 text-white cursor-pointer transition-colors"
+                className="p-2 bg-white/5 hover:bg-red-600 text-white cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
             <div className="aspect-video w-full bg-black">
               <iframe
-                src={`https://www.youtube.com/embed/${videoModal.videoId}?autoplay=1`}
+                src={`https://www.youtube.com/embed/${videoModal.videoId}?autoplay=1&rel=0`}
                 title={videoModal.title}
+                className="w-full h-full"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
-                className="w-full h-full border-0"
               />
-            </div>
-            <div className="p-4 bg-[#0B0709] border-t border-white/10 flex items-center justify-between">
-              <span className="text-xs font-mono-tech text-zinc-400">
-                Memutar rekaman arsip YouTube
-              </span>
-              <a
-                href={`https://www.youtube.com/watch?v=${videoModal.videoId}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="px-4 py-2 bg-red-600 hover:bg-red-500 text-white font-mono-tech text-xs font-bold uppercase flex items-center gap-2"
-              >
-                <YouTubeIcon className="w-4 h-4" />
-                <span>BUKA DI YOUTUBE</span>
-              </a>
             </div>
           </div>
         </div>
