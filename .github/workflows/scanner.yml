@@ -5,10 +5,6 @@ on:
     # Run every 5 minutes (standard cron interval)
     - cron: '*/5 * * * *'
   workflow_dispatch:
-  push:
-    branches:
-      - main
-      - development
 
 jobs:
   scan-and-sync:

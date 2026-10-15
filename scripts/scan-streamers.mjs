@@ -19,30 +19,68 @@ const YT_HEADERS = {
 async function checkChannel(streamer) {
   const { channelId, name } = streamer;
   try {
-    const res = await fetch(`https://www.youtube.com/channel/${channelId}/live`, {
-      headers: YT_HEADERS,
-      redirect: 'follow',
-      signal: AbortSignal.timeout(4500),
-    });
+    let videoId = null;
 
-    if (!res.ok) return { ...streamer, isLive: false, videoId: null };
+    // 1. Try canonical /live page
+    try {
+      const res = await fetch(`https://www.youtube.com/channel/${channelId}/live`, {
+        headers: YT_HEADERS,
+        redirect: 'follow',
+        signal: AbortSignal.timeout(4000),
+      });
 
-    const html = await res.text();
-    const canMatch = html.match(/<link rel="canonical" href="([^"]+)"/);
-    const canUrl = canMatch ? canMatch[1] : '';
-    const vidMatch = canUrl.match(/watch\?v=([a-zA-Z0-9_-]{11})/);
-    const videoId = vidMatch ? vidMatch[1] : null;
+      if (res.ok) {
+        const html = await res.text();
+        const canMatch = html.match(/<link rel="canonical" href="([^"]+)"/);
+        const canUrl = canMatch ? canMatch[1] : '';
+        const vidMatch = canUrl.match(/watch\?v=([a-zA-Z0-9_-]{11})/);
+        if (vidMatch) {
+          videoId = vidMatch[1];
+        }
+      }
+    } catch {}
 
-    if (!videoId) return { ...streamer, isLive: false, videoId: null };
+    // 2. Infallible RSS Fallback: Never blocked by consent/bot captcha on cloud/datacenter IPs
+    if (!videoId) {
+      try {
+        const rssRes = await fetch(
+          `https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}`,
+          { signal: AbortSignal.timeout(4000) }
+        );
+        if (rssRes.ok) {
+          const xml = await rssRes.text();
+          const rssVidMatch = xml.match(/<yt:videoId>([a-zA-Z0-9_-]{11})<\/yt:videoId>/);
+          if (rssVidMatch) {
+            videoId = rssVidMatch[1];
+          }
+        }
+      } catch {}
+    }
+
+    if (!videoId) {
+      return { ...streamer, isLive: false, videoId: null, unverified: true };
+    }
 
     const watchRes = await fetch(`https://www.youtube.com/watch?v=${videoId}`, {
       headers: YT_HEADERS,
       signal: AbortSignal.timeout(4500),
     });
 
-    if (!watchRes.ok) return { ...streamer, isLive: false, videoId: null };
+    if (!watchRes.ok) {
+      return { ...streamer, isLive: false, videoId: null, unverified: true };
+    }
 
     const watchHtml = await watchRes.text();
+    const isBotChallenge =
+      watchHtml.includes('consent.youtube.com') ||
+      watchHtml.includes('google.com/sorry') ||
+      watchHtml.includes('unusual traffic') ||
+      !watchHtml.includes('<title>');
+
+    if (isBotChallenge) {
+      return { ...streamer, isLive: false, videoId: null, botChallenged: true };
+    }
+
     const isOffline =
       watchHtml.includes('LIVE_STREAM_OFFLINE') ||
       watchHtml.includes('"isLiveNow":false') ||
@@ -81,6 +119,7 @@ async function checkChannel(streamer) {
       title: isLiveNow ? title : null,
       actualStartTime: isLiveNow ? actualStartTime : null,
       viewerCount: isLiveNow ? viewerCount : null,
+      verifiedOffline: isOffline,
       lastChecked: new Date().toISOString(),
     };
   } catch (err) {
@@ -107,17 +146,52 @@ async function main() {
     console.log(`- ${l.name} (${l.channelId}): "${l.title}" [${l.videoId}] viewers: ${l.viewerCount || 0}`)
   );
 
-  // Sync to Firebase RTDB
+  // 1. Fetch current existing Firebase state
+  let existingFbData = {};
+  try {
+    const existingRes = await fetch(FIREBASE_URL, { signal: AbortSignal.timeout(5000) });
+    if (existingRes.ok) {
+      existingFbData = (await existingRes.json()) || {};
+    }
+  } catch (e) {
+    console.warn('[Safety] Failed to read current Firebase state:', e.message);
+  }
+
+  const existingLiveCount = Object.values(existingFbData).filter((s) => s?.isLive).length;
+
+  // 2. Safety Circuit Breaker:
+  // If scan found 0 live streams while Firebase has confirmed live streams,
+  // it means the runner is likely blocked by YouTube. DO NOT wipe legitimate live data!
+  if (live.length === 0 && existingLiveCount > 0) {
+    console.warn(
+      `[Safety Shield] Scanner detected 0 live streams while Firebase currently has ${existingLiveCount} live streams. Possible bot challenge/rate-limiting. SKIPPING Firebase wipe to protect legitimate data!`
+    );
+    return;
+  }
+
+  // 3. Build smart delta payload
   const fbPayload = {};
   for (const r of results) {
+    const prev = existingFbData[r.channelId];
+
+    // If channel was live, but current check was inconclusive (unverified / bot challenge / timeout),
+    // PRESERVE the previous live state so transient network glitches do not mark streamers offline!
+    if (prev?.isLive && (r.unverified || r.botChallenged || r.error)) {
+      fbPayload[r.channelId] = {
+        ...prev,
+        lastChecked: new Date().toISOString(),
+      };
+      continue;
+    }
+
     fbPayload[r.channelId] = {
       channelId: r.channelId,
       name: r.name,
       isLive: Boolean(r.isLive),
-      videoId: r.videoId || null,
-      title: r.title || null,
-      actualStartTime: r.actualStartTime || null,
-      viewerCount: r.viewerCount || null,
+      videoId: r.isLive ? r.videoId : null,
+      title: r.isLive ? r.title : null,
+      actualStartTime: r.isLive ? r.actualStartTime : null,
+      viewerCount: r.isLive ? r.viewerCount : null,
       lastChecked: new Date().toISOString(),
     };
   }
@@ -145,6 +219,7 @@ async function main() {
           item.streamTitle = fresh.title;
           item.viewerCount = fresh.viewerCount;
           item.startTimestamp = fresh.actualStartTime;
+          item.viewerCount = fresh.viewerCount;
         }
       }
       fs.writeFileSync(SNAPSHOT_PATH, JSON.stringify(snapshotList, null, 2), 'utf8');
