@@ -293,14 +293,14 @@ export async function GET(request: Request) {
     );
   }
 
-  // 3. PROACTIVE LIVE CHECK: Check ALL roster channels directly on YouTube so newly started streams or restreams are detected immediately
+  // 3. PROACTIVE LIVE CHECK: Check unconfirmed roster channels in small rotating batches (max 6)
+  // Keeps serverless response time < 1.5s, preventing Vercel 10s gateway timeout and YouTube 429 IP blocks
   const allCandidateIds = STREAMER_ROSTER.map((m) => m.channelId);
   const unconfirmedCheckIds = allCandidateIds.filter((cid) => !snapshotMap[cid]?.isLive);
 
-  // Scan in 2 controlled parallel batches to prevent subrequest throttling while covering all channels
-  const batchSize = Math.ceil(unconfirmedCheckIds.length / 2);
-  const batch1 = unconfirmedCheckIds.slice(0, batchSize);
-  const batch2 = unconfirmedCheckIds.slice(batchSize);
+  const maxToScan = firebaseSuccess && !forceRefresh ? 6 : Math.min(unconfirmedCheckIds.length, 10);
+  const rotIndex = (Math.floor(Date.now() / 30_000) * maxToScan) % Math.max(1, unconfirmedCheckIds.length);
+  const toScan = unconfirmedCheckIds.slice(rotIndex, rotIndex + maxToScan);
 
   const scanChannelItem = async (cid: string) => {
     const liveInfo = await safeCheckYouTubeChannel(cid);
@@ -347,10 +347,9 @@ export async function GET(request: Request) {
     }
   };
 
-  await Promise.all([
-    Promise.all(batch1.map(scanChannelItem)),
-    Promise.all(batch2.map(scanChannelItem)),
-  ]);
+  if (toScan.length > 0) {
+    await Promise.all(toScan.map(scanChannelItem));
+  }
 
   // 4. Optional: YouTube Data API v3 check if user provided YOUTUBE_API_KEY in Vercel environment
   const apiKey = process.env.YOUTUBE_API_KEY || process.env.NEXT_PUBLIC_YOUTUBE_API_KEY;

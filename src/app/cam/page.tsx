@@ -315,19 +315,24 @@ export default function FourBloodsCamPage() {
 
   const applyInitialStreamerSelection = useCallback(
     (loadedStreamers: EnrichedStreamer[]) => {
-      if (hasInitializedSelection.current) return;
-      hasInitializedSelection.current = true;
-
       if (typeof window !== 'undefined') {
         const params = new URLSearchParams(window.location.search);
         const watchParam = params.get('watch');
         if (watchParam && loadedStreamers.some((s) => s.channelId === watchParam)) {
-          setSelectedIds([watchParam]);
-          setUnmutedId(watchParam);
-          setActiveChatIds([watchParam]);
+          if (!hasInitializedSelection.current) {
+            hasInitializedSelection.current = true;
+            setSelectedIds([watchParam]);
+            setUnmutedId(watchParam);
+            setActiveChatIds([watchParam]);
+          }
           return;
         }
+      }
 
+      // If already initialized and has streamers selected, keep user's active view
+      if (hasInitializedSelection.current && selectedIds.length > 0) return;
+
+      if (typeof window !== 'undefined') {
         try {
           const rawFavs = localStorage.getItem('4bg_fav_streamers');
           const favList: string[] = rawFavs ? JSON.parse(rawFavs) : [];
@@ -337,6 +342,7 @@ export default function FourBloodsCamPage() {
             );
             if (liveFavs.length > 0) {
               const liveFavIds = liveFavs.map((s) => s.channelId);
+              hasInitializedSelection.current = true;
               setSelectedIds(liveFavIds);
               setUnmutedId(liveFavIds[0]);
               setActiveChatIds(liveFavIds);
@@ -350,6 +356,7 @@ export default function FourBloodsCamPage() {
       const liveOnes = loadedStreamers.filter((s) => s.isLive);
       if (liveOnes.length > 0) {
         const liveIds = liveOnes.map((s) => s.channelId);
+        hasInitializedSelection.current = true;
         setSelectedIds(liveIds);
         setUnmutedId(liveIds[0]);
         setActiveChatIds(liveIds);
@@ -360,7 +367,7 @@ export default function FourBloodsCamPage() {
       setSelectedIds([]);
       setActiveChatIds([]);
     },
-    []
+    [selectedIds.length]
   );
 
   const fetchLiveStatus = useCallback(async (forceRefresh = false) => {
@@ -798,7 +805,7 @@ export default function FourBloodsCamPage() {
     setActiveChatIds((prev) => prev.filter((id) => id !== channelId));
   }, []);
 
-  // Auto-detect YouTube iframe ENDED event (state 0) or errors to auto-clear ended streams
+  // Auto-detect YouTube iframe ENDED event (state 0) to clear ended stream locally
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
       try {
@@ -812,9 +819,7 @@ export default function FourBloodsCamPage() {
         }
         if (!data || typeof data !== 'object') return;
         const isEnded = data.event === 'onStateChange' && data.info === 0;
-        const isError =
-          data.event === 'onError' || (data.info && [100, 101, 150].includes(data.info));
-        if (isEnded || isError) {
+        if (isEnded) {
           const matchingChannelId = Object.entries(iframeRefs.current).find(
             ([_, iframe]) => iframe && iframe.contentWindow === event.source
           )?.[0];
@@ -827,27 +832,13 @@ export default function FourBloodsCamPage() {
                   : s
               )
             );
-            fetch(
-              `https://blood-186bd-default-rtdb.firebaseio.com/streamers/${matchingChannelId}.json`,
-              {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                  isLive: false,
-                  videoId: null,
-                  title: null,
-                  lastChecked: new Date().toISOString(),
-                }),
-              }
-            ).catch(() => {});
           }
-          fetchLiveStatus(true);
         }
       } catch {}
     };
     window.addEventListener('message', handleMessage);
     return () => window.removeEventListener('message', handleMessage);
-  }, [fetchLiveStatus]);
+  }, []);
 
   // Drag & drop reorder swap handler
   const handleDropOnCard = useCallback(
@@ -2049,20 +2040,13 @@ export default function FourBloodsCamPage() {
                                 iframeRefs.current[member.channelId] = el;
                               }}
                               src={`https://www.youtube.com/embed/${activeEmbedVideoId}?autoplay=1&mute=1&playsinline=1&rel=0&modestbranding=1&enablejsapi=1${
-                                embedDomain
-                                  ? `&origin=${encodeURIComponent(
-                                      typeof window !== 'undefined' ? window.location.origin : ''
-                                    )}`
+                                typeof window !== 'undefined' && window.location.origin
+                                  ? `&origin=${window.location.origin}`
                                   : ''
                               }`}
                               title={`${member.name} Stream`}
                               onLoad={() => {
-                                if (unmutedId === member.channelId) {
-                                  sendIframeCommand(member.channelId, 'unMute');
-                                  sendIframeCommand(member.channelId, 'setVolume', [100]);
-                                } else {
-                                  sendIframeCommand(member.channelId, 'mute');
-                                }
+                                sendIframeCommand(member.channelId, 'mute');
                               }}
                               className={`w-full h-full border-0 absolute inset-0 ${
                                 resizingChannelId || isResizingChat || Boolean(draggedChannelId)

@@ -134,8 +134,15 @@ export default function CompanyProfilePage() {
                     Date.now() - new Date(s.lastChecked).getTime() > 8 * 60 * 60 * 1000;
                   const isLive = !isStale && Boolean(s?.isLive && s?.videoId);
                   return isLive
-                    ? { ...m, isLive: true, videoId: s.videoId }
-                    : { ...m, isLive: false, videoId: null };
+                    ? {
+                        ...m,
+                        isLive: true,
+                        videoId: s.videoId,
+                        streamTitle: s.title || m.streamTitle || null,
+                        viewerCount: s.viewerCount || null,
+                        startTimestamp: s.actualStartTime || null,
+                      }
+                    : { ...m, isLive: false, videoId: null, streamTitle: null, viewerCount: null };
                 })
               );
             }
